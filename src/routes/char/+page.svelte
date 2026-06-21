@@ -34,11 +34,6 @@
 	<button type="submit">Roll</button>
 </form>
 
-{#if form && 'pick' in form}
-	<section>
-		<h2>{form.pick.name}</h2>
-		<p>{form.pick.rarity}★ · {form.pick.elementType}</p>
-	</section>
-{:else if form && 'error' in form}
-	<p role="alert">{form.error}</p>
+{#if form?.todo}
+	<p>{form.todo}</p>
 {/if}

@@ -24,16 +24,6 @@
 	<button type="submit">Roll</button>
 </form>
 
-{#if form && 'picks' in form}
-	<section>
-		<h2>{form.gauntlet ? 'Gauntlet' : 'Boss'}</h2>
-		{#each form.picks as boss (boss.name)}
-			<article>
-				<h3>{boss.name}</h3>
-				<p>{boss.description}</p>
-			</article>
-		{/each}
-	</section>
-{:else if form && 'error' in form}
-	<p role="alert">{form.error}</p>
+{#if form?.todo}
+	<p>{form.todo}</p>
 {/if}

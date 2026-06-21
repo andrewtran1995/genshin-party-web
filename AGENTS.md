@@ -14,18 +14,12 @@ Prefer existing `package.json` scripts over crafting custom commands. Check `pnp
 
 - SvelteKit 2 with Svelte 5 syntax (runes)
 - `@sveltejs/adapter-vercel` — do not change the adapter
-- `genshin-db` for character/enemy data (server-only — pulls in Node `fs`)
-- `remeda`, `ts-pattern`, `xstate` ported from the CLI
 
-## Domain logic source of truth
+The CLI's domain dependencies (`genshin-db`, `xstate`, `remeda`, `ts-pattern`) are **intentionally not installed yet**. The current routes are scaffolding only and carry `TODO` comments where each will be wired in.
 
-The CLI at `../genshin-party/` (or [`genshin-party` on npm](https://www.npmjs.com/package/genshin-party)) is the original implementation. When porting a feature, mirror its behaviour rather than re-deriving it:
+## Domain logic source of truth (when added)
 
-- Character filtering and exclusions (`Aether` always excluded; `Aloy`/`Lumine` excluded under `onlyTeyvat`) → `src/lib/server/genshin-db.ts`
-- Interactive party state machine → `src/lib/player-selection-stack.ts` (xstate)
-- Boss filtering (weekly + `Stormterror` exclusion) → `src/lib/server/genshin-db.ts`
-
-See `docs/architecture.md` for the route-by-route mapping.
+The CLI at `../genshin-party/` (or [`genshin-party` on npm](https://www.npmjs.com/package/genshin-party)) is the original implementation. When porting a feature, mirror its behaviour rather than re-deriving it. See `docs/architecture.md` for the planned route-by-route mapping and the rules each port should preserve (e.g. `Aether`/`Stormterror` exclusions).
 
 ## Browser support
 
