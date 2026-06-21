@@ -66,7 +66,7 @@ export default defineConfig(
 		}
 	},
 	{
-		files: ['*.config.{js,ts}', 'e2e/**'],
+		files: ['*.config.{js,ts}', 'e2e/**', 'scripts/**'],
 		extends: [ts.configs.disableTypeChecked]
 	}
 );
