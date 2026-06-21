@@ -1,0 +1,1 @@
+../../.claude/skills/add-fun-conversion/SKILL.md

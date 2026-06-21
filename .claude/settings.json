@@ -1,0 +1,70 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s https://svelte.dev/docs/svelte/$state)",
+      "Bash(curl -s https://svelte.dev/docs/svelte/$derived)",
+      "Bash(curl -s https://svelte.dev/docs/svelte/$effect)",
+      "Bash(curl -s https://svelte.dev/docs/svelte/$props)",
+      "Bash(curl -s https://svelte.dev/docs/svelte/$bindable)",
+      "WebFetch(domain:svelte.dev)",
+      "Bash(pnpm check:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(cat /home/andrew/code/wedding-site/src/routes/[locale]/+layout.svelte)",
+      "Bash(cat:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm prettier:*)",
+      "Bash(pnpm eslint:*)",
+      "Bash(git stash:*)",
+      "Bash(pnpm test:e2e:update)",
+      "Bash(pnpm dev:*)",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__*",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(pnpm view:*)",
+      "Bash(pnpm test:unit:*)",
+      "Bash(pnpm test:e2e)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm test:e2e:update:*)",
+      "Bash(pnpm test:a11y:*)",
+      "Bash(pnpm test:e2e:*)",
+      "Bash(gh run:*)",
+      "Bash(find:*)",
+      "Bash(xargs:*)",
+      "Bash(git log:*)",
+      "Bash(git blame:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "mcp__playwright__*",
+      "mcp__svelte__*"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | xargs -r pnpm exec prettier --write --log-level warn 2>&1 | tail -5"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(jq -r '.tool_input.file_path'); case \"$FILE\" in *.svelte|*.ts|*.svelte.ts) pnpm exec svelte-check --tsconfig ./tsconfig.json --output human 2>&1 | tail -20 ;; esac"
+          }
+        ]
+      }
+    ]
+  }
+}
