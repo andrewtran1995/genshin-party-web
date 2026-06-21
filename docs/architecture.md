@@ -18,33 +18,32 @@
 
 ## Route map
 
-| CLI command           | Web route      | Status                                                                                    |
-| --------------------- | -------------- | ----------------------------------------------------------------------------------------- |
-| `genshin-party char`  | `/char`        | Form skeleton only. Form action returns a TODO message — no `genshin-db` integration yet. |
-| `genshin-party boss`  | `/boss`        | Form skeleton only. Form action returns a TODO message — no `genshin-db` integration yet. |
-| `genshin-party order` | `/order`       | Working — pure shuffle, no data dependency.                                               |
-| `genshin-party i`     | `/interactive` | Placeholder page only. State machine + roll endpoint deferred.                            |
+| CLI command           | Web route      | Status                                                                                                 |
+| --------------------- | -------------- | ------------------------------------------------------------------------------------------------------ |
+| `genshin-party char`  | `/char`        | Working — form action filters via `getChars` and renders portrait/region.                              |
+| `genshin-party boss`  | `/boss`        | Working — form action picks one or three via `getBosses`, honoring gauntlet/weekly.                    |
+| `genshin-party order` | `/order`       | Working — pure shuffle, no data dependency.                                                            |
+| `genshin-party i`     | `/interactive` | Data layer ready: `GET /api/random-char` serves rolls. The xstate UI that drives it is still deferred. |
+
+## Data layer (implemented)
+
+`genshin-db` is Node-only, reads JSON from disk via `fs`, and is ~170 MB installed — far too large to bundle into a Vercel function. The data is also **static per `genshin-db` version**, not live state. So rather than query it at runtime, we extract it at build time:
+
+- **`scripts/gen-data.ts`** (run via `pnpm gen:data`) imports `genshin-db`, trims it, and writes `src/lib/server/genshin/data/{characters,bosses}.json` (committed, ~44 KB each). `Aether` and `Stormterror` are excluded here, at extraction time.
+- **`genshin-db` is a `devDependency`** — imported only by that script, never by runtime code, so it never reaches the Vercel bundle. Re-run `pnpm gen:data` when the `genshin-db` version is bumped.
+- **`src/lib/server/genshin/index.ts`** loads the committed JSON once as a module and exposes pure functions: `getChars({ element, rarity })`, `getBosses({ weekly })`, `sample(items, count)`, and `randomChars(filters)` (mirrors the CLI's generator).
+- The trim differs from the CLI: it **keeps** each character's `region` and full-URL `portrait`/`icon`/`fandomUrl` for the UI (the CLI drops `images`/`url`). Bosses are text-only — `genshin-db` exposes no usable image URL for enemies, only a bare icon filename.
+- `Aloy`/`Lumine` exclusion (`onlyTeyvat`) stays at the call site (`/api/random-char`), same as the CLI's `interactive` command. They remain in the character data because `/char` may return them.
+
+Surfaces:
+
+- `src/routes/char/+page.server.ts` — form action: `getChars(...)` + `sample`.
+- `src/routes/boss/+page.server.ts` — form action: `getBosses(...)` + `sample` (one or three).
+- `src/routes/api/random-char/+server.ts` — `GET` returning JSON with `Cache-Control: no-store`; used by `/interactive`.
 
 ## Deferred work
 
-The CLI carries three domain dependencies that this foundation deliberately does **not** pull in yet. The shape they will take when added:
-
-### 1. `genshin-db` data layer
-
-`genshin-db` is Node-only — it reads from local JSON via `fs`. On Vercel we lose persistent disk between invocations, so the strategy will be:
-
-- Imports of `genshin-db` confined to `src/lib/server/` (e.g. `src/lib/server/genshin-db.ts`). SvelteKit guarantees nothing under `$lib/server` ships to the browser.
-- In-process memoization (a single-call cache) to keep the dataset warm across requests on a warm serverless instance. Cold starts re-load.
-- Helpers to add: `getChars({ element, rarity })` (excluding `Aether`), `getBosses({ weekly })` (excluding `Stormterror`).
-- `Aloy`/`Lumine` exclusion (`onlyTeyvat`) belongs at the call site, same as in the CLI's `interactive` command.
-
-Wire-up points in this scaffold:
-
-- `src/routes/char/+page.server.ts` — replace TODO return with `getChars(...)` + pick one.
-- `src/routes/boss/+page.server.ts` — replace TODO return with `getBosses(...)` + pick one or three.
-- `src/routes/api/random-char/+server.ts` (to be created) — used by `/interactive`.
-
-### 2. `xstate` interactive flow
+### 1. `xstate` interactive flow
 
 Mirrors `src/commands/interactive.ts` in the CLI:
 
@@ -57,16 +56,14 @@ Mirrors `src/commands/interactive.ts` in the CLI:
 
 Wire-up points: a new `src/lib/player-selection-stack.ts` ports the CLI's xstate machine; `src/routes/interactive/+page.svelte` drives it.
 
-### 3. Things further out
+### 2. Things further out
 
 - **Player name input** — CLI accepts `-p name1,name2,…` and expands 1/2/3-player input into a 4-slot array. Web version will need a text input + duplicate-expansion logic.
-- **Cache headers** — `/api/random-char` should set `Cache-Control: no-store`.
 - **Shareable results** — `?seed=…` query param to make rolls reproducible.
 - **Visual polish** — intentional. Foundation only.
-- **`genshin-db` bundle size** — measure before optimizing. If the trimmed dataset bloats Vercel functions, pre-extract a JSON asset at build time and read from edge functions instead.
+- **Staleness guard** — `pnpm gen:data` is run manually on `genshin-db` bumps. A CI check that regenerates and fails on a dirty diff would prevent the committed JSON drifting from the pinned version.
 
 ## Open questions for the next session
 
-1. Does the `genshin-db` bundle bloat Vercel functions enough to warrant build-time extraction? Measure first.
-2. Should `/interactive` persist state in `sessionStorage` so a reload mid-party doesn't restart? Probably yes once the UX is fleshed out.
-3. Add `@vercel/analytics` event tracking for which feature is used most.
+1. Should `/interactive` persist state in `sessionStorage` so a reload mid-party doesn't restart? Probably yes once the UX is fleshed out.
+2. Add `@vercel/analytics` event tracking for which feature is used most.

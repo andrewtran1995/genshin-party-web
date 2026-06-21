@@ -34,6 +34,19 @@
 	<button type="submit">Roll</button>
 </form>
 
-{#if form?.todo}
-	<p>{form.todo}</p>
+{#if form?.error}
+	<p class="error">{form.error}</p>
+{:else if form?.char}
+	{@const char = form.char}
+	<figure class="char">
+		{#if char.portrait}
+			<img src={char.portrait} alt={char.name} width="240" loading="lazy" />
+		{/if}
+		<figcaption>
+			<strong>{char.name}</strong>
+			<span>{char.rarity}★ {char.elementText} · {char.weaponText}</span>
+			{#if char.title}<span class="title">{char.title}</span>{/if}
+			{#if char.region}<span class="region">{char.region}</span>{/if}
+		</figcaption>
+	</figure>
 {/if}
