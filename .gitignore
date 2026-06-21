@@ -1,0 +1,57 @@
+# Build output / generated
+.svelte-kit/
+build/
+dist/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Husky-generated
+.husky/_/
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+
+# OS
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Playwright
+test-results
+playwright-report
+
+# Coverage
+coverage
+
+# Agent harness directories and runtime files
+/.agents
+/.cursor
+/.kiro
+/.codex
+/.gemini
+.opencode/settings.local.json
+.opencode/scheduled_tasks.lock
+.opencode/worktrees/
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+.claude/worktrees/
+.playwright-mcp
+AGENTS.local.md
+CLAUDE.local.md
+skills-lock.json
