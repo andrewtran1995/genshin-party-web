@@ -5,6 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
+		"gen:data": "tsx scripts/gen-data.ts",
 		"build": "svelte-kit sync && vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo '' && husky",
@@ -41,6 +42,7 @@
 		"eslint": "^10.4.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.19.0",
+		"genshin-db": "^5.2.11",
 		"globals": "^17.6.0",
 		"husky": "^9.1.7",
 		"playwright": "^1.61.0",
@@ -51,6 +53,7 @@
 		"stylelint-config-standard": "^40.0.0",
 		"svelte": "^5.56.3",
 		"svelte-check": "^4.4.8",
+		"tsx": "^4.22.4",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.61.0",
 		"vite": "^8.0.16",

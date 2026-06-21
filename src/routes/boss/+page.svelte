@@ -24,6 +24,15 @@
 	<button type="submit">Roll</button>
 </form>
 
-{#if form?.todo}
-	<p>{form.todo}</p>
+{#if form?.error}
+	<p class="error">{form.error}</p>
+{:else if form?.bosses}
+	<ul class="bosses">
+		{#each form.bosses as boss (boss.name)}
+			<li>
+				<strong>{boss.name}</strong>
+				<p>{boss.description}</p>
+			</li>
+		{/each}
+	</ul>
 {/if}
