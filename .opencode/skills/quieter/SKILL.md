@@ -1,1 +1,0 @@
-../../.claude/skills/quieter/SKILL.md

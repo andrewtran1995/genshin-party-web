@@ -1,1 +1,0 @@
-../../.claude/skills/delight/SKILL.md

@@ -1,1 +1,0 @@
-../../.claude/skills/adapt/SKILL.md
