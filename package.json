@@ -5,10 +5,10 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"gen:data": "node --import @swc-node/register/esm-register scripts/gen-data.ts",
+		"gen:data": "SWC_NODE_PROJECT=tsconfig.scripts.json node --import @swc-node/register/esm-register scripts/gen-data.ts",
 		"build": "svelte-kit sync && vite build",
 		"preview": "vite preview",
-		"prepare": "node --import @swc-node/register/esm-register scripts/gen-data.ts && svelte-kit sync || echo '' && husky",
+		"prepare": "SWC_NODE_PROJECT=tsconfig.scripts.json node --import @swc-node/register/esm-register scripts/gen-data.ts && svelte-kit sync || echo '' && husky",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test:e2e": "playwright test",
