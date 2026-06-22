@@ -1,1 +1,0 @@
-../../.claude/skills/layout/SKILL.md

@@ -1,1 +1,0 @@
-../../.claude/skills/distill/SKILL.md

@@ -1,1 +1,0 @@
-../../.claude/skills/colorize/SKILL.md

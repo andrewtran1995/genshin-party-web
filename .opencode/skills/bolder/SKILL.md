@@ -1,1 +1,0 @@
-../../.claude/skills/bolder/SKILL.md

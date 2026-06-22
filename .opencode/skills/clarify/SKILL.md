@@ -1,1 +1,0 @@
-../../.claude/skills/clarify/SKILL.md

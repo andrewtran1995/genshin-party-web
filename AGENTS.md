@@ -66,6 +66,23 @@ The generated JSON files are **not committed** — they are build artifacts list
 - Composition over abstraction. Keep component hierarchies flat
 - Behavioural tests, not implementation-mirroring tests
 
+## Agent skills
+
+Agent skills are managed with the [Skills CLI](https://skills.sh/) (`npx skills`) instead of being committed to the repository.
+
+- `skills-lock.json` is the source of truth for installed skills and is tracked in git.
+- `pnpm skills:install` restores skills from `skills-lock.json` into `.agents/skills/`.
+- `pnpm skills:sync` wires the installed skills into agent-specific directories (`.claude/skills/`, `agent/skills/`, etc.).
+- `pnpm skills:update` updates installed skills to their latest versions.
+
+After a fresh clone, run:
+
+```bash
+pnpm skills:install && pnpm skills:sync
+```
+
+The installed skill directories are gitignored. The custom project skill `add-fun-conversion` lives under `.claude/skills/add-fun-conversion/` (and `.opencode/skills/add-fun-conversion/`) and remains tracked because it is project-specific and not available via the Skills CLI.
+
 ## Agent-specific configuration
 
 - **Claude Code** reads `CLAUDE.md` (a shim to this file)

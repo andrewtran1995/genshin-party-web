@@ -1,1 +1,0 @@
-../../.claude/skills/typeset/SKILL.md
