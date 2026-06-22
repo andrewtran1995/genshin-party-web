@@ -75,7 +75,7 @@ Agent skills are managed with the [Skills CLI](https://skills.sh/) (`npx skills`
 - `pnpm skills:sync` wires the installed skills into agent-specific directories (`.claude/skills/`, `agent/skills/`, etc.).
 - `pnpm skills:update` updates installed skills to their latest versions.
 
-After a fresh clone, run:
+After a fresh clone, run `pnpm install` to install dependencies and automatically restore skills. If you need to restore skills manually, run:
 
 ```bash
 pnpm skills:install && pnpm skills:sync
