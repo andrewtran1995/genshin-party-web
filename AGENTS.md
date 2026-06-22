@@ -57,7 +57,9 @@ E2E tests (`pnpm test:e2e`) run in CI; they are too slow for pre-commit.
 
 ## Genshin data
 
-`genshin-db` is ~170 MB and Node-only, and its data is static per version, so it is **not** queried at runtime. `scripts/gen-data.ts` (run via `pnpm gen:data`) trims it to small committed JSON under `src/lib/server/genshin/data/`; `src/lib/server/genshin/index.ts` loads that JSON once and exposes `getChars`/`getBosses`/`randomChars`. Re-run `pnpm gen:data` after bumping `genshin-db`. Keep `genshin-db` a `devDependency` — never import it from runtime code.
+`genshin-db` is ~170 MB and Node-only, and its data is static per version, so it is **not** queried at runtime. `scripts/gen-data.ts` trims it to small JSON files under `src/lib/server/genshin/data/`; `src/lib/server/genshin/index.ts` loads that JSON once and exposes `getChars`/`getBosses`/`randomChars`.
+
+The generated JSON files are **not committed** — they are build artifacts listed in `.gitignore`. The `build`, `dev`, `check`, and `test:unit` scripts all invoke `gen:data` automatically as their first step, so a fresh checkout works without any manual data-generation step. After bumping `genshin-db`, the next run of any of those scripts will regenerate the data. Keep `genshin-db` a `devDependency` — never import it from runtime code.
 
 ## Style
 
