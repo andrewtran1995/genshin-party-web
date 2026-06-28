@@ -11,9 +11,9 @@ const mockChars: Char[] = [
 		elementText: 'Pyro',
 		weaponText: 'Sword',
 		region: 'Mondstadt',
-		portrait: null,
-		icon: null,
-		fandomUrl: null
+		portrait: undefined,
+		icon: undefined,
+		fandomUrl: undefined
 	},
 	{
 		id: 2,
@@ -24,9 +24,9 @@ const mockChars: Char[] = [
 		elementText: 'Cryo',
 		weaponText: 'Bow',
 		region: 'Mondstadt',
-		portrait: null,
-		icon: null,
-		fandomUrl: null
+		portrait: undefined,
+		icon: undefined,
+		fandomUrl: undefined
 	},
 	{
 		id: 3,
@@ -37,9 +37,9 @@ const mockChars: Char[] = [
 		elementText: 'Geo',
 		weaponText: 'Claymore',
 		region: 'Liyue',
-		portrait: null,
-		icon: null,
-		fandomUrl: null
+		portrait: undefined,
+		icon: undefined,
+		fandomUrl: undefined
 	},
 	{
 		id: 4,
@@ -50,9 +50,9 @@ const mockChars: Char[] = [
 		elementText: 'Electro',
 		weaponText: 'Polearm',
 		region: 'Inazuma',
-		portrait: null,
-		icon: null,
-		fandomUrl: null
+		portrait: undefined,
+		icon: undefined,
+		fandomUrl: undefined
 	},
 	{
 		id: 5,
@@ -63,9 +63,9 @@ const mockChars: Char[] = [
 		elementText: 'Hydro',
 		weaponText: 'Catalyst',
 		region: 'Liyue',
-		portrait: null,
-		icon: null,
-		fandomUrl: null
+		portrait: undefined,
+		icon: undefined,
+		fandomUrl: undefined
 	},
 	{
 		id: 6,
@@ -76,9 +76,9 @@ const mockChars: Char[] = [
 		elementText: 'Anemo',
 		weaponText: 'Sword',
 		region: 'Mondstadt',
-		portrait: null,
-		icon: null,
-		fandomUrl: null
+		portrait: undefined,
+		icon: undefined,
+		fandomUrl: undefined
 	},
 	{
 		id: 7,
@@ -89,9 +89,9 @@ const mockChars: Char[] = [
 		elementText: 'Dendro',
 		weaponText: 'Bow',
 		region: 'Sumeru',
-		portrait: null,
-		icon: null,
-		fandomUrl: null
+		portrait: undefined,
+		icon: undefined,
+		fandomUrl: undefined
 	},
 	{
 		id: 8,
@@ -102,9 +102,9 @@ const mockChars: Char[] = [
 		elementText: 'Pyro',
 		weaponText: 'Claymore',
 		region: 'Natlan',
-		portrait: null,
-		icon: null,
-		fandomUrl: null
+		portrait: undefined,
+		icon: undefined,
+		fandomUrl: undefined
 	}
 ];
 

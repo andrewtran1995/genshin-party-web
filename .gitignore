@@ -55,6 +55,8 @@ coverage
 .playwright-mcp
 AGENTS.local.md
 CLAUDE.local.md
+.worktrees/
+/worktrees/
 
 # Agent skills installed by the Skills CLI (see skills-lock.json)
 /.agents
