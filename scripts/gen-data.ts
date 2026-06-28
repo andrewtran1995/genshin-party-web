@@ -36,7 +36,16 @@ const characters: Char[] = pipe(
 		elementText: char.elementText,
 		weaponText: char.weaponText,
 		region: char.region,
-		portrait: char.images.portrait ?? char.images.card ?? undefined,
+		// Fandom/Wikia portrait URLs (char.images.portrait) are broken as of mid-2026.
+		// Use enka.network which mirrors HoYoverse game assets reliably.
+		// filename_gachaSplash is undefined for Lumine (Traveler), so derive it
+		// from filename_icon as a fallback (UI_AvatarIcon_X → UI_Gacha_AvatarImg_X).
+		portrait: (() => {
+			const splash =
+				char.images.filename_gachaSplash ??
+				char.images.filename_icon?.replace('UI_AvatarIcon_', 'UI_Gacha_AvatarImg_');
+			return splash ? `https://enka.network/ui/${splash}.png` : undefined;
+		})(),
 		icon: char.images.mihoyo_icon ?? undefined,
 		fandomUrl: char.url?.fandom ?? undefined
 	}))
