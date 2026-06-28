@@ -1,4 +1,4 @@
-import { shuffle, take } from 'remeda';
+import { shuffle } from 'remeda';
 import type { Char, Element, Enemy, Rarity } from '$lib/types';
 import charactersJson from './data/characters.json';
 import bossesJson from './data/bosses.json';
@@ -34,7 +34,7 @@ export const getBosses = ({ weekly }: { weekly: boolean }): Enemy[] =>
 	);
 
 /** Pick `count` distinct random items. Returns fewer if the pool is smaller. */
-export const sample = <T>(items: readonly T[], count = 1): T[] => take(shuffle(items), count);
+export const sample = <T>(items: readonly T[], count = 1): T[] => shuffle(items).slice(0, count);
 
 /**
  * Infinitely yields random characters matching `filters`, exhausting the full

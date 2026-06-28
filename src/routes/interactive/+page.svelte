@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CharCard from '$lib/components/CharCard.svelte';
 	import { join, map, pipe, prop, sortBy } from 'remeda';
 	import type { Char } from '$lib/types';
 	import { expandPlayerNames, formatPlayer } from '$lib/player-names';
@@ -204,17 +205,7 @@
 	{:else if error}
 		<p class="error" role="alert">{error}</p>
 	{:else if candidate}
-		<figure class="char">
-			{#if candidate.portrait}
-				<img alt={candidate.name} loading="lazy" src={candidate.portrait} width="240" />
-			{/if}
-			<figcaption>
-				<strong>{candidate.name}</strong>
-				<span>{candidate.rarity}★ {candidate.elementText} · {candidate.weaponText}</span>
-				{#if candidate.title}<span class="title">{candidate.title}</span>{/if}
-				{#if candidate.region}<span class="region">{candidate.region}</span>{/if}
-			</figcaption>
-		</figure>
+		<CharCard char={candidate} />
 	{/if}
 
 	<div class="controls">
