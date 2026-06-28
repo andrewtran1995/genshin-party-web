@@ -15,9 +15,9 @@ const makeChar = (name: string, rarity: 4 | 5 = 5): import('$lib/types').Char =>
 	elementText: 'Pyro',
 	weaponText: 'Sword',
 	region: 'Mondstadt',
-	portrait: null,
-	icon: null,
-	fandomUrl: null
+	portrait: undefined,
+	icon: undefined,
+	fandomUrl: undefined
 });
 
 describe('playerSelectionStack', () => {

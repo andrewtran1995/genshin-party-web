@@ -20,7 +20,7 @@ const noStore = { 'Cache-Control': 'no-store' };
  */
 export const GET: RequestHandler = ({ url }) => {
 	const rarityParam = url.searchParams.get('rarity');
-	const rarity = rarityParam !== null && isRarity(rarityParam) ? rarityParam : undefined;
+	const rarity = rarityParam && isRarity(rarityParam) ? rarityParam : undefined;
 	const onlyTeyvat = url.searchParams.get('onlyTeyvat') !== 'false';
 	const exclude = new Set(
 		(url.searchParams.get('exclude') ?? '')

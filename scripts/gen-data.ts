@@ -36,9 +36,9 @@ const characters: Char[] = pipe(
 		elementText: char.elementText,
 		weaponText: char.weaponText,
 		region: char.region,
-		portrait: char.images.portrait ?? char.images.card ?? null,
-		icon: char.images.mihoyo_icon ?? null,
-		fandomUrl: char.url?.fandom ?? null
+		portrait: char.images.portrait ?? char.images.card ?? undefined,
+		icon: char.images.mihoyo_icon ?? undefined,
+		fandomUrl: char.url?.fandom ?? undefined
 	}))
 );
 
@@ -61,7 +61,7 @@ const bosses: Enemy[] = pipe(
 );
 
 mkdirSync(dataDir, { recursive: true });
-writeFileSync(join(dataDir, 'characters.json'), `${JSON.stringify(characters, null, '\t')}\n`);
-writeFileSync(join(dataDir, 'bosses.json'), `${JSON.stringify(bosses, null, '\t')}\n`);
+writeFileSync(join(dataDir, 'characters.json'), `${JSON.stringify(characters, undefined, '\t')}\n`);
+writeFileSync(join(dataDir, 'bosses.json'), `${JSON.stringify(bosses, undefined, '\t')}\n`);
 
 console.log(`Wrote ${characters.length} characters and ${bosses.length} bosses to ${dataDir}`);

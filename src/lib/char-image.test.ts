@@ -11,9 +11,9 @@ const baseChar: Char = {
 	elementText: 'Pyro',
 	weaponText: 'Sword',
 	region: 'Mondstadt',
-	portrait: null,
+	portrait: undefined,
 	icon: 'https://icon.test',
-	fandomUrl: null
+	fandomUrl: undefined
 };
 
 describe('getCharImageUrl', () => {
@@ -23,12 +23,12 @@ describe('getCharImageUrl', () => {
 	});
 
 	it('falls back to icon when portrait is missing', () => {
-		const char: Char = { ...baseChar, portrait: null };
+		const char: Char = { ...baseChar, portrait: undefined };
 		expect(getCharImageUrl(char)).toBe('https://icon.test');
 	});
 
-	it('returns null when no image is available', () => {
-		const char: Char = { ...baseChar, portrait: null, icon: null };
-		expect(getCharImageUrl(char)).toBeNull();
+	it('returns undefined when no image is available', () => {
+		const char: Char = { ...baseChar, portrait: undefined, icon: undefined };
+		expect(getCharImageUrl(char)).toBeUndefined();
 	});
 });

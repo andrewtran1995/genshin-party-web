@@ -37,12 +37,12 @@ export interface Char {
 	weaponText: string;
 	/** Home region, e.g. `Liyue`. Empty for the Traveler and crossovers (Aloy). */
 	region: string;
-	/** Tall portrait URL (wikia), or `null` when unavailable. */
-	portrait: string | null;
-	/** Square avatar URL (hoyolab), or `null` when unavailable. */
-	icon: string | null;
-	/** Fandom wiki link, or `null` when unavailable. */
-	fandomUrl: string | null;
+	/** Tall portrait URL (wikia), or `undefined` when unavailable. */
+	portrait: string | undefined;
+	/** Square avatar URL (hoyolab), or `undefined` when unavailable. */
+	icon: string | undefined;
+	/** Fandom wiki link, or `undefined` when unavailable. */
+	fandomUrl: string | undefined;
 }
 
 /**
