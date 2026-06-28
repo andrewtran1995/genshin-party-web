@@ -1,3 +1,4 @@
+import { filter, map, pipe, split } from 'remeda';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { isRarity } from '$lib/types';
@@ -23,10 +24,12 @@ export const GET: RequestHandler = ({ url }) => {
 	const rarity = rarityParam !== null && isRarity(rarityParam) ? rarityParam : undefined;
 	const onlyTeyvat = url.searchParams.get('onlyTeyvat') !== 'false';
 	const exclude = new Set(
-		(url.searchParams.get('exclude') ?? '')
-			.split(',')
-			.map((name) => name.trim())
-			.filter(Boolean)
+		pipe(
+			url.searchParams.get('exclude') ?? '',
+			split(','),
+			map((name) => name.trim()),
+			filter((name) => name.length > 0)
+		)
 	);
 
 	const eligible = getChars({ rarity }).filter(

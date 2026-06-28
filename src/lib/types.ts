@@ -1,3 +1,5 @@
+import { isIncludedIn } from 'remeda';
+
 export const rarities = ['4', '5'] as const;
 export type Rarity = (typeof rarities)[number];
 
@@ -13,11 +15,9 @@ export const elements = [
 ] as const;
 export type Element = (typeof elements)[number];
 
-export const isRarity = (value: string): value is Rarity =>
-	(rarities as readonly string[]).includes(value);
+export const isRarity = (value: string): value is Rarity => isIncludedIn(value, rarities);
 
-export const isElement = (value: string): value is Element =>
-	(elements as readonly string[]).includes(value);
+export const isElement = (value: string): value is Element => isIncludedIn(value, elements);
 
 /**
  * A playable character, trimmed from `genshin-db` for the web UI.
