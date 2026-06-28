@@ -1,5 +1,3 @@
-import { filter, map, pipe } from 'remeda';
-
 /**
  * Expand a list of player names to exactly four team slots,
  * matching the CLI's `-p, --players` behavior.
@@ -11,11 +9,7 @@ import { filter, map, pipe } from 'remeda';
  * - 4 names → unchanged
  */
 export const expandPlayerNames = (names: string[]): string[] => {
-	const trimmed = pipe(
-		names,
-		map((name) => name.trim()),
-		filter((name) => name.length > 0)
-	);
+	const trimmed = names.map((name) => name.trim()).filter((name) => name.length > 0);
 
 	if (trimmed.length === 0) return [];
 

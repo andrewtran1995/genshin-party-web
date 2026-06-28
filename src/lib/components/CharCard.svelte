@@ -4,16 +4,17 @@
 
 	interface Props {
 		char: Char;
+		loading?: 'eager' | 'lazy';
 	}
 
-	let { char }: Props = $props();
+	let { char, loading = 'lazy' }: Props = $props();
 
 	const imageUrl = $derived(getCharImageUrl(char));
 </script>
 
 <figure class="char-card">
 	{#if imageUrl}
-		<img alt={char.name} loading="lazy" src={imageUrl} width="240" />
+		<img alt={char.name} {loading} src={imageUrl} width="240" height="480" />
 	{/if}
 	<figcaption>
 		<strong>{char.name}</strong>
@@ -22,3 +23,10 @@
 		{#if char.region}<span class="region">{char.region}</span>{/if}
 	</figcaption>
 </figure>
+
+<style>
+	.char-card img {
+		height: auto;
+		max-width: 100%;
+	}
+</style>
