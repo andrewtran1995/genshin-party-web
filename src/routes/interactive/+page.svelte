@@ -3,7 +3,7 @@
 	import { expandPlayerNames, formatPlayer } from '$lib/player-names';
 	import { createPlayerSelectionStackActor, type PlayerChoice } from '$lib/player-selection-stack';
 
-	let playerNamesRaw = $state('');
+	let playerNames = $state(['']);
 	let expandedNames = $state<string[]>([]);
 	let actor = $state<ReturnType<typeof createPlayerSelectionStackActor> | undefined>();
 	let snapshot = $state<
@@ -26,7 +26,7 @@
 	const lastChoice = $derived(snapshot?.context.playerChoices.at(-1));
 
 	function start() {
-		expandedNames = expandPlayerNames(playerNamesRaw);
+		expandedNames = expandPlayerNames(playerNames);
 		const newActor = createPlayerSelectionStackActor({
 			input: {
 				onNewChoiceFunction(playerNumber) {
@@ -116,6 +116,20 @@
 		discardedChoice = undefined;
 		loading = false;
 		error = undefined;
+		playerNames = [''];
+		expandedNames = [];
+	}
+
+	function addPlayer() {
+		if (playerNames.length < 4) {
+			playerNames = [...playerNames, ''];
+		}
+	}
+
+	function removePlayer(index: number) {
+		if (playerNames.length > 1) {
+			playerNames = playerNames.filter((_, i) => i !== index);
+		}
 	}
 </script>
 
@@ -128,15 +142,40 @@
 {#if !actor}
 	<form
 		method="dialog"
+		class="player-form"
 		onsubmit={(event) => {
 			event.preventDefault();
 			start();
 		}}
 	>
-		<label>
-			Player names (comma-separated):
-			<input bind:value={playerNamesRaw} placeholder="e.g. A, B, C, D" type="text" />
-		</label>
+		<fieldset>
+			<legend>Player names</legend>
+			<div class="player-inputs">
+				{#each playerNames, index (index)}
+					<div class="player-input-row">
+						<label>
+							Player {index + 1}
+							<input bind:value={playerNames[index]} placeholder="Name (optional)" type="text" />
+						</label>
+						{#if playerNames.length > 1}
+							<button
+								aria-label={`Remove player ${index + 1}`}
+								class="remove-player"
+								onclick={() => {
+									removePlayer(index);
+								}}
+								type="button"
+							>
+								Remove
+							</button>
+						{/if}
+					</div>
+				{/each}
+			</div>
+			{#if playerNames.length < 4}
+				<button class="add-player" onclick={addPlayer} type="button">Add player</button>
+			{/if}
+		</fieldset>
 		<button type="submit">Start</button>
 	</form>
 {:else if isDone}
@@ -192,6 +231,45 @@
 {/if}
 
 <style>
+	.player-form fieldset {
+		border: 0;
+		padding: 0;
+		margin: 0 0 1rem;
+	}
+
+	.player-form legend {
+		font-weight: 600;
+		margin-bottom: 0.5rem;
+	}
+
+	.player-inputs {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.player-input-row {
+		display: flex;
+		align-items: flex-end;
+		gap: 0.5rem;
+	}
+
+	.player-input-row label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		flex: 1;
+	}
+
+	.remove-player {
+		padding-inline: 0.5rem;
+	}
+
+	.add-player {
+		margin-bottom: 1rem;
+	}
+
 	.controls {
 		display: flex;
 		flex-wrap: wrap;

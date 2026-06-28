@@ -144,7 +144,13 @@ test('interactive flow completes four selections', async ({ page }) => {
 	await expect(page.getByRole('heading', { name: /interactive party selection/i })).toBeVisible();
 
 	await setupMockApi(page);
-	await page.getByLabel(/player names/i).fill('A, B, C, D');
+	await page.getByRole('textbox', { name: /player 1/i }).fill('A');
+	await page.getByRole('button', { name: /^add player$/i }).click();
+	await page.getByRole('textbox', { name: /player 2/i }).fill('B');
+	await page.getByRole('button', { name: /^add player$/i }).click();
+	await page.getByRole('textbox', { name: /player 3/i }).fill('C');
+	await page.getByRole('button', { name: /^add player$/i }).click();
+	await page.getByRole('textbox', { name: /player 4/i }).fill('D');
 	await page.getByRole('button', { name: /^start$/i }).click();
 
 	for (let i = 0; i < 4; i++) {
@@ -157,6 +163,26 @@ test('interactive flow completes four selections', async ({ page }) => {
 	await expect(page.getByText(/Player 2 \(B\):/)).toBeVisible();
 	await expect(page.getByText(/Player 3 \(C\):/)).toBeVisible();
 	await expect(page.getByText(/Player 4 \(D\):/)).toBeVisible();
+});
+
+test('one player controls all four characters', async ({ page }) => {
+	await page.goto('/interactive');
+	await expect(page.getByRole('heading', { name: /interactive party selection/i })).toBeVisible();
+
+	await setupMockApi(page);
+	await page.getByRole('textbox', { name: /player 1/i }).fill('Solo');
+	await page.getByRole('button', { name: /^start$/i }).click();
+
+	for (let i = 0; i < 4; i++) {
+		await expect(page.getByText(/now choosing for/i)).toBeVisible();
+		await page.getByRole('button', { name: /^accept$/i }).click();
+	}
+
+	await expect(page.getByRole('heading', { name: /chosen characters/i })).toBeVisible();
+	await expect(page.getByText(/Player 1 \(Solo\):/)).toBeVisible();
+	await expect(page.getByText(/Player 2 \(Solo\):/)).toBeVisible();
+	await expect(page.getByText(/Player 3 \(Solo\):/)).toBeVisible();
+	await expect(page.getByText(/Player 4 \(Solo\):/)).toBeVisible();
 });
 
 test('accepting a main forces the next roll to be 4-star', async ({ page }) => {
