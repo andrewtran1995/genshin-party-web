@@ -1,3 +1,4 @@
+import { shuffle } from 'remeda';
 import { match } from 'ts-pattern';
 import type { Char } from '$lib/types';
 
@@ -28,24 +29,6 @@ export type PlayerSelectionEvent =
 export interface CreatePlayerSelectionStateInput {
 	readonly playerOrder?: readonly number[];
 }
-
-const swap = (array: unknown[], i: number, j: number): void => {
-	const a = array[i];
-	const b = array[j];
-	if (a === undefined || b === undefined) return;
-	array[i] = b;
-	array[j] = a;
-};
-
-/** Fisher-Yates shuffle, returning a new array. */
-const shuffle = <T>(items: readonly T[]): T[] => {
-	const result = [...items];
-	for (let i = result.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		swap(result, i, j);
-	}
-	return result;
-};
 
 export const createPlayerSelectionState = (
 	input: CreatePlayerSelectionStateInput = {}

@@ -1,3 +1,4 @@
+import { shuffle, take } from 'remeda';
 import type { Char, Element, Enemy, Rarity } from '$lib/types';
 import charactersJson from './data/characters.json';
 import bossesJson from './data/bosses.json';
@@ -7,18 +8,6 @@ import bossesJson from './data/bosses.json';
 // `Aether` and `Stormterror` are already excluded at extraction time.
 const allChars = charactersJson as Char[];
 const allBosses = bossesJson as Enemy[];
-
-/** Fisher-Yates shuffle, returning a new array. */
-const shuffle = <T>(items: readonly T[]): T[] => {
-	const result = [...items];
-	for (let i = result.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		const swap = result[i] as T;
-		result[i] = result[j] as T;
-		result[j] = swap;
-	}
-	return result;
-};
 
 export interface GetCharsOptions {
 	element?: Element | undefined;
@@ -45,7 +34,7 @@ export const getBosses = ({ weekly }: { weekly: boolean }): Enemy[] =>
 	);
 
 /** Pick `count` distinct random items. Returns fewer if the pool is smaller. */
-export const sample = <T>(items: readonly T[], count = 1): T[] => shuffle(items).slice(0, count);
+export const sample = <T>(items: readonly T[], count = 1): T[] => take(shuffle(items), count);
 
 /**
  * Infinitely yields random characters matching `filters`, exhausting the full

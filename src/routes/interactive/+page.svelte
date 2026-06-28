@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { join, map, pipe, prop, sortBy } from 'remeda';
 	import type { Char } from '$lib/types';
 	import { expandPlayerNames, formatPlayer } from '$lib/player-names';
 	import {
@@ -22,9 +23,7 @@
 	const canGoBack = $derived((selectionState?.playerChoices.length ?? 0) > 0);
 	const isFinalPick = $derived((selectionState?.playerChoices.length ?? 0) === 3);
 	const finalChoices = $derived(
-		selectionState?.status === 'done'
-			? [...selectionState.playerChoices].sort((a, b) => a.number - b.number)
-			: []
+		selectionState?.status === 'done' ? sortBy(selectionState.playerChoices, prop('number')) : []
 	);
 	const lastChoice = $derived(selectionState?.playerChoices.at(-1));
 
@@ -50,7 +49,11 @@
 
 		const { playerChoices } = selectionState;
 		const rarity = playerChoices.at(-1)?.isMain ? '4' : '5';
-		const exclude = playerChoices.map((choice) => choice.char.name).join(',');
+		const exclude = pipe(
+			playerChoices,
+			map((choice) => choice.char.name),
+			join(',')
+		);
 		const url = `/api/random-char?rarity=${rarity}&exclude=${encodeURIComponent(exclude)}`;
 
 		try {

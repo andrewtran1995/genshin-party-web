@@ -11,6 +11,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { filter, map, pipe } from 'remeda';
 import genshinDb from 'genshin-db';
 import type { Char, Element, Enemy } from '../src/lib/types.ts';
 
@@ -22,11 +23,11 @@ const queryOptions = { matchCategories: true, verboseCategories: true } as const
 const toElement = (elementType: string): Element =>
 	elementType.replace(/^ELEMENT_/, '').toLowerCase() as Element;
 
-const characters: Char[] = genshinDb
-	.characters('names', queryOptions)
+const characters: Char[] = pipe(
+	genshinDb.characters('names', queryOptions),
 	// Exclude Aether so the Traveler isn't returned twice (Aether + Lumine).
-	.filter((char) => char.name !== 'Aether')
-	.map((char) => ({
+	filter((char) => char.name !== 'Aether'),
+	map((char) => ({
 		id: char.id,
 		name: char.name,
 		title: char.title,
@@ -38,24 +39,26 @@ const characters: Char[] = genshinDb
 		portrait: char.images.portrait ?? char.images.card ?? null,
 		icon: char.images.mihoyo_icon ?? null,
 		fandomUrl: char.url?.fandom ?? null
-	}));
+	}))
+);
 
-const bosses: Enemy[] = genshinDb
-	.enemies('names', queryOptions)
+const bosses: Enemy[] = pipe(
+	genshinDb.enemies('names', queryOptions),
 	// Keep only enemies reachable by either boss filter; drop the rest of the
 	// bestiary so the shipped JSON stays small. Exclude Stormterror (the CLI
 	// does too — it has no weekly-boss arena).
-	.filter(
+	filter(
 		(enemy) =>
 			enemy.name !== 'Stormterror' &&
 			(enemy.enemyType === 'BOSS' || enemy.categoryType === 'CODEX_SUBTYPE_BOSS')
-	)
-	.map((enemy) => ({
+	),
+	map((enemy) => ({
 		name: enemy.name,
 		description: enemy.description,
 		categoryType: enemy.categoryType,
 		enemyType: enemy.enemyType
-	}));
+	}))
+);
 
 mkdirSync(dataDir, { recursive: true });
 writeFileSync(join(dataDir, 'characters.json'), `${JSON.stringify(characters, null, '\t')}\n`);
