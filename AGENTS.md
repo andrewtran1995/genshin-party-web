@@ -81,8 +81,6 @@ After a fresh clone, run `pnpm install` to install dependencies and automaticall
 pnpm skills:install && pnpm skills:sync
 ```
 
-The installed skill directories are gitignored. The custom project skill `add-fun-conversion` lives under `.claude/skills/add-fun-conversion/` (and `.opencode/skills/add-fun-conversion/`) and remains tracked because it is project-specific and not available via the Skills CLI.
-
 ## Agent-specific configuration
 
 - **Claude Code** reads `CLAUDE.md` (a shim to this file)
