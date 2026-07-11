@@ -64,7 +64,8 @@
 	"dependencies": {
 		"@vercel/analytics": "^2.0.1",
 		"@vercel/speed-insights": "^2.0.0",
-		"xstate": "^5.32.2"
+		"remeda": "^2.39.0",
+		"ts-pattern": "^5.9.0"
 	},
 	"packageManager": "pnpm@11.9.0",
 	"engines": {

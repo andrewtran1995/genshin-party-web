@@ -1,5 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
-import { createPlayerSelectionStackActor, playerSelectionStack } from './player-selection-stack';
+import { describe, expect, it } from 'vitest';
+import {
+	createPlayerSelectionState,
+	getCurrentPlayerNumber,
+	transition,
+	type PlayerSelectionState
+} from './player-selection-stack';
 
 const makeChar = (name: string, rarity: 4 | 5 = 5): import('$lib/types').Char => ({
 	id: 1,
@@ -10,113 +15,78 @@ const makeChar = (name: string, rarity: 4 | 5 = 5): import('$lib/types').Char =>
 	elementText: 'Pyro',
 	weaponText: 'Sword',
 	region: 'Mondstadt',
-	portrait: null,
-	icon: null,
-	fandomUrl: null
+	portrait: undefined,
+	icon: undefined,
+	fandomUrl: undefined
 });
-
-const assertDefined = <T>(value: T | undefined): T => {
-	if (value === undefined) {
-		throw new Error('Expected a defined value');
-	}
-	return value;
-};
 
 describe('playerSelectionStack', () => {
 	it('starts with empty choices and a shuffled player order', () => {
-		const actor = createPlayerSelectionStackActor({ input: {} }).start();
-		const snapshot = actor.getSnapshot();
+		const state = createPlayerSelectionState();
 
-		expect(snapshot.context.playerChoices).toEqual([]);
-		expect(snapshot.context.playerOrder).toHaveLength(4);
-		expect(new Set(snapshot.context.playerOrder)).toEqual(new Set([1, 2, 3, 4]));
-		expect(snapshot.status).toBe('active');
-		actor.stop();
+		expect(state.playerChoices).toEqual([]);
+		expect(state.playerOrder).toHaveLength(4);
+		expect(new Set(state.playerOrder)).toEqual(new Set([1, 2, 3, 4]));
+		expect(state.status).toBe('active');
 	});
 
-	it('calls onNewChoiceFunction with the first player number on start', () => {
-		const onNewChoiceFunction = vi.fn();
-		const actor = createPlayerSelectionStackActor({
-			input: { onNewChoiceFunction }
-		}).start();
+	it('exposes the first player number', () => {
+		const state = createPlayerSelectionState({ playerOrder: [1, 2, 3, 4] });
 
-		const firstPlayer = actor.getSnapshot().context.playerOrder[0];
-		expect(onNewChoiceFunction).toHaveBeenCalledExactlyOnceWith(firstPlayer);
-		actor.stop();
+		expect(getCurrentPlayerNumber(state)).toBe(1);
 	});
 
 	it('pushes a choice and advances to the next slot', () => {
-		const onNewChoiceFunction = vi.fn();
-		const actor = createPlayerSelectionStackActor({
-			input: { onNewChoiceFunction }
-		}).start();
-		const firstPlayer = assertDefined(actor.getSnapshot().context.playerOrder[0]);
+		let state: PlayerSelectionState = createPlayerSelectionState({ playerOrder: [1, 2, 3, 4] });
 
-		actor.send({
-			choice: { char: makeChar('Amber'), isMain: false, number: firstPlayer },
+		state = transition(state, {
+			choice: { char: makeChar('Amber'), isMain: false, number: 1 },
 			type: 'push'
 		});
 
-		const snapshot = actor.getSnapshot();
-		expect(snapshot.context.playerChoices).toHaveLength(1);
-		expect(snapshot.context.playerChoices[0]?.char.name).toBe('Amber');
-		expect(onNewChoiceFunction).toHaveBeenCalledTimes(2);
-		expect(onNewChoiceFunction).toHaveBeenLastCalledWith(snapshot.context.playerOrder[1]);
-		actor.stop();
+		expect(state.playerChoices).toHaveLength(1);
+		expect(state.playerChoices[0]?.char.name).toBe('Amber');
+		expect(state.status).toBe('active');
+		expect(getCurrentPlayerNumber(state)).toBe(2);
 	});
 
 	it('enters done after four pushes', () => {
-		const actor = createPlayerSelectionStackActor({ input: {} }).start();
-		const { playerOrder } = actor.getSnapshot().context;
+		let state: PlayerSelectionState = createPlayerSelectionState({ playerOrder: [1, 2, 3, 4] });
 
 		for (let i = 0; i < 4; i++) {
-			actor.send({
-				choice: {
-					char: makeChar(`Char${i}`),
-					isMain: false,
-					number: assertDefined(playerOrder[i])
-				},
+			state = transition(state, {
+				choice: { char: makeChar(`Char${i}`), isMain: false, number: i + 1 },
 				type: 'push'
 			});
 		}
 
-		const snapshot = actor.getSnapshot();
-		expect(snapshot.status).toBe('done');
-		expect(snapshot.context.playerChoices).toHaveLength(4);
-		actor.stop();
+		expect(state.status).toBe('done');
+		expect(state.playerChoices).toHaveLength(4);
 	});
 
 	it('pops the last choice and returns to the previous slot', () => {
-		const onNewChoiceFunction = vi.fn();
-		const actor = createPlayerSelectionStackActor({
-			input: { onNewChoiceFunction }
-		}).start();
-		const { playerOrder } = actor.getSnapshot().context;
+		let state: PlayerSelectionState = createPlayerSelectionState({ playerOrder: [1, 2, 3, 4] });
 
-		actor.send({
-			choice: { char: makeChar('Amber'), isMain: false, number: assertDefined(playerOrder[0]) },
+		state = transition(state, {
+			choice: { char: makeChar('Amber'), isMain: false, number: 1 },
 			type: 'push'
 		});
-		actor.send({
-			choice: {
-				char: makeChar('Barbara'),
-				isMain: false,
-				number: assertDefined(playerOrder[1])
-			},
+		state = transition(state, {
+			choice: { char: makeChar('Barbara'), isMain: false, number: 2 },
 			type: 'push'
 		});
-		onNewChoiceFunction.mockClear();
+		state = transition(state, { type: 'pop' });
 
-		actor.send({ type: 'pop' });
-
-		const snapshot = actor.getSnapshot();
-		expect(snapshot.context.playerChoices).toHaveLength(1);
-		expect(snapshot.context.playerChoices[0]?.char.name).toBe('Amber');
-		expect(onNewChoiceFunction).toHaveBeenCalledExactlyOnceWith(playerOrder[1]);
-		actor.stop();
+		expect(state.playerChoices).toHaveLength(1);
+		expect(state.playerChoices[0]?.char.name).toBe('Amber');
+		expect(getCurrentPlayerNumber(state)).toBe(2);
 	});
 
-	it('exports the raw machine for type-level reuse', () => {
-		expect(playerSelectionStack).toBeDefined();
+	it('ignores pop when empty', () => {
+		const state = createPlayerSelectionState({ playerOrder: [1, 2, 3, 4] });
+		const next = transition(state, { type: 'pop' });
+
+		expect(next.playerChoices).toHaveLength(0);
+		expect(next.status).toBe('active');
 	});
 });

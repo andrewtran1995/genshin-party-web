@@ -1,50 +1,43 @@
 <script lang="ts">
+	import CharCard from '$lib/components/CharCard.svelte';
+	import { join, map, pipe, prop, sortBy } from 'remeda';
 	import type { Char } from '$lib/types';
 	import { expandPlayerNames, formatPlayer } from '$lib/player-names';
-	import { createPlayerSelectionStackActor, type PlayerChoice } from '$lib/player-selection-stack';
+	import {
+		createPlayerSelectionState,
+		getCurrentPlayerNumber,
+		transition,
+		type PlayerChoice,
+		type PlayerSelectionState
+	} from '$lib/player-selection-stack';
 
 	let playerNames = $state(['']);
 	let expandedNames = $state<string[]>([]);
-	let actor = $state<ReturnType<typeof createPlayerSelectionStackActor> | undefined>();
-	let snapshot = $state<
-		ReturnType<ReturnType<typeof createPlayerSelectionStackActor>['getSnapshot']> | undefined
-	>();
+	let selectionState = $state<PlayerSelectionState | undefined>();
 	let currentPlayerNumber = $state<number | undefined>();
 	let candidate = $state<Char | undefined>();
 	let discardedChoice = $state<PlayerChoice | undefined>();
 	let loading = $state(false);
 	let error = $state<string | undefined>();
 
-	const isDone = $derived(snapshot?.status === 'done');
-	const canGoBack = $derived((snapshot?.context.playerChoices.length ?? 0) > 0);
-	const isFinalPick = $derived((snapshot?.context.playerChoices.length ?? 0) === 3);
+	const isDone = $derived(selectionState?.status === 'done');
+	const canGoBack = $derived((selectionState?.playerChoices.length ?? 0) > 0);
+	const isFinalPick = $derived((selectionState?.playerChoices.length ?? 0) === 3);
 	const finalChoices = $derived(
-		snapshot?.status === 'done'
-			? [...snapshot.context.playerChoices].sort((a, b) => a.number - b.number)
-			: []
+		selectionState?.status === 'done' ? sortBy(selectionState.playerChoices, prop('number')) : []
 	);
-	const lastChoice = $derived(snapshot?.context.playerChoices.at(-1));
+	const lastChoice = $derived(selectionState?.playerChoices.at(-1));
 
 	function start() {
 		expandedNames = expandPlayerNames(playerNames);
-		const newActor = createPlayerSelectionStackActor({
-			input: {
-				onNewChoiceFunction(playerNumber) {
-					currentPlayerNumber = playerNumber;
-					queueMicrotask(() => void fetchCandidate(newActor));
-				}
-			}
-		});
-		actor = newActor;
-		snapshot = newActor.getSnapshot();
-		newActor.subscribe((next) => {
-			snapshot = next;
-		});
-		newActor.start();
+		const initialState = createPlayerSelectionState();
+		selectionState = initialState;
+		currentPlayerNumber = getCurrentPlayerNumber(initialState);
+		void fetchCandidate();
 	}
 
-	async function fetchCandidate(actorRef = actor) {
-		if (!actorRef) return;
+	async function fetchCandidate() {
+		if (!selectionState) return;
 		loading = true;
 		error = undefined;
 
@@ -55,9 +48,13 @@
 			return;
 		}
 
-		const { playerChoices } = actorRef.getSnapshot().context;
+		const { playerChoices } = selectionState;
 		const rarity = playerChoices.at(-1)?.isMain ? '4' : '5';
-		const exclude = playerChoices.map((choice) => choice.char.name).join(',');
+		const exclude = pipe(
+			playerChoices,
+			map((choice) => choice.char.name),
+			join(',')
+		);
 		const url = `/api/random-char?rarity=${rarity}&exclude=${encodeURIComponent(exclude)}`;
 
 		try {
@@ -77,12 +74,17 @@
 	}
 
 	function accept(isMain: boolean) {
-		if (!actor || !candidate || currentPlayerNumber === undefined) return;
-		actor.send({
+		if (selectionState?.status !== 'active' || !candidate || currentPlayerNumber === undefined)
+			return;
+		selectionState = transition(selectionState, {
 			choice: { char: candidate, isMain, number: currentPlayerNumber },
 			type: 'push'
 		});
 		candidate = undefined;
+		if (selectionState.status === 'active') {
+			currentPlayerNumber = getCurrentPlayerNumber(selectionState);
+			void fetchCandidate();
+		}
 	}
 
 	function acceptNormal() {
@@ -99,18 +101,20 @@
 	}
 
 	function goBack() {
-		if (!actor || !snapshot) return;
-		const lastChoice = snapshot.context.playerChoices.at(-1);
-		if (!lastChoice) return;
-		discardedChoice = lastChoice;
-		actor.send({ type: 'pop' });
+		if (!selectionState) return;
+		const previousChoice = selectionState.playerChoices.at(-1);
+		if (!previousChoice) return;
+		discardedChoice = previousChoice;
+		selectionState = transition(selectionState, { type: 'pop' });
 		candidate = undefined;
+		if (selectionState.status === 'active') {
+			currentPlayerNumber = getCurrentPlayerNumber(selectionState);
+			void fetchCandidate();
+		}
 	}
 
 	function reset() {
-		actor?.stop();
-		actor = undefined;
-		snapshot = undefined;
+		selectionState = undefined;
 		currentPlayerNumber = undefined;
 		candidate = undefined;
 		discardedChoice = undefined;
@@ -139,7 +143,7 @@
 
 <h1>Interactive party selection</h1>
 
-{#if !actor}
+{#if !selectionState}
 	<form
 		method="dialog"
 		class="player-form"
@@ -201,17 +205,7 @@
 	{:else if error}
 		<p class="error" role="alert">{error}</p>
 	{:else if candidate}
-		<figure class="char">
-			{#if candidate.portrait}
-				<img alt={candidate.name} loading="lazy" src={candidate.portrait} width="240" />
-			{/if}
-			<figcaption>
-				<strong>{candidate.name}</strong>
-				<span>{candidate.rarity}★ {candidate.elementText} · {candidate.weaponText}</span>
-				{#if candidate.title}<span class="title">{candidate.title}</span>{/if}
-				{#if candidate.region}<span class="region">{candidate.region}</span>{/if}
-			</figcaption>
-		</figure>
+		<CharCard char={candidate} />
 	{/if}
 
 	<div class="controls">

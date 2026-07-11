@@ -1,3 +1,4 @@
+import { shuffle } from 'remeda';
 import type { Char, Element, Enemy, Rarity } from '$lib/types';
 import charactersJson from './data/characters.json';
 import bossesJson from './data/bosses.json';
@@ -7,18 +8,6 @@ import bossesJson from './data/bosses.json';
 // `Aether` and `Stormterror` are already excluded at extraction time.
 const allChars = charactersJson as Char[];
 const allBosses = bossesJson as Enemy[];
-
-/** Fisher-Yates shuffle, returning a new array. */
-const shuffle = <T>(items: readonly T[]): T[] => {
-	const result = [...items];
-	for (let i = result.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		const swap = result[i] as T;
-		result[i] = result[j] as T;
-		result[j] = swap;
-	}
-	return result;
-};
 
 export interface GetCharsOptions {
 	element?: Element | undefined;

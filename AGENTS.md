@@ -15,7 +15,7 @@ Prefer existing `package.json` scripts over crafting custom commands. Check `pnp
 - SvelteKit 2 with Svelte 5 syntax (runes)
 - `@sveltejs/adapter-vercel` — do not change the adapter
 
-The data layer is wired in: `/char`, `/boss`, and `GET /api/random-char` are backed by a build-time-extracted dataset (see "Genshin data" below). `genshin-db` is a `devDependency` used only by the extraction script. `xstate` (the `/interactive` flow) is **still intentionally not installed** — that page remains a placeholder.
+The data layer is wired in: `/char`, `/boss`, and `GET /api/random-char` are backed by a build-time-extracted dataset (see "Genshin data" below). `genshin-db` is a `devDependency` used only by the extraction script. The `/interactive` flow uses a plain reducer in `$lib/player-selection-stack.ts` backed by Svelte 5 runes.
 
 ## Domain logic source of truth (when added)
 
@@ -80,8 +80,6 @@ After a fresh clone, run `pnpm install` to install dependencies and automaticall
 ```bash
 pnpm skills:install && pnpm skills:sync
 ```
-
-The installed skill directories are gitignored. The custom project skill `add-fun-conversion` lives under `.claude/skills/add-fun-conversion/` (and `.opencode/skills/add-fun-conversion/`) and remains tracked because it is project-specific and not available via the Skills CLI.
 
 ## Agent-specific configuration
 

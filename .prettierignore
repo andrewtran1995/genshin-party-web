@@ -13,6 +13,7 @@ yarn.lock
 .kiro/
 .opencode/
 .svelte-kit/
+.worktrees/
 /e2e/__screenshots__/
 /static/
 build/

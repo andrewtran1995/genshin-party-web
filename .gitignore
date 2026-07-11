@@ -55,6 +55,8 @@ coverage
 .playwright-mcp
 AGENTS.local.md
 CLAUDE.local.md
+.worktrees/
+/worktrees/
 
 # Agent skills installed by the Skills CLI (see skills-lock.json)
 /.agents
@@ -64,8 +66,4 @@ CLAUDE.local.md
 /agent
 /agent/**
 
-# Project-specific custom skill not available via the Skills CLI
-!/.claude/skills/add-fun-conversion/
-!/.claude/skills/add-fun-conversion/**
-!/.opencode/skills/add-fun-conversion/
-!/.opencode/skills/add-fun-conversion/**
+
