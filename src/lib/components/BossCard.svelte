@@ -14,9 +14,10 @@
 	const isWeekly = $derived(boss.categoryType === 'CODEX_SUBTYPE_BOSS');
 	const categoryLabel = $derived(isWeekly ? 'Weekly boss' : 'Boss');
 
+	let canvasEl: HTMLCanvasElement | undefined = $state();
 	let imgLoaded = $state(false);
 	let imgError = $state(false);
-	let lastSrc: string | undefined;
+
 	let expanded = $state(false);
 	let descriptionEl: HTMLParagraphElement | undefined = $state();
 	let isClamped = $state(false);
@@ -37,18 +38,106 @@
 		};
 	});
 
-	$effect(() => {
-		if (imageUrl !== lastSrc) {
-			lastSrc = imageUrl;
-			imgLoaded = false;
-			imgError = false;
+	function resizeCanvas(canvas: HTMLCanvasElement) {
+		const rect = canvas.getBoundingClientRect();
+		const dpr = window.devicePixelRatio || 1;
+		const width = Math.max(1, Math.round(rect.width * dpr));
+		const height = Math.max(1, Math.round(rect.height * dpr));
+		if (canvas.width !== width || canvas.height !== height) {
+			canvas.width = width;
+			canvas.height = height;
 		}
+	}
+
+	function drawPlaceholder(canvas: HTMLCanvasElement) {
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		const { width, height } = canvas;
+		ctx.clearRect(0, 0, width, height);
+
+		const cx = width / 2;
+		const cy = height / 2;
+		const size = Math.min(width, height) * 0.25;
+
+		ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+		ctx.lineWidth = Math.max(2, width * 0.015);
+		ctx.lineCap = 'round';
+		ctx.lineJoin = 'round';
+
+		ctx.beginPath();
+		ctx.moveTo(cx, cy - size);
+		ctx.lineTo(cx + size * 0.866, cy + size * 0.5);
+		ctx.lineTo(cx - size * 0.866, cy + size * 0.5);
+		ctx.closePath();
+		ctx.stroke();
+	}
+
+	function drawIcon(canvas: HTMLCanvasElement, url: string) {
+		const img = new Image();
+		img.crossOrigin = 'anonymous';
+		img.loading = loading;
+		img.decoding = loading === 'eager' ? 'sync' : 'async';
+
+		img.onload = () => {
+			imgLoaded = true;
+			imgError = false;
+			resizeCanvas(canvas);
+			const ctx = canvas.getContext('2d');
+			if (!ctx) return;
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+			// The canvas matches the icon's 1:1 ratio, so cover fills it with no padding.
+			const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+			const w = img.width * scale;
+			const h = img.height * scale;
+			const x = (canvas.width - w) / 2;
+			const y = (canvas.height - h) / 2;
+			ctx.drawImage(img, x, y, w, h);
+		};
+
+		img.onerror = () => {
+			imgError = true;
+			drawPlaceholder(canvas);
+		};
+
+		img.src = url;
+	}
+
+	$effect(() => {
+		const canvas = canvasEl;
+		if (!canvas) return;
+
+		imgLoaded = false;
+		imgError = false;
+
+		if (imageUrl) {
+			drawIcon(canvas, imageUrl);
+		} else {
+			drawPlaceholder(canvas);
+		}
+
+		const handleResize = () => {
+			if (imageUrl && !imgError) {
+				drawIcon(canvas, imageUrl);
+			} else {
+				drawPlaceholder(canvas);
+			}
+		};
+
+		const resizeObserver = new ResizeObserver(handleResize);
+		resizeObserver.observe(canvas);
+		return () => {
+			resizeObserver.disconnect();
+		};
 	});
 
 	const showArt = $derived(!!imageUrl && !imgError);
-	// Boss icons are always square assets; treat them as a centered floating image.
-	const isPortrait = $derived(false);
 
+	/**
+	 * Pointer-driven tilt + foil. Enhancement only — the card is fully legible
+	 * without it, so it's gated to fine pointers and disabled for reduced motion.
+	 */
 	function tilt(node: HTMLElement) {
 		const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
 		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -99,28 +188,7 @@
 
 		<div class="card-window" class:is-loading={showArt && !imgLoaded}>
 			<div class="card-splash" aria-hidden="true"></div>
-			{#if showArt}
-				<img
-					class="card-art"
-					class:card-art-floating={!isPortrait}
-					alt={boss.name}
-					src={imageUrl}
-					{loading}
-					width="512"
-					height="512"
-					onload={() => (imgLoaded = true)}
-					onerror={() => (imgError = true)}
-				/>
-			{:else}
-				<div class="card-placeholder" aria-hidden="true">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-						<path d="M12 2L2 7l10 5 10-5-10-5z" stroke-linecap="round" stroke-linejoin="round" />
-						<path d="M2 17l10 5 10-5" stroke-linecap="round" stroke-linejoin="round" />
-						<path d="M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round" />
-					</svg>
-					<span>Icon unavailable</span>
-				</div>
-			{/if}
+		<canvas class="card-canvas" bind:this={canvasEl} aria-hidden="true"></canvas>
 		</div>
 
 		<p class="card-typeline">
@@ -243,9 +311,8 @@
 
 	.card-window {
 		position: relative;
-		flex: 1;
-		min-height: 12rem;
-		max-height: 16rem;
+		aspect-ratio: 1 / 1;
+		width: 100%;
 		border-radius: 9px;
 		overflow: hidden;
 		background: radial-gradient(120% 90% at 50% 100%, var(--stock-2), var(--stock) 70%);
@@ -263,41 +330,12 @@
 		opacity: 0.85;
 	}
 
-	.card-art {
+	.card-canvas {
 		position: absolute;
 		inset: 0;
 		width: 100%;
 		height: 100%;
-		filter: drop-shadow(0 3cqi 4cqi rgb(0 0 0 / 40%));
-	}
-
-	/* Square boss icons are treated as floating art, centered in the window. */
-	.card-art-floating {
-		object-fit: contain;
-		object-position: center;
-		padding: 6cqi;
-	}
-
-	.card-placeholder {
-		position: absolute;
-		inset: 0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 2cqi;
-		color: color-mix(in oklch, var(--el) 55%, var(--muted));
-	}
-
-	.card-placeholder svg {
-		width: 22cqi;
-		height: 22cqi;
-		opacity: 0.7;
-	}
-
-	.card-placeholder span {
-		font-size: 3.6cqi;
-		color: var(--muted);
+		display: block;
 	}
 
 	/* Skeleton shimmer while the remote icon loads. */
