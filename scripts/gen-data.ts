@@ -66,8 +66,10 @@ const bosses: Enemy[] = pipe(
 		description: enemy.description,
 		categoryType: enemy.categoryType,
 		enemyType: enemy.enemyType,
+		// `genshin-db` only exposes a bare monster-icon filename. enka.network does
+		// not host these assets, so build the URL from Honey Hunter World instead.
 		icon: enemy.images?.filename_icon
-			? `https://enka.network/ui/${enemy.images.filename_icon}.png`
+			? `https://genshin.honeyhunterworld.com/img/icons/monstr/${enemy.images.filename_icon}.png`
 			: undefined
 	}))
 );

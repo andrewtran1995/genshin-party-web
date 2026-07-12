@@ -79,7 +79,7 @@
 			<div class="card-splash" aria-hidden="true"></div>
 			{#if showArt}
 				<img
-					class="card-art card-art-floating"
+					class="card-art"
 					alt={boss.name}
 					src={imageUrl}
 					{loading}
@@ -95,20 +95,15 @@
 						<path d="M2 17l10 5 10-5" stroke-linecap="round" stroke-linejoin="round" />
 						<path d="M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>
-					<span>Art unavailable</span>
+					<span>Icon unavailable</span>
 				</div>
 			{/if}
 		</div>
 
-		<p class="card-typeline">
-			<span class="card-dot" aria-hidden="true">◈</span>
-			<span>{categoryLabel}</span>
-		</p>
-
 		{#if boss.description}
-			<footer class="card-plate">
-				<p class="card-flavor">{boss.description}</p>
-			</footer>
+			<div class="card-body">
+				<p class="card-description">{boss.description}</p>
+			</div>
 		{/if}
 
 		<div class="card-foil" aria-hidden="true"></div>
@@ -131,8 +126,7 @@
 		container-type: inline-size;
 		display: block;
 		width: 100%;
-		max-width: 20rem;
-		aspect-ratio: 5 / 7;
+		max-width: 24rem;
 		perspective: 1000px;
 		margin: 0;
 	}
@@ -140,11 +134,11 @@
 	.card-inner {
 		position: relative;
 		width: 100%;
-		height: 100%;
+		height: auto;
 		display: flex;
 		flex-direction: column;
-		padding: 3.5cqi;
-		gap: 2.5cqi;
+		padding: 4cqi;
+		gap: 3cqi;
 		border-radius: 14px;
 		background: linear-gradient(160deg, var(--stock-2), var(--stock) 55%), var(--stock);
 		border: 1.5px solid color-mix(in oklch, var(--frame) 55%, var(--stock));
@@ -204,8 +198,10 @@
 
 	.card-window {
 		position: relative;
-		flex: 1;
-		min-height: 0;
+		align-self: center;
+		width: 40cqi;
+		aspect-ratio: 1 / 1;
+		flex: none;
 		border-radius: 9px;
 		overflow: hidden;
 		background: radial-gradient(120% 90% at 50% 100%, var(--stock-2), var(--stock) 70%);
@@ -228,13 +224,10 @@
 		inset: 0;
 		width: 100%;
 		height: 100%;
-		filter: drop-shadow(0 3cqi 4cqi rgb(0 0 0 / 40%));
-	}
-
-	.card-art-floating {
 		object-fit: contain;
 		object-position: center;
-		padding: 6cqi;
+		padding: 5cqi;
+		filter: drop-shadow(0 3cqi 4cqi rgb(0 0 0 / 40%));
 	}
 
 	.card-placeholder {
@@ -284,37 +277,18 @@
 		}
 	}
 
-	.card-typeline {
-		display: flex;
-		align-items: center;
-		gap: 1.6cqi;
-		margin: 0;
-		font-size: 4.4cqi;
-		font-weight: 500;
-		color: var(--muted);
-	}
-
-	.card-dot {
-		color: var(--el);
-	}
-
-	.card-plate {
-		padding-top: 2.4cqi;
+	.card-body {
+		padding-top: 2cqi;
 		border-top: 1px solid color-mix(in oklch, var(--frame) 28%, transparent);
 	}
 
-	.card-flavor {
-		display: -webkit-box;
-		-webkit-box-orient: vertical;
-		-webkit-line-clamp: 3;
-		line-clamp: 3;
+	.card-description {
 		margin: 0;
-		font-size: 4cqi;
-		font-style: italic;
+		font-size: 4.4cqi;
 		font-weight: 450;
-		line-height: 1.4;
+		line-height: 1.55;
 		color: var(--ink);
-		overflow: hidden;
+		white-space: pre-wrap;
 	}
 
 	.card-foil {
