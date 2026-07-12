@@ -75,7 +75,6 @@
 
 	function drawIcon(canvas: HTMLCanvasElement, url: string) {
 		const img = new Image();
-		img.crossOrigin = 'anonymous';
 		img.loading = loading;
 		img.decoding = loading === 'eager' ? 'sync' : 'async';
 
