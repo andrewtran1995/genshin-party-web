@@ -29,7 +29,7 @@
 	});
 
 	const showArt = $derived(!!imageUrl && !imgError);
-	// A tall portrait stands on the frame; a square avatar (icon fallback) floats centered.
+	// Wide splash art fills the window (cover); a square avatar (icon fallback) floats centered.
 	const isPortrait = $derived(!!char.portrait && !imgError);
 
 	/**
@@ -101,8 +101,8 @@
 					alt={char.name}
 					src={imageUrl}
 					{loading}
-					width="240"
-					height="480"
+					width="2048"
+					height="1024"
 					onload={() => (imgLoaded = true)}
 					onerror={() => (imgError = true)}
 				/>
@@ -339,11 +339,16 @@
 		inset: 0;
 		width: 100%;
 		height: 100%;
-		object-fit: contain;
-		object-position: bottom center;
-		filter: drop-shadow(0 4cqi 5cqi rgb(0 0 0 / 45%));
+
+		/* Portraits are wide 2:1 splash arts; cover fills the window height and
+		   crops the side effects so the figure reads large and consistently,
+		   instead of shrinking into a half-height band. */
+		object-fit: cover;
+		object-position: center 42%;
+		filter: drop-shadow(0 3cqi 4cqi rgb(0 0 0 / 40%));
 	}
 
+	/* Square avatar fallback (icon): contain and float it, centered. */
 	.card-art-floating {
 		object-fit: contain;
 		object-position: center;
