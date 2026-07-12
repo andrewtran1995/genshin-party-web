@@ -4,7 +4,7 @@
  * `genshin-db` is a ~170 MB, Node-only, multi-language package — far too large
  * to ship into a Vercel function. It is a `devDependency` and is imported here
  * ONLY. This script trims it to the small, UI-shaped JSON that the runtime
- * reads (`src/lib/server/genshin/data/*`), which is committed to the repo.
+ * reads (`src/lib/genshin/data/*`), which is a build artifact and not committed.
  *
  * Re-run with `pnpm gen:data` whenever the `genshin-db` version is bumped.
  */
@@ -15,7 +15,7 @@ import { filter, map, pipe } from 'remeda';
 import genshinDb from 'genshin-db';
 import type { Char, Element, Enemy } from '../src/lib/types.ts';
 
-const dataDir = join(dirname(fileURLToPath(import.meta.url)), '../src/lib/server/genshin/data');
+const dataDir = join(dirname(fileURLToPath(import.meta.url)), '../src/lib/genshin/data');
 
 const queryOptions = { matchCategories: true, verboseCategories: true } as const;
 

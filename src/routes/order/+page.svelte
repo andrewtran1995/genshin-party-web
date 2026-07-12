@@ -1,7 +1,16 @@
 <script lang="ts">
-	import type { ActionData } from './$types';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { sample } from '$lib/genshin';
 
-	let { form }: { form: ActionData } = $props();
+	let clientError = $state('');
+
+	function handleSubmit(event: SubmitEvent) {
+		event.preventDefault();
+		clientError = '';
+		const order = sample([1, 2, 3, 4], 4).join(',');
+		void goto(resolve(`/order/${order}`));
+	}
 </script>
 
 <svelte:head>
@@ -10,14 +19,10 @@
 
 <h1>Random selection order</h1>
 
-<form method="POST">
+<form method="POST" onsubmit={handleSubmit}>
 	<button type="submit">Shuffle</button>
 </form>
 
-{#if form?.order}
-	<ol>
-		{#each form.order as player (player)}
-			<li>Player {player}</li>
-		{/each}
-	</ol>
+{#if clientError}
+	<p class="error" role="alert">{clientError}</p>
 {/if}

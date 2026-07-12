@@ -1,8 +1,41 @@
 <script lang="ts">
-	import CharCard from '$lib/components/CharCard.svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import type { ActionData, PageData } from './$types';
+	import { isElement, isRarity } from '$lib/types';
+	import { getRandomChar } from '$lib/genshin';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let clientError = $state('');
+
+	function handleSubmit(event: SubmitEvent) {
+		event.preventDefault();
+		clientError = '';
+
+		const formData = new FormData(event.currentTarget as HTMLFormElement);
+		const elementRaw = formData.get('element');
+		const rarityRaw = formData.get('rarity');
+		const element = typeof elementRaw === 'string' ? elementRaw : '';
+		const rarity = typeof rarityRaw === 'string' ? rarityRaw : '';
+
+		const char = getRandomChar({
+			element: isElement(element) ? element : undefined,
+			rarity: isRarity(rarity) ? rarity : undefined
+		});
+		if (!char) {
+			clientError = 'No character matches those filters.';
+			return;
+		}
+
+		const query = [
+			element && `element=${encodeURIComponent(element)}`,
+			rarity && `rarity=${encodeURIComponent(rarity)}`
+		]
+			.filter(Boolean)
+			.join('&');
+
+		void goto(resolve(`/char/${encodeURIComponent(char.name)}${query ? `?${query}` : ''}`));
+	}
 </script>
 
 <svelte:head>
@@ -11,7 +44,7 @@
 
 <h1>Random character</h1>
 
-<form method="POST">
+<form method="POST" onsubmit={handleSubmit}>
 	<label>
 		Element:
 		<select name="element">
@@ -35,8 +68,6 @@
 	<button type="submit">Roll</button>
 </form>
 
-{#if form?.error}
-	<p class="error">{form.error}</p>
-{:else if form?.char}
-	<CharCard char={form.char} />
+{#if clientError || form?.error}
+	<p class="error" role="alert">{clientError || form?.error}</p>
 {/if}
