@@ -17,6 +17,26 @@
 	let imgLoaded = $state(false);
 	let imgError = $state(false);
 	let lastSrc: string | undefined;
+	let expanded = $state(false);
+	let descriptionEl: HTMLParagraphElement | undefined = $state();
+	let isClamped = $state(false);
+
+	$effect(() => {
+		const el = descriptionEl;
+		if (!el) return;
+		const update = () => {
+			if (!expanded) {
+				isClamped = el.scrollHeight > el.clientHeight;
+			}
+		};
+		update();
+		const observer = new ResizeObserver(update);
+		observer.observe(el);
+		return () => {
+			observer.disconnect();
+		};
+	});
+
 	$effect(() => {
 		if (imageUrl !== lastSrc) {
 			lastSrc = imageUrl;
@@ -110,7 +130,24 @@
 
 		{#if boss.description}
 			<footer class="card-plate">
-				<p class="card-flavor">{boss.description}</p>
+				<p
+					class="card-flavor"
+					class:is-clamped={!expanded}
+					class:is-expanded={expanded}
+					bind:this={descriptionEl}
+				>
+					{boss.description}
+				</p>
+				{#if isClamped || expanded}
+					<button
+						class="card-expand"
+						type="button"
+						aria-expanded={expanded}
+						onclick={() => (expanded = !expanded)}
+					>
+						{expanded ? 'Show less' : 'Show more'}
+					</button>
+				{/if}
 			</footer>
 		{/if}
 
@@ -303,11 +340,14 @@
 	}
 
 	.card-plate {
+		display: flex;
+		flex-direction: column;
 		padding-top: 2.4cqi;
 		border-top: 1px solid color-mix(in oklch, var(--frame) 28%, transparent);
 	}
 
 	.card-flavor {
+		position: relative;
 		margin: 0;
 		font-size: 4cqi;
 		font-style: italic;
@@ -315,6 +355,44 @@
 		line-height: 1.5;
 		color: var(--ink);
 		white-space: pre-wrap;
+	}
+
+	.card-flavor.is-clamped {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		overflow: hidden;
+	}
+
+	.card-flavor.is-clamped::after {
+		content: '';
+		position: absolute;
+		inset: auto 0 0;
+		height: 2.5em;
+		background: linear-gradient(transparent, var(--stock));
+		pointer-events: none;
+	}
+
+	.card-flavor.is-expanded {
+		overflow: visible;
+	}
+
+	.card-expand {
+		margin-top: 1.2cqi;
+		padding: 0;
+		font-size: 3.6cqi;
+		font-weight: 600;
+		color: var(--el);
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		align-self: flex-start;
+	}
+
+	.card-expand:hover,
+	.card-expand:focus-visible {
+		text-decoration: underline;
 	}
 
 	.card-foil {
