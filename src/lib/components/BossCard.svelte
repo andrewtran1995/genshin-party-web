@@ -4,11 +4,10 @@
 
 	interface Props {
 		boss: Enemy;
-		loading?: 'eager' | 'lazy';
 		reveal?: boolean;
 	}
 
-	let { boss, loading = 'lazy', reveal = false }: Props = $props();
+	let { boss, reveal = false }: Props = $props();
 
 	const imageUrl = $derived(getBossImageUrl(boss));
 	const isWeekly = $derived(boss.categoryType === 'CODEX_SUBTYPE_BOSS');
@@ -16,7 +15,7 @@
 
 	let imgLoaded = $state(false);
 	let imgError = $state(false);
-	let lastSrc: string | undefined;
+
 	let expanded = $state(false);
 	let descriptionEl: HTMLParagraphElement | undefined = $state();
 	let isClamped = $state(false);
@@ -38,17 +37,18 @@
 	});
 
 	$effect(() => {
-		if (imageUrl !== lastSrc) {
-			lastSrc = imageUrl;
+		if (imageUrl !== undefined) {
 			imgLoaded = false;
 			imgError = false;
 		}
 	});
 
 	const showArt = $derived(!!imageUrl && !imgError);
-	// Boss icons are always square assets; treat them as a centered floating image.
-	const isPortrait = $derived(false);
 
+	/**
+	 * Pointer-driven tilt + foil. Enhancement only — the card is fully legible
+	 * without it, so it's gated to fine pointers and disabled for reduced motion.
+	 */
 	function tilt(node: HTMLElement) {
 		const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
 		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -102,12 +102,11 @@
 			{#if showArt}
 				<img
 					class="card-art"
-					class:card-art-floating={!isPortrait}
 					alt={boss.name}
 					src={imageUrl}
-					{loading}
-					width="512"
-					height="512"
+					width="256"
+					height="256"
+					decoding="async"
 					onload={() => (imgLoaded = true)}
 					onerror={() => (imgError = true)}
 				/>
@@ -132,7 +131,7 @@
 			<footer class="card-plate">
 				<p
 					class="card-flavor"
-					class:is-clamped={!expanded}
+					class:is-clamped={isClamped && !expanded}
 					class:is-expanded={expanded}
 					bind:this={descriptionEl}
 				>
@@ -243,9 +242,8 @@
 
 	.card-window {
 		position: relative;
-		flex: 1;
-		min-height: 12rem;
-		max-height: 16rem;
+		aspect-ratio: 2 / 1;
+		width: 100%;
 		border-radius: 9px;
 		overflow: hidden;
 		background: radial-gradient(120% 90% at 50% 100%, var(--stock-2), var(--stock) 70%);
@@ -268,14 +266,9 @@
 		inset: 0;
 		width: 100%;
 		height: 100%;
-		filter: drop-shadow(0 3cqi 4cqi rgb(0 0 0 / 40%));
-	}
-
-	/* Square boss icons are treated as floating art, centered in the window. */
-	.card-art-floating {
-		object-fit: contain;
+		object-fit: cover;
 		object-position: center;
-		padding: 6cqi;
+		filter: drop-shadow(0 3cqi 4cqi rgb(0 0 0 / 40%));
 	}
 
 	.card-placeholder {
