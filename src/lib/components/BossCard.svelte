@@ -85,6 +85,7 @@
 					{loading}
 					width="512"
 					height="512"
+					referrerpolicy="no-referrer"
 					onload={() => (imgLoaded = true)}
 					onerror={() => (imgError = true)}
 				/>
