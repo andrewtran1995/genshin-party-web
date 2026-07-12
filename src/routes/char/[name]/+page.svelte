@@ -47,8 +47,18 @@
 	<p class="error" role="alert">This character does not match the requested filters.</p>
 {/if}
 
-<CharCard char={data.char} />
+<div class="card-stage">
+	<CharCard char={data.char} loading="eager" />
+</div>
 
 <p>
 	<a href={resolve('/char')}>Roll again</a>
 </p>
+
+<style>
+	.card-stage {
+		display: flex;
+		justify-content: center;
+		margin-block: 1.5rem;
+	}
+</style>
