@@ -188,7 +188,7 @@
 
 		<div class="card-window" class:is-loading={showArt && !imgLoaded}>
 			<div class="card-splash" aria-hidden="true"></div>
-		<canvas class="card-canvas" bind:this={canvasEl} aria-hidden="true"></canvas>
+			<canvas class="card-canvas" bind:this={canvasEl} aria-hidden="true"></canvas>
 		</div>
 
 		<p class="card-typeline">
