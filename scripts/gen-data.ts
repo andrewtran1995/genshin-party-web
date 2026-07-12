@@ -16,6 +16,7 @@ import genshinDb from 'genshin-db';
 import type { Char, Element, Enemy } from '../src/lib/types.ts';
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), '../src/lib/genshin/data');
+const staticBossIconsDir = join(dirname(fileURLToPath(import.meta.url)), '../static/icons/bosses');
 
 const queryOptions = { matchCategories: true, verboseCategories: true } as const;
 
@@ -51,7 +52,7 @@ const characters: Char[] = pipe(
 	}))
 );
 
-const bosses: Enemy[] = pipe(
+const bossEnemies = pipe(
 	genshinDb.enemies('names', queryOptions),
 	// Keep only enemies reachable by either boss filter; drop the rest of the
 	// bestiary so the shipped JSON stays small. Exclude Stormterror (the CLI
@@ -60,18 +61,37 @@ const bosses: Enemy[] = pipe(
 		(enemy) =>
 			enemy.name !== 'Stormterror' &&
 			(enemy.enemyType === 'BOSS' || enemy.categoryType === 'CODEX_SUBTYPE_BOSS')
-	),
-	map((enemy) => ({
-		name: enemy.name,
-		description: enemy.description,
-		categoryType: enemy.categoryType,
-		enemyType: enemy.enemyType,
-		// `genshin-db` only exposes a bare monster-icon filename. enka.network does
-		// not host these assets, so build the URL from Honey Hunter World instead.
-		icon: enemy.images?.filename_icon
-			? `https://genshin.honeyhunterworld.com/img/icons/monstr/${enemy.images.filename_icon}.png`
-			: undefined
-	}))
+	)
+);
+
+const bosses: Enemy[] = await Promise.all(
+	bossEnemies.map(async (enemy) => {
+		const filename = enemy.images?.filename_icon;
+		let icon: string | undefined;
+		if (filename) {
+			const remoteUrl = `https://genshin.honeyhunterworld.com/img/icons/monstr/${filename}.png`;
+			try {
+				const response = await fetch(remoteUrl);
+				if (response.ok) {
+					mkdirSync(staticBossIconsDir, { recursive: true });
+					const buffer = Buffer.from(await response.arrayBuffer());
+					writeFileSync(join(staticBossIconsDir, `${filename}.webp`), buffer);
+					icon = `/icons/bosses/${filename}.webp`;
+				} else {
+					console.warn(`Failed to fetch icon for ${enemy.name}: ${response.status}`);
+				}
+			} catch (err) {
+				console.warn(`Failed to fetch icon for ${enemy.name}:`, err);
+			}
+		}
+		return {
+			name: enemy.name,
+			description: enemy.description,
+			categoryType: enemy.categoryType,
+			enemyType: enemy.enemyType,
+			icon
+		};
+	})
 );
 
 mkdirSync(dataDir, { recursive: true });

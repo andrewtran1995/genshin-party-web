@@ -26,6 +26,8 @@
 	});
 
 	const showArt = $derived(!!imageUrl && !imgError);
+	// Boss icons are always square assets; treat them as a centered floating image.
+	const isPortrait = $derived(false);
 
 	function tilt(node: HTMLElement) {
 		const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -80,12 +82,12 @@
 			{#if showArt}
 				<img
 					class="card-art"
+					class:card-art-floating={!isPortrait}
 					alt={boss.name}
 					src={imageUrl}
 					{loading}
 					width="512"
 					height="512"
-					referrerpolicy="no-referrer"
 					onload={() => (imgLoaded = true)}
 					onerror={() => (imgError = true)}
 				/>
@@ -101,10 +103,15 @@
 			{/if}
 		</div>
 
+		<p class="card-typeline">
+			<span class="card-dot" aria-hidden="true">◈</span>
+			<span>{categoryLabel}</span>
+		</p>
+
 		{#if boss.description}
-			<div class="card-body">
-				<p class="card-description">{boss.description}</p>
-			</div>
+			<footer class="card-plate">
+				<p class="card-flavor">{boss.description}</p>
+			</footer>
 		{/if}
 
 		<div class="card-foil" aria-hidden="true"></div>
@@ -127,7 +134,7 @@
 		container-type: inline-size;
 		display: block;
 		width: 100%;
-		max-width: 24rem;
+		max-width: 20rem;
 		perspective: 1000px;
 		margin: 0;
 	}
@@ -138,8 +145,8 @@
 		height: auto;
 		display: flex;
 		flex-direction: column;
-		padding: 4cqi;
-		gap: 3cqi;
+		padding: 3.5cqi;
+		gap: 2.5cqi;
 		border-radius: 14px;
 		background: linear-gradient(160deg, var(--stock-2), var(--stock) 55%), var(--stock);
 		border: 1.5px solid color-mix(in oklch, var(--frame) 55%, var(--stock));
@@ -199,10 +206,9 @@
 
 	.card-window {
 		position: relative;
-		align-self: center;
-		width: 40cqi;
-		aspect-ratio: 1 / 1;
-		flex: none;
+		flex: 1;
+		min-height: 12rem;
+		max-height: 16rem;
 		border-radius: 9px;
 		overflow: hidden;
 		background: radial-gradient(120% 90% at 50% 100%, var(--stock-2), var(--stock) 70%);
@@ -225,10 +231,14 @@
 		inset: 0;
 		width: 100%;
 		height: 100%;
+		filter: drop-shadow(0 3cqi 4cqi rgb(0 0 0 / 40%));
+	}
+
+	/* Square boss icons are treated as floating art, centered in the window. */
+	.card-art-floating {
 		object-fit: contain;
 		object-position: center;
-		padding: 5cqi;
-		filter: drop-shadow(0 3cqi 4cqi rgb(0 0 0 / 40%));
+		padding: 6cqi;
 	}
 
 	.card-placeholder {
@@ -278,16 +288,31 @@
 		}
 	}
 
-	.card-body {
-		padding-top: 2cqi;
+	.card-typeline {
+		display: flex;
+		align-items: center;
+		gap: 1.6cqi;
+		margin: 0;
+		font-size: 4.4cqi;
+		font-weight: 500;
+		color: var(--muted);
+	}
+
+	.card-dot {
+		color: var(--el);
+	}
+
+	.card-plate {
+		padding-top: 2.4cqi;
 		border-top: 1px solid color-mix(in oklch, var(--frame) 28%, transparent);
 	}
 
-	.card-description {
+	.card-flavor {
 		margin: 0;
-		font-size: 4.4cqi;
+		font-size: 4cqi;
+		font-style: italic;
 		font-weight: 450;
-		line-height: 1.55;
+		line-height: 1.5;
 		color: var(--ink);
 		white-space: pre-wrap;
 	}
