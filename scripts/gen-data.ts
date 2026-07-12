@@ -52,6 +52,28 @@ const characters: Char[] = pipe(
 	}))
 );
 
+interface YattaMonster {
+	id: number;
+	name: string;
+	icon: string;
+}
+
+async function fetchYattaMonsterIcons(): Promise<Map<number, string>> {
+	const response = await fetch('https://gi.yatta.moe/api/v2/en/monster');
+	if (!response.ok) throw new Error(`Yatta API failed: ${response.status}`);
+	const json = (await response.json()) as {
+		response: number;
+		data: { items: Record<string, YattaMonster> };
+	};
+	const icons = new Map<number, string>();
+	for (const item of Object.values(json.data.items)) {
+		icons.set(item.id, item.icon);
+	}
+	return icons;
+}
+
+const yattaIcons = await fetchYattaMonsterIcons();
+
 const bossEnemies = pipe(
 	genshinDb.enemies('names', queryOptions),
 	// Keep only enemies reachable by either boss filter; drop the rest of the
@@ -66,17 +88,17 @@ const bossEnemies = pipe(
 
 const bosses: Enemy[] = await Promise.all(
 	bossEnemies.map(async (enemy) => {
-		const filename = enemy.images?.filename_icon;
+		const filename = yattaIcons.get(enemy.id) ?? enemy.images?.filename_icon;
 		let icon: string | undefined;
 		if (filename) {
-			const remoteUrl = `https://genshin.honeyhunterworld.com/img/icons/monstr/${filename}.png`;
+			const remoteUrl = `https://gi.yatta.moe/assets/UI/monster/${filename}.png`;
 			try {
 				const response = await fetch(remoteUrl);
 				if (response.ok) {
 					mkdirSync(staticBossIconsDir, { recursive: true });
 					const buffer = Buffer.from(await response.arrayBuffer());
-					writeFileSync(join(staticBossIconsDir, `${filename}.webp`), buffer);
-					icon = `/icons/bosses/${filename}.webp`;
+					writeFileSync(join(staticBossIconsDir, `${filename}.png`), buffer);
+					icon = `/icons/bosses/${filename}.png`;
 				} else {
 					console.warn(`Failed to fetch icon for ${enemy.name}: ${response.status}`);
 				}
