@@ -65,7 +65,10 @@ const bosses: Enemy[] = pipe(
 		name: enemy.name,
 		description: enemy.description,
 		categoryType: enemy.categoryType,
-		enemyType: enemy.enemyType
+		enemyType: enemy.enemyType,
+		icon: enemy.images?.filename_icon
+			? `https://enka.network/ui/${enemy.images.filename_icon}.png`
+			: undefined
 	}))
 );
 
