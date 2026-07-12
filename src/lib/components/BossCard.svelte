@@ -20,9 +20,25 @@
 	let descriptionEl: HTMLParagraphElement | undefined = $state();
 	let isClamped = $state(false);
 
+	const description = $derived(boss.description ?? '');
+
+	/**
+	 * A reroll swaps in a new boss on the same component instance, so the previous
+	 * boss's reading state has to be dropped explicitly — otherwise a card left
+	 * open before the roll stays open on the boss that replaces it. Keyed on the
+	 * name, since that's the boss's identity; rerolling the same boss keeps it open.
+	 */
+	$effect(() => {
+		if (boss.name) expanded = false;
+	});
+
 	$effect(() => {
 		const el = descriptionEl;
-		if (!el) return;
+		// Depending on the text — not just on the element — is what makes a reroll
+		// re-measure: the collapsed box is a fixed three-line height, so a new
+		// description never resizes it and the ResizeObserver alone would miss it.
+		const text = description;
+		if (!el || !text) return;
 		const update = () => {
 			if (!expanded) {
 				isClamped = el.scrollHeight > el.clientHeight;
@@ -138,16 +154,18 @@
 				>
 					{boss.description}
 				</p>
-				{#if isClamped || expanded}
-					<button
-						class="card-expand"
-						type="button"
-						aria-expanded={expanded}
-						onclick={() => (expanded = !expanded)}
-					>
-						{expanded ? 'Show less' : 'Show more'}
-					</button>
-				{/if}
+				<div class="card-expand-slot">
+					{#if isClamped || expanded}
+						<button
+							class="card-expand"
+							type="button"
+							aria-expanded={expanded}
+							onclick={() => (expanded = !expanded)}
+						>
+							{expanded ? 'Show less' : 'Show more'}
+						</button>
+					{/if}
+				</div>
 			</footer>
 		{/if}
 
@@ -351,11 +369,14 @@
 		white-space: pre-wrap;
 	}
 
+	/* Reserve the full clamp height so a short description leaves the same
+	   footprint as a clamped one — cards sit side by side on the gauntlet page. */
 	.card-flavor.is-clamped {
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: 3;
 		line-clamp: 3;
+		min-height: calc(1.5em * 3);
 		overflow: hidden;
 	}
 
@@ -372,16 +393,24 @@
 		overflow: visible;
 	}
 
+	/* Holds the row open even when there's nothing to expand, so a card with a
+	   short description stays as tall as one with a "Show more" button. */
+	.card-expand-slot {
+		display: flex;
+		align-items: flex-start;
+		padding-top: 1.2cqi;
+		min-height: calc(3.6cqi * 1.5);
+	}
+
 	.card-expand {
-		margin-top: 1.2cqi;
 		padding: 0;
 		font-size: 3.6cqi;
 		font-weight: 600;
+		line-height: 1.5;
 		color: var(--el);
 		background: transparent;
 		border: none;
 		cursor: pointer;
-		align-self: flex-start;
 	}
 
 	.card-expand:hover,

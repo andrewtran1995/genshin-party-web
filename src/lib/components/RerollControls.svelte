@@ -1,0 +1,65 @@
+<script lang="ts">
+	import { resolve } from '$app/paths';
+	import type { Pathname } from '$app/types';
+
+	interface Props {
+		/** Entry form to reroll against. Its action re-rolls without JS. */
+		entry: Pathname;
+		/** Filters that produced the current result. Empty values are omitted. */
+		criteria: Record<string, string>;
+		onreroll: () => void;
+	}
+
+	let { entry, criteria, onreroll }: Props = $props();
+
+	const action = $derived(resolve(entry));
+
+	function handleSubmit(event: SubmitEvent) {
+		event.preventDefault();
+		onreroll();
+	}
+</script>
+
+<form class="reroll-controls" method="POST" {action} onsubmit={handleSubmit}>
+	{#each Object.entries(criteria) as [name, value] (name)}
+		{#if value}
+			<input type="hidden" {name} {value} />
+		{/if}
+	{/each}
+	<button class="reroll" type="submit">Reroll</button>
+	<a class="change-criteria" href={action}>Change criteria</a>
+</form>
+
+<style>
+	.reroll-controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		align-items: center;
+	}
+
+	.reroll {
+		width: 100%;
+		padding: 0.5rem 1rem;
+		border: 1px solid currentcolor;
+		border-radius: 9999px;
+		font-weight: 600;
+		background: ButtonFace;
+		color: ButtonText;
+	}
+
+	.change-criteria {
+		font-size: 0.875rem;
+	}
+
+	@media (width >= 30rem) {
+		.reroll-controls {
+			flex-direction: row;
+			align-items: center;
+		}
+
+		.reroll {
+			width: auto;
+		}
+	}
+</style>

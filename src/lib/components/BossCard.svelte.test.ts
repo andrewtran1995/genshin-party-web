@@ -42,6 +42,60 @@ describe('BossCard', () => {
 		expect(container.textContent).not.toContain('Show more');
 	});
 
+	it('gives a short description the same collapsed footprint as a clamped one', async () => {
+		const { container: fitContainer } = await render(BossCard, { props: { boss: shortBoss } });
+		const { container: overflowContainer } = await render(BossCard, {
+			props: { boss: overflowingBoss }
+		});
+
+		const plateOf = (container: HTMLElement) => {
+			const plate = container.querySelector('.card-plate');
+			if (!(plate instanceof HTMLElement)) throw new Error('Expected a card plate');
+			return plate;
+		};
+		const flavorOf = (container: HTMLElement) => {
+			const flavor = container.querySelector('.card-flavor');
+			if (!(flavor instanceof HTMLElement)) throw new Error('Expected a card flavor');
+			return flavor;
+		};
+
+		// The clamped card is the tall one; the short card must be padded up to match,
+		// both in its text box and in the row reserved for the expand button.
+		await expect
+			.poll(() => flavorOf(fitContainer).clientHeight)
+			.toBe(flavorOf(overflowContainer).clientHeight);
+		await expect
+			.poll(() => plateOf(fitContainer).offsetHeight)
+			.toBe(plateOf(overflowContainer).offsetHeight);
+	});
+
+	// A reroll swaps the boss on a reused component instance. The clamped box is a
+	// fixed height, so it never resizes and the ResizeObserver alone won't notice.
+	it('re-measures overflow when a reroll swaps in a new boss', async () => {
+		const { container, rerender } = await render(BossCard, { props: { boss: shortBoss } });
+		await expect.poll(() => container.textContent).not.toContain('Show more');
+
+		await rerender({ boss: overflowingBoss });
+
+		await expect.poll(() => container.textContent).toContain('Show more');
+	});
+
+	it('collapses an expanded description when a reroll swaps in a new boss', async () => {
+		const { container, rerender } = await render(BossCard, { props: { boss: overflowingBoss } });
+
+		const button = container.querySelector('.card-expand');
+		if (!(button instanceof HTMLElement)) throw new Error('Expected an expand button');
+		button.click();
+		await expect.poll(() => container.textContent).toContain('Show less');
+
+		await rerender({ boss: { ...overflowingBoss, name: 'Azhdaha' } });
+
+		await expect.poll(() => container.textContent).toContain('Show more');
+		await expect
+			.poll(() => container.querySelector('.card-flavor')?.classList.contains('is-clamped'))
+			.toBe(true);
+	});
+
 	it('shows the show more button only when overflowing', async () => {
 		const { container: overflowContainer } = await render(BossCard, {
 			props: { boss: overflowingBoss }
