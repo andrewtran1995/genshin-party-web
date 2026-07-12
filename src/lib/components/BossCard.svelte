@@ -4,11 +4,10 @@
 
 	interface Props {
 		boss: Enemy;
-		loading?: 'eager' | 'lazy';
 		reveal?: boolean;
 	}
 
-	let { boss, loading = 'lazy', reveal = false }: Props = $props();
+	let { boss, reveal = false }: Props = $props();
 
 	const imageUrl = $derived(getBossImageUrl(boss));
 	const isWeekly = $derived(boss.categoryType === 'CODEX_SUBTYPE_BOSS');
@@ -75,8 +74,8 @@
 
 	function drawIcon(canvas: HTMLCanvasElement, url: string) {
 		const img = new Image();
-		img.loading = loading;
-		img.decoding = loading === 'eager' ? 'sync' : 'async';
+		img.loading = 'eager';
+		img.decoding = 'async';
 
 		img.onload = () => {
 			imgLoaded = true;
@@ -86,7 +85,7 @@
 			if (!ctx) return;
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-			// The canvas matches the icon's 1:1 ratio, so cover fills it with no padding.
+			// Draw the icon to fill the canvas using cover (cropping to fit the portrait window).
 			const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
 			const w = img.width * scale;
 			const h = img.height * scale;
