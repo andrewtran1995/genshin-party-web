@@ -15,7 +15,7 @@ Prefer existing `package.json` scripts over crafting custom commands. Check `pnp
 - SvelteKit 2 with Svelte 5 syntax (runes)
 - `@sveltejs/adapter-vercel` — do not change the adapter
 
-The data layer is wired in: `/char`, `/boss`, and `GET /api/random-char` are backed by a build-time-extracted dataset (see "Genshin data" below). `genshin-db` is a `devDependency` used only by the extraction script. The `/interactive` flow uses a plain reducer in `$lib/player-selection-stack.ts` backed by Svelte 5 runes.
+The data layer is client-safe: `/char`, `/boss`, and `/order` roll from the browser using a build-time-extracted dataset loaded by `$lib/genshin`, while `/interactive` uses the same dataset via a Svelte 5 rune reducer in `$lib/player-selection-stack.ts`. `genshin-db` is a `devDependency` used only by the extraction script.
 
 ## Domain logic source of truth (when added)
 
@@ -28,7 +28,7 @@ The CLI at `../genshin-party/` (or [`genshin-party` on npm](https://www.npmjs.co
 
 ## Prerendering strategy
 
-- `src/routes/+layout.ts` sets `prerender = false` because every feature route uses form actions or API endpoints backed by `genshin-db`.
+- Prerendering is opt-in per route. Result pages (`/char/[name]`, `/boss/[name]`, `/order/[permutation]`) are pre-rendered; entry forms and the `/interactive` flow are dynamic.
 - If a static informational page is added, opt it in with `export const prerender = true` in its own `+page.ts`.
 
 ## Pre-commit hooks
@@ -52,12 +52,12 @@ E2E tests (`pnpm test:e2e`) run in CI; they are too slow for pre-commit.
 
 - Server data + secrets → `+page.server.ts`. Universal load → `+page.ts`
 - Form actions live in `+page.server.ts`. Use `fail()` for validation
-- Domain helpers live in `src/lib/server/genshin/` so they never reach the browser bundle
+- Domain helpers live in `src/lib/genshin/` so they are available to both client pages and the no-JS fallback server actions
 - Keep route files thin — move logic to `$lib`
 
 ## Genshin data
 
-`genshin-db` is ~170 MB and Node-only, and its data is static per version, so it is **not** queried at runtime. `scripts/gen-data.ts` trims it to small JSON files under `src/lib/server/genshin/data/`; `src/lib/server/genshin/index.ts` loads that JSON once and exposes `getChars`/`getBosses`/`randomChars`.
+`genshin-db` is ~170 MB and Node-only, and its data is static per version, so it is **not** queried at runtime. `scripts/gen-data.ts` trims it to small JSON files under `src/lib/genshin/data/`; `src/lib/genshin/index.ts` loads that JSON once and exposes `getChars`/`getBosses`/`randomChars` plus helpers for client-side rolling.
 
 The generated JSON files are **not committed** — they are build artifacts listed in `.gitignore`. The `build`, `dev`, `check`, and `test:unit` scripts all invoke `gen:data` automatically as their first step, so a fresh checkout works without any manual data-generation step. After bumping `genshin-db`, the next run of any of those scripts will regenerate the data. Keep `genshin-db` a `devDependency` — never import it from runtime code.
 

@@ -1,11 +1,10 @@
-import { shuffle } from 'remeda';
+import { redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
+import { sample } from '$lib/genshin';
 
 export const actions = {
 	default: () => {
-		// `order` has no data dependency in the CLI either — it just shuffles
-		// [1..4]. Kept inline rather than pulling in a util for one call.
-		const order = shuffle([1, 2, 3, 4]);
-		return { order };
+		const order = sample([1, 2, 3, 4], 4).join(',');
+		redirect(303, `/order/${order}`);
 	}
 } satisfies Actions;

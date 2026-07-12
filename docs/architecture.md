@@ -18,50 +18,39 @@
 
 ## Route map
 
-| CLI command           | Web route      | Status                                                                                                 |
-| --------------------- | -------------- | ------------------------------------------------------------------------------------------------------ |
-| `genshin-party char`  | `/char`        | Working — form action filters via `getChars` and renders portrait/region.                              |
-| `genshin-party boss`  | `/boss`        | Working — form action picks one or three via `getBosses`, honoring gauntlet/weekly.                    |
-| `genshin-party order` | `/order`       | Working — pure shuffle, no data dependency.                                                            |
-| `genshin-party i`     | `/interactive` | Data layer ready: `GET /api/random-char` serves rolls. The xstate UI that drives it is still deferred. |
+| CLI command           | Web route      | Status                                                                                                                                                                                                 |
+| --------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `genshin-party char`  | `/char`        | Working — entry form filters via `$lib/genshin` and navigates to a pre-rendered `/char/[name]` result.                                                                                                 |
+| `genshin-party boss`  | `/boss`        | Working — entry form picks one or three bosses via `$lib/genshin`, honoring gauntlet/weekly. Single bosses render at `/boss/[name]` (pre-rendered); gauntlets render at `/boss/[a]/[b]/[c]` (dynamic). |
+| `genshin-party order` | `/order`       | Working — entry form shuffles `[1,2,3,4]` and navigates to a pre-rendered `/order/[permutation]` result.                                                                                               |
+| `genshin-party i`     | `/interactive` | Working — client-side 4-player flow using `$lib/genshin` and `$lib/player-selection-stack.ts`.                                                                                                         |
 
-## Data layer (implemented)
+## Data layer
 
 `genshin-db` is Node-only, reads JSON from disk via `fs`, and is ~170 MB installed — far too large to bundle into a Vercel function. The data is also **static per `genshin-db` version**, not live state. So rather than query it at runtime, we extract it at build time:
 
-- **`scripts/gen-data.ts`** (run via `pnpm gen:data`) imports `genshin-db`, trims it, and writes `src/lib/server/genshin/data/{characters,bosses}.json` (committed, ~44 KB each). `Aether` and `Stormterror` are excluded here, at extraction time.
+- **`scripts/gen-data.ts`** (run via `pnpm gen:data`) imports `genshin-db`, trims it, and writes `src/lib/genshin/data/{characters,bosses}.json` (build artifacts, ~44 KB each). `Aether` and `Stormterror` are excluded here, at extraction time.
 - **`genshin-db` is a `devDependency`** — imported only by that script, never by runtime code, so it never reaches the Vercel bundle. Re-run `pnpm gen:data` when the `genshin-db` version is bumped.
-- **`src/lib/server/genshin/index.ts`** loads the committed JSON once as a module and exposes pure functions: `getChars({ element, rarity })`, `getBosses({ weekly })`, `sample(items, count)`, and `randomChars(filters)` (mirrors the CLI's generator).
+- **`src/lib/genshin/index.ts`** loads the JSON once as a module and exposes pure functions: `getChars({ element, rarity, includeTraveler, exclude })`, `getBosses({ weekly })`, `sample(items, count)`, `getRandomChar(...)`, `getRandomBoss(...)`, `getRandomBosses(...)`, and `randomChars(filters)` (mirrors the CLI's generator). This module is client-safe, so all randomization runs in the browser.
 - The trim differs from the CLI: it **keeps** each character's `region` and full-URL `portrait`/`icon`/`fandomUrl` for the UI (the CLI drops `images`/`url`). Bosses are text-only — `genshin-db` exposes no usable image URL for enemies, only a bare icon filename.
-- `Aloy`/`Lumine` exclusion (`onlyTeyvat`) stays at the call site (`/api/random-char`), same as the CLI's `interactive` command. They remain in the character data because `/char` may return them.
+- `Aloy`/`Lumine` exclusion (`includeTraveler: false`) stays at the call site (`/interactive`), same as the CLI's `interactive` command. They remain in the character data because `/char` may return them.
 
 Surfaces:
 
-- `src/routes/char/+page.server.ts` — form action: `getChars(...)` + `sample`.
-- `src/routes/boss/+page.server.ts` — form action: `getBosses(...)` + `sample` (one or three).
-- `src/routes/api/random-char/+server.ts` — `GET` returning JSON with `Cache-Control: no-store`; used by `/interactive`.
+- `src/routes/char/+page.svelte` — browser form intercept; `+page.server.ts` provides the no-JS fallback.
+- `src/routes/char/[name]/+page.svelte` — pre-rendered result page.
+- `src/routes/boss/+page.svelte` — browser form intercept; `+page.server.ts` provides the no-JS fallback.
+- `src/routes/boss/[name]/+page.svelte` — pre-rendered single-boss result.
+- `src/routes/boss/[a]/[b]/[c]/+page.svelte` — dynamic gauntlet result.
+- `src/routes/order/+page.svelte` — browser form intercept; `+page.server.ts` provides the no-JS fallback.
+- `src/routes/order/[permutation]/+page.svelte` — pre-rendered result page.
+- `src/routes/interactive/+page.svelte` — client-side flow using `$lib/genshin` for rolls.
 
 ## Deferred work
 
-### 1. `xstate` interactive flow
-
-Mirrors `src/commands/interactive.ts` in the CLI:
-
-1. On mount the page shuffles `[1,2,3,4]` and starts an actor.
-2. For each player slot:
-   - Rarity to roll is `4` if the previous accepted choice was marked `isMain`, else `5`.
-   - Page polls `/api/random-char` until the candidate passes the `unique` filter.
-   - User can `Accept`, `Accept as main` (disabled on the final pick), `Reroll`, or `Go back to Player N` (pops the last choice).
-3. When four choices are committed, the actor enters `done` and the final party renders.
-
-Wire-up points: a new `src/lib/player-selection-stack.ts` ports the CLI's xstate machine; `src/routes/interactive/+page.svelte` drives it.
-
-### 2. Things further out
-
-- **Player name input** — CLI accepts `-p name1,name2,…` and expands 1/2/3-player input into a 4-slot array. Web version will need a text input + duplicate-expansion logic.
-- **Shareable results** — `?seed=…` query param to make rolls reproducible.
+- **Shareable results with a seed** — currently results use URL-based state but are not reproducible. A `?seed=…` query param could make rolls deterministic.
 - **Visual polish** — intentional. Foundation only.
-- **Staleness guard** — `pnpm gen:data` is run manually on `genshin-db` bumps. A CI check that regenerates and fails on a dirty diff would prevent the committed JSON drifting from the pinned version.
+- **Staleness guard** — `pnpm gen:data` is run automatically on `build`/`dev`/`check`/`test`. A CI check that regenerates and fails on a dirty diff would prevent the generated JSON drifting from the pinned `genshin-db` version.
 
 ## Open questions for the next session
 

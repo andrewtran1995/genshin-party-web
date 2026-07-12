@@ -8,7 +8,7 @@
  * - 3 names → [a, a, b, c]
  * - 4 names → unchanged
  */
-export const expandPlayerNames = (names: string[]): string[] => {
+export const expandPlayerNames = (names: readonly string[]): string[] => {
 	const trimmed = names.map((name) => name.trim()).filter((name) => name.length > 0);
 
 	if (trimmed.length === 0) return [];
@@ -27,7 +27,7 @@ export const expandPlayerNames = (names: string[]): string[] => {
 };
 
 /** Format a player label like the CLI's `formatPlayer`. */
-export const formatPlayer = (number: number, names: string[]): string => {
+export const formatPlayer = (number: number, names: readonly string[]): string => {
 	const name = names[number - 1]?.trim();
 	return name ? `Player ${number} (${name})` : `Player ${number}`;
 };

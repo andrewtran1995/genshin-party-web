@@ -1,7 +1,7 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { elements, isElement, isRarity, rarities } from '$lib/types';
-import { getChars, sample } from '$lib/server/genshin';
+import { getRandomChar } from '$lib/genshin';
 
 export const load: PageServerLoad = () => {
 	return { elements, rarities };
@@ -23,11 +23,16 @@ export const actions = {
 			return fail(400, { error: 'Unknown rarity.' });
 		}
 
-		const [char] = sample(getChars({ element, rarity }));
+		const char = getRandomChar({ element, rarity });
 		if (!char) {
 			return fail(404, { error: 'No character matches those filters.' });
 		}
 
-		return { char };
+		const params = new URLSearchParams();
+		if (element) params.set('element', element);
+		if (rarity) params.set('rarity', rarity);
+		const query = params.toString();
+
+		redirect(303, `/char/${encodeURIComponent(char.name)}${query ? `?${query}` : ''}`);
 	}
 } satisfies Actions;

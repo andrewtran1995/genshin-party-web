@@ -3,7 +3,7 @@
 build/
 dist/
 coverage/
-src/lib/server/genshin/data/
+src/lib/genshin/data/
 
 # Dependencies
 node_modules/

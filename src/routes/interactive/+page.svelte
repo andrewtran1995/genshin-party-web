@@ -1,8 +1,10 @@
 <script lang="ts">
 	import CharCard from '$lib/components/CharCard.svelte';
-	import { join, map, pipe, prop, sortBy } from 'remeda';
+	import PartyResult from '$lib/components/PartyResult.svelte';
+	import { sortBy, prop } from 'remeda';
 	import type { Char } from '$lib/types';
 	import { expandPlayerNames, formatPlayer } from '$lib/player-names';
+	import { getRandomChar } from '$lib/genshin';
 	import {
 		createPlayerSelectionState,
 		getCurrentPlayerNumber,
@@ -18,7 +20,7 @@
 	let candidate = $state<Char | undefined>();
 	let discardedChoice = $state<PlayerChoice | undefined>();
 	let loading = $state(false);
-	let error = $state<string | undefined>();
+	let error = $state('');
 
 	const isDone = $derived(selectionState?.status === 'done');
 	const canGoBack = $derived((selectionState?.playerChoices.length ?? 0) > 0);
@@ -33,13 +35,13 @@
 		const initialState = createPlayerSelectionState();
 		selectionState = initialState;
 		currentPlayerNumber = getCurrentPlayerNumber(initialState);
-		void fetchCandidate();
+		fetchCandidate();
 	}
 
-	async function fetchCandidate() {
+	function fetchCandidate() {
 		if (!selectionState) return;
 		loading = true;
-		error = undefined;
+		error = '';
 
 		if (discardedChoice) {
 			candidate = discardedChoice.char;
@@ -50,27 +52,12 @@
 
 		const { playerChoices } = selectionState;
 		const rarity = playerChoices.at(-1)?.isMain ? '4' : '5';
-		const exclude = pipe(
-			playerChoices,
-			map((choice) => choice.char.name),
-			join(',')
-		);
-		const url = `/api/random-char?rarity=${rarity}&exclude=${encodeURIComponent(exclude)}`;
-
-		try {
-			const response = await fetch(url);
-			if (!response.ok) {
-				error = 'No eligible character.';
-				candidate = undefined;
-			} else {
-				candidate = (await response.json()) as Char;
-			}
-		} catch {
-			error = 'Failed to fetch character.';
-			candidate = undefined;
-		} finally {
-			loading = false;
+		const exclude = playerChoices.map((choice) => choice.char.name);
+		candidate = getRandomChar({ rarity, exclude, includeTraveler: false });
+		if (!candidate) {
+			error = 'No eligible character.';
 		}
+		loading = false;
 	}
 
 	function accept(isMain: boolean) {
@@ -83,7 +70,7 @@
 		candidate = undefined;
 		if (selectionState.status === 'active') {
 			currentPlayerNumber = getCurrentPlayerNumber(selectionState);
-			void fetchCandidate();
+			fetchCandidate();
 		}
 	}
 
@@ -97,7 +84,7 @@
 
 	function reroll() {
 		candidate = undefined;
-		void fetchCandidate();
+		fetchCandidate();
 	}
 
 	function goBack() {
@@ -109,7 +96,7 @@
 		candidate = undefined;
 		if (selectionState.status === 'active') {
 			currentPlayerNumber = getCurrentPlayerNumber(selectionState);
-			void fetchCandidate();
+			fetchCandidate();
 		}
 	}
 
@@ -119,7 +106,7 @@
 		candidate = undefined;
 		discardedChoice = undefined;
 		loading = false;
-		error = undefined;
+		error = '';
 		playerNames = [''];
 		expandedNames = [];
 	}
@@ -147,6 +134,8 @@
 	<form
 		method="dialog"
 		class="player-form"
+		class:player-form={true}
+		aria-label="Player names"
 		onsubmit={(event) => {
 			event.preventDefault();
 			start();
@@ -185,14 +174,7 @@
 {:else if isDone}
 	<h2>Chosen characters</h2>
 
-	<ul>
-		{#each finalChoices as choice (choice.number)}
-			<li>
-				<strong>{formatPlayer(choice.number, expandedNames)}:</strong>
-				{choice.char.name} ({choice.char.rarity}★ {choice.char.elementText})
-			</li>
-		{/each}
-	</ul>
+	<PartyResult choices={finalChoices} names={expandedNames} />
 
 	<button type="button" onclick={reset}>Start over</button>
 {:else}
