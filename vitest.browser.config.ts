@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { playwright } from '@vitest/browser-playwright';
 import browserslistToEsbuild from 'browserslist-to-esbuild';
 
 const buildTarget = browserslistToEsbuild();
@@ -13,8 +14,12 @@ export default defineConfig({
 	test: {
 		passWithNoTests: true,
 		expect: { requireAssertions: true },
-		environment: 'node',
-		include: ['src/**/*.{test,spec}.{js,ts}'],
-		exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+		browser: {
+			provider: playwright(),
+			enabled: true,
+			instances: [{ browser: 'chromium', headless: true }],
+			api: { port: 63315 }
+		},
+		include: ['src/**/*.svelte.test.ts']
 	}
 });

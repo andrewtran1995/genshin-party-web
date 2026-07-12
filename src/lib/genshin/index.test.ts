@@ -5,7 +5,6 @@ import {
 	getBosses,
 	getCharByName,
 	getChars,
-	getElementIconUrl,
 	getRandomBosses,
 	getRandomChar,
 	randomChars,
@@ -55,20 +54,6 @@ describe('getCharByName', () => {
 
 	it('returns undefined for unknown names', () => {
 		expect(getCharByName('Unknown')).toBeUndefined();
-	});
-});
-
-describe('getElementIconUrl', () => {
-	it('returns the official icon URL for each real element', () => {
-		for (const element of ['anemo', 'cryo', 'dendro', 'electro', 'geo', 'hydro', 'pyro'] as const) {
-			const url = getElementIconUrl(element);
-			expect(url).toBeTruthy();
-			expect(url).toContain(`Element_${element.charAt(0).toUpperCase() + element.slice(1)}`);
-		}
-	});
-
-	it('returns undefined for the none element', () => {
-		expect(getElementIconUrl('none')).toBeUndefined();
 	});
 });
 

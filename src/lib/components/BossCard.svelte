@@ -131,7 +131,8 @@
 			<footer class="card-plate">
 				<p
 					class="card-flavor"
-					class:is-clamped={isClamped && !expanded}
+					class:is-clamped={!expanded}
+					class:has-overflow={isClamped && !expanded}
 					class:is-expanded={expanded}
 					bind:this={descriptionEl}
 				>
@@ -358,7 +359,7 @@
 		overflow: hidden;
 	}
 
-	.card-flavor.is-clamped::after {
+	.card-flavor.is-clamped.has-overflow::after {
 		content: '';
 		position: absolute;
 		inset: auto 0 0;

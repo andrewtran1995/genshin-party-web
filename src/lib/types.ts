@@ -19,10 +19,6 @@ export const isRarity = (value: string): value is Rarity => isIncludedIn(value, 
 
 export const isElement = (value: string): value is Element => isIncludedIn(value, elements);
 
-export interface ElementData {
-	id: Element;
-	iconUrl: string;
-}
 /**
  * A playable character, trimmed from `genshin-db` for the web UI.
  *
