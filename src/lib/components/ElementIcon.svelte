@@ -1,20 +1,10 @@
 <script lang="ts">
 	import type { Element } from '$lib/types';
-	import { getElementIconUrl } from '$lib/genshin';
 
 	let { element }: { element: Element } = $props();
 
-	const iconUrl = $derived(getElementIconUrl(element));
-	let imgError = $state(false);
-	const showImage = $derived(iconUrl !== undefined && !imgError);
-
-	// Reset error state when the element changes and a new icon URL is available.
-	$effect(() => {
-		if (iconUrl !== undefined) imgError = false;
-	});
-
 	// Simple, coherent stroke glyphs (Lucide-style) drawn on a 24×24 grid.
-	// Used as a fallback for the `none` element or when the official icon fails to load.
+	// Element sigils, not literal illustrations. `currentColor` themes them.
 	const paths: Record<Element, string[]> = {
 		pyro: [
 			'M12 3c1.9 2.7 4 4.6 4 7.6a4 4 0 0 1-8 0c0-1 .4-1.9 1-2.6.2 1.5.9 2.3 1.7 2.6-.6-2.4.4-4.8 1.3-7.6Z'
@@ -38,51 +28,26 @@
 	};
 </script>
 
-<span class="element-icon">
-	{#if showImage}
-		<img
-			src={iconUrl}
-			alt=""
-			loading="lazy"
-			decoding="async"
-			aria-hidden="true"
-			onerror={() => (imgError = true)}
-		/>
-	{:else}
-		<svg
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			aria-hidden="true"
-		>
-			{#each paths[element] as d (d)}
-				<path {d} />
-			{/each}
-		</svg>
-	{/if}
-</span>
+<svg
+	class="element-icon"
+	viewBox="0 0 24 24"
+	fill="none"
+	stroke="currentColor"
+	stroke-width="2"
+	stroke-linecap="round"
+	stroke-linejoin="round"
+	aria-hidden="true"
+>
+	{#each paths[element] as d (d)}
+		<path {d} />
+	{/each}
+</svg>
 
 <style>
 	.element-icon {
 		width: 1em;
 		height: 1em;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		flex: none;
-	}
-
-	.element-icon img,
-	.element-icon svg {
-		width: 100%;
-		height: 100%;
 		display: block;
-	}
-
-	.element-icon img {
-		object-fit: contain;
+		flex: none;
 	}
 </style>

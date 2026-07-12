@@ -1,16 +1,13 @@
 import { shuffle } from 'remeda';
-import type { Char, Element, ElementData, Enemy, Rarity } from '$lib/types';
+import type { Char, Element, Enemy, Rarity } from '$lib/types';
 import charactersJson from './data/characters.json';
 import bossesJson from './data/bosses.json';
-import elementsJson from './data/elements.json';
 
 // Build-time-extracted, trimmed dataset (see scripts/gen-data.ts). Static per
 // `genshin-db` version, so it's loaded once as a module rather than queried.
 // `Aether` and `Stormterror` are already excluded at extraction time.
 const allChars = charactersJson as Char[];
 const allBosses = bossesJson as Enemy[];
-const allElements = elementsJson as ElementData[];
-const elementIconById = Object.fromEntries(allElements.map((el) => [el.id, el.iconUrl]));
 
 /** Characters not from Teyvat — excluded by `/interactive` by default (matches
  * the CLI's `--only-teyvat`). Kept at the call site, not in the data layer. */
@@ -43,9 +40,6 @@ export const getChars = ({
 /** Look up a character by name. */
 export const getCharByName = (name: string): Char | undefined =>
 	allChars.find((char) => char.name === name);
-
-/** Return the official element-type icon URL, or `undefined` for `none`. */
-export const getElementIconUrl = (element: Element): string | undefined => elementIconById[element];
 
 /** All character names, useful for pre-rendering entry lists. */
 export const getAllCharNames = (): string[] => allChars.map((char) => char.name);
