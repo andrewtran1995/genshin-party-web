@@ -48,21 +48,23 @@ test('accepting a main forces the next roll to be 4-star', async ({ page }) => {
 	await page.goto('/interactive');
 	await page.getByRole('button', { name: /^start$/i }).click();
 
-	await expect(page.locator('.char-card').getByText('5★')).toBeVisible();
+	await expect(page.getByRole('article').getByLabel('5-star')).toBeVisible();
 	await page.getByRole('button', { name: /accept as main/i }).click();
 
-	await expect(page.locator('.char-card').getByText('4★')).toBeVisible();
+	await expect(page.getByRole('article').getByLabel('4-star')).toBeVisible();
 });
 
 test('reroll shows a different candidate', async ({ page }) => {
 	await page.goto('/interactive');
 	await page.getByRole('button', { name: /^start$/i }).click();
 
-	const first = await page.locator('.char-card strong').textContent();
+	const first = await page.getByRole('article').getByRole('heading', { level: 3 }).textContent();
 	await page.getByRole('button', { name: /^reroll$/i }).click();
 
 	await expect
-		.poll(async () => await page.locator('.char-card strong').textContent())
+		.poll(
+			async () => await page.getByRole('article').getByRole('heading', { level: 3 }).textContent()
+		)
 		.not.toBe(first);
 });
 
@@ -71,11 +73,13 @@ test('going back re-offers the previous character', async ({ page }) => {
 	await page.getByRole('button', { name: /^start$/i }).click();
 
 	await page.getByRole('button', { name: /^accept$/i }).click();
-	const second = await page.locator('.char-card strong').textContent();
+	const second = await page.getByRole('article').getByRole('heading', { level: 3 }).textContent();
 	await page.getByRole('button', { name: /^accept$/i }).click();
 
 	await page.getByRole('button', { name: /^go back/i }).click();
-	await expect(page.locator('.char-card strong')).toHaveText(second ?? '');
+	await expect(page.getByRole('article').getByRole('heading', { level: 3 })).toHaveText(
+		second ?? ''
+	);
 });
 
 test('accept as main is disabled on the final pick', async ({ page }) => {
