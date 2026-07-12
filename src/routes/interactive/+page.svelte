@@ -187,7 +187,11 @@
 	{:else if error}
 		<p class="error" role="alert">{error}</p>
 	{:else if candidate}
-		<CharCard char={candidate} />
+		{#key candidate.id}
+			<div class="candidate">
+				<CharCard char={candidate} reveal />
+			</div>
+		{/key}
 	{/if}
 
 	<div class="controls">
@@ -244,6 +248,10 @@
 
 	.add-player {
 		margin-bottom: 1rem;
+	}
+
+	.candidate {
+		margin-block: 1rem;
 	}
 
 	.controls {
