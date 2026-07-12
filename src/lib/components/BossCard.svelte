@@ -311,7 +311,7 @@
 
 	.card-window {
 		position: relative;
-		aspect-ratio: 1 / 1;
+		aspect-ratio: 2 / 1;
 		width: 100%;
 		border-radius: 9px;
 		overflow: hidden;
