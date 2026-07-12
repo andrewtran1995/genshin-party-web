@@ -50,12 +50,16 @@ export interface Char {
 }
 
 /**
- * A boss enemy, trimmed from `genshin-db`. Text-only: `genshin-db` exposes no
- * usable image URL for enemies (only a bare icon filename), so no art is kept.
+ * A boss enemy, trimmed from `genshin-db`.
+ *
+ * `genshin-db` exposes only a bare icon filename for enemies, so we build the
+ * art URL at generation time from `images.filename_icon`.
  */
 export interface Enemy {
 	name: string;
 	description: string;
 	categoryType: string;
 	enemyType: string;
+	/** Square icon URL (enka.network), or `undefined` when unavailable. */
+	icon: string | undefined;
 }

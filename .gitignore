@@ -4,6 +4,7 @@ build/
 dist/
 coverage/
 src/lib/genshin/data/
+static/icons/bosses/
 
 # Dependencies
 node_modules/
