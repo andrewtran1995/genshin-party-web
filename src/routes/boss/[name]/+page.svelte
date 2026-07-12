@@ -40,20 +40,22 @@
 	<title>{data.boss.name} — genshin-party</title>
 </svelte:head>
 
-<h1>Random boss</h1>
+<div class="stacked">
+	<h1>Random boss</h1>
 
-{#if weekly}
-	<p>Filter: Weekly bosses only</p>
-{/if}
+	{#if weekly}
+		<p>Filter: Weekly bosses only</p>
+	{/if}
 
-{#if mismatch}
-	<p class="error" role="alert">This boss does not match the requested filter.</p>
-{/if}
+	{#if mismatch}
+		<p class="error" role="alert">This boss does not match the requested filter.</p>
+	{/if}
 
-<BossCard boss={data.boss} />
+	<BossCard boss={data.boss} />
 
-<RerollControls entry="/boss" criteria={{ weekly: weekly ? '1' : '' }} onreroll={handleReroll} />
+	<RerollControls entry="/boss" criteria={{ weekly: weekly ? '1' : '' }} onreroll={handleReroll} />
 
-{#if rerollError}
-	<p class="error" role="alert">{rerollError}</p>
-{/if}
+	{#if rerollError}
+		<p class="error" role="alert">{rerollError}</p>
+	{/if}
+</div>

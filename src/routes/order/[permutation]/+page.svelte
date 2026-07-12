@@ -17,12 +17,14 @@
 	<title>Random order — genshin-party</title>
 </svelte:head>
 
-<h1>Random selection order</h1>
+<div class="stacked">
+	<h1>Random selection order</h1>
 
-<ol>
-	{#each data.order as player (player)}
-		<li>Player {player}</li>
-	{/each}
-</ol>
+	<ol>
+		{#each data.order as player (player)}
+			<li>Player {player}</li>
+		{/each}
+	</ol>
 
-<RerollControls entry="/order" criteria={{}} onreroll={handleReroll} />
+	<RerollControls entry="/order" criteria={{}} onreroll={handleReroll} />
+</div>

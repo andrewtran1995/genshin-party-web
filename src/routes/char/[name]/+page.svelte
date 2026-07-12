@@ -57,34 +57,36 @@
 	<title>{data.char.name} — genshin-party</title>
 </svelte:head>
 
-<h1>Random character</h1>
+<div class="stacked">
+	<h1>Random character</h1>
 
-{#if appliedFilters.length > 0}
-	<p>Filters: {appliedFilters.join(', ')}</p>
-{/if}
+	{#if appliedFilters.length > 0}
+		<p>Filters: {appliedFilters.join(', ')}</p>
+	{/if}
 
-{#if mismatch}
-	<p class="error" role="alert">This character does not match the requested filters.</p>
-{/if}
+	{#if mismatch}
+		<p class="error" role="alert">This character does not match the requested filters.</p>
+	{/if}
 
-<div class="card-stage">
-	<CharCard char={data.char} loading="eager" />
+	<div class="card-stage">
+		<CharCard char={data.char} loading="eager" />
+	</div>
+
+	<RerollControls
+		entry="/char"
+		criteria={{ element: element ?? '', rarity: rarity ?? '' }}
+		onreroll={handleReroll}
+	/>
+
+	{#if rerollError}
+		<p class="error" role="alert">{rerollError}</p>
+	{/if}
 </div>
 
-<RerollControls
-	entry="/char"
-	criteria={{ element: element ?? '', rarity: rarity ?? '' }}
-	onreroll={handleReroll}
-/>
-
-{#if rerollError}
-	<p class="error" role="alert">{rerollError}</p>
-{/if}
-
 <style>
+	/* Horizontal centring only — `.stacked` owns the vertical rhythm. */
 	.card-stage {
 		display: flex;
 		justify-content: center;
-		margin-block: 1.5rem;
 	}
 </style>

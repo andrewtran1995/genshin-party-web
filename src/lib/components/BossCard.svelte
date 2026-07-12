@@ -138,16 +138,18 @@
 				>
 					{boss.description}
 				</p>
-				{#if isClamped || expanded}
-					<button
-						class="card-expand"
-						type="button"
-						aria-expanded={expanded}
-						onclick={() => (expanded = !expanded)}
-					>
-						{expanded ? 'Show less' : 'Show more'}
-					</button>
-				{/if}
+				<div class="card-expand-slot">
+					{#if isClamped || expanded}
+						<button
+							class="card-expand"
+							type="button"
+							aria-expanded={expanded}
+							onclick={() => (expanded = !expanded)}
+						>
+							{expanded ? 'Show less' : 'Show more'}
+						</button>
+					{/if}
+				</div>
 			</footer>
 		{/if}
 
@@ -351,11 +353,14 @@
 		white-space: pre-wrap;
 	}
 
+	/* Reserve the full clamp height so a short description leaves the same
+	   footprint as a clamped one — cards sit side by side on the gauntlet page. */
 	.card-flavor.is-clamped {
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: 3;
 		line-clamp: 3;
+		min-height: calc(1.5em * 3);
 		overflow: hidden;
 	}
 
@@ -372,16 +377,24 @@
 		overflow: visible;
 	}
 
+	/* Holds the row open even when there's nothing to expand, so a card with a
+	   short description stays as tall as one with a "Show more" button. */
+	.card-expand-slot {
+		display: flex;
+		align-items: flex-start;
+		padding-top: 1.2cqi;
+		min-height: calc(3.6cqi * 1.5);
+	}
+
 	.card-expand {
-		margin-top: 1.2cqi;
 		padding: 0;
 		font-size: 3.6cqi;
 		font-weight: 600;
+		line-height: 1.5;
 		color: var(--el);
 		background: transparent;
 		border: none;
 		cursor: pointer;
-		align-self: flex-start;
 	}
 
 	.card-expand:hover,

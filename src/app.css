@@ -23,3 +23,12 @@ a {
 button {
 	cursor: pointer;
 }
+
+/**
+ * Vertical rhythm between a page's top-level blocks. Global rather than
+ * component-scoped so it reaches child components' root elements, which never
+ * carry the page's scoping hash. Tune per page with `--stack-gap`.
+ */
+.stacked > * + * {
+	margin-block-start: var(--stack-gap, 1.5rem);
+}
