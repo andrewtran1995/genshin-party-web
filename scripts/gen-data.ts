@@ -11,9 +11,9 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { filter, map, pipe } from 'remeda';
+import { filter, map, pipe, sortBy } from 'remeda';
 import genshinDb from 'genshin-db';
-import type { Char, Element, Enemy } from '../src/lib/types.ts';
+import type { Char, Element, ElementData, Enemy } from '../src/lib/types.ts';
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), '../src/lib/genshin/data');
 const staticBossIconsDir = join(dirname(fileURLToPath(import.meta.url)), '../static/icons/bosses');
@@ -116,8 +116,20 @@ const bosses: Enemy[] = await Promise.all(
 	})
 );
 
+const elements: ElementData[] = pipe(
+	genshinDb.elements('names', queryOptions),
+	map((el) => ({
+		id: el.name.toLowerCase() as Element,
+		iconUrl: el.images.wikia
+	})),
+	sortBy((el) => el.id)
+);
+
 mkdirSync(dataDir, { recursive: true });
 writeFileSync(join(dataDir, 'characters.json'), `${JSON.stringify(characters, undefined, '\t')}\n`);
 writeFileSync(join(dataDir, 'bosses.json'), `${JSON.stringify(bosses, undefined, '\t')}\n`);
+writeFileSync(join(dataDir, 'elements.json'), `${JSON.stringify(elements, undefined, '\t')}\n`);
 
-console.log(`Wrote ${characters.length} characters and ${bosses.length} bosses to ${dataDir}`);
+console.log(
+	`Wrote ${characters.length} characters, ${bosses.length} bosses, and ${elements.length} elements to ${dataDir}`
+);
