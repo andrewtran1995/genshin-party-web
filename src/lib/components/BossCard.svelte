@@ -131,7 +131,7 @@
 			<footer class="card-plate">
 				<p
 					class="card-flavor"
-					class:is-clamped={!expanded}
+					class:is-clamped={isClamped && !expanded}
 					class:is-expanded={expanded}
 					bind:this={descriptionEl}
 				>
