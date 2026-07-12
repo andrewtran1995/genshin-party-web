@@ -20,9 +20,25 @@
 	let descriptionEl: HTMLParagraphElement | undefined = $state();
 	let isClamped = $state(false);
 
+	const description = $derived(boss.description ?? '');
+
+	/**
+	 * A reroll swaps in a new boss on the same component instance, so the previous
+	 * boss's reading state has to be dropped explicitly — otherwise a card left
+	 * open before the roll stays open on the boss that replaces it. Keyed on the
+	 * name, since that's the boss's identity; rerolling the same boss keeps it open.
+	 */
+	$effect(() => {
+		if (boss.name) expanded = false;
+	});
+
 	$effect(() => {
 		const el = descriptionEl;
-		if (!el) return;
+		// Depending on the text — not just on the element — is what makes a reroll
+		// re-measure: the collapsed box is a fixed three-line height, so a new
+		// description never resizes it and the ResizeObserver alone would miss it.
+		const text = description;
+		if (!el || !text) return;
 		const update = () => {
 			if (!expanded) {
 				isClamped = el.scrollHeight > el.clientHeight;

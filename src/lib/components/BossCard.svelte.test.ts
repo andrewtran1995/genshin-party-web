@@ -69,6 +69,33 @@ describe('BossCard', () => {
 			.toBe(plateOf(overflowContainer).offsetHeight);
 	});
 
+	// A reroll swaps the boss on a reused component instance. The clamped box is a
+	// fixed height, so it never resizes and the ResizeObserver alone won't notice.
+	it('re-measures overflow when a reroll swaps in a new boss', async () => {
+		const { container, rerender } = await render(BossCard, { props: { boss: shortBoss } });
+		await expect.poll(() => container.textContent).not.toContain('Show more');
+
+		await rerender({ boss: overflowingBoss });
+
+		await expect.poll(() => container.textContent).toContain('Show more');
+	});
+
+	it('collapses an expanded description when a reroll swaps in a new boss', async () => {
+		const { container, rerender } = await render(BossCard, { props: { boss: overflowingBoss } });
+
+		const button = container.querySelector('.card-expand');
+		if (!(button instanceof HTMLElement)) throw new Error('Expected an expand button');
+		button.click();
+		await expect.poll(() => container.textContent).toContain('Show less');
+
+		await rerender({ boss: { ...overflowingBoss, name: 'Azhdaha' } });
+
+		await expect.poll(() => container.textContent).toContain('Show more');
+		await expect
+			.poll(() => container.querySelector('.card-flavor')?.classList.contains('is-clamped'))
+			.toBe(true);
+	});
+
 	it('shows the show more button only when overflowing', async () => {
 		const { container: overflowContainer } = await render(BossCard, {
 			props: { boss: overflowingBoss }
