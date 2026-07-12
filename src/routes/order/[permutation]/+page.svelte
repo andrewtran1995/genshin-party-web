@@ -1,8 +1,16 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import RerollControls from '$lib/components/RerollControls.svelte';
+	import { sample } from '$lib/genshin';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	function handleReroll() {
+		const order = sample([1, 2, 3, 4], 4).join(',');
+		void goto(resolve(`/order/${order}`));
+	}
 </script>
 
 <svelte:head>
@@ -17,6 +25,4 @@
 	{/each}
 </ol>
 
-<p>
-	<a href={resolve('/order')}>Shuffle again</a>
-</p>
+<RerollControls entry="/order" criteria={{}} onreroll={handleReroll} />

@@ -1,12 +1,15 @@
 <script lang="ts">
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import BossCard from '$lib/components/BossCard.svelte';
+	import RerollControls from '$lib/components/RerollControls.svelte';
+	import { getRandomBoss } from '$lib/genshin';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	let searchParams = $state(new URLSearchParams(''));
+	let rerollError = $state('');
 
 	function updateSearchParams() {
 		searchParams = new URLSearchParams(window.location.search);
@@ -20,6 +23,17 @@
 			return false;
 		})()
 	);
+
+	function handleReroll() {
+		rerollError = '';
+		const boss = getRandomBoss({ weekly });
+		if (!boss) {
+			rerollError = 'No bosses match those filters.';
+			return;
+		}
+		const query = weekly ? '?weekly=1' : '';
+		void goto(resolve(`/boss/${encodeURIComponent(boss.name)}${query}`));
+	}
 </script>
 
 <svelte:head>
@@ -38,6 +52,8 @@
 
 <BossCard boss={data.boss} />
 
-<p>
-	<a href={resolve('/boss')}>Roll again</a>
-</p>
+<RerollControls entry="/boss" criteria={{ weekly: weekly ? '1' : '' }} onreroll={handleReroll} />
+
+{#if rerollError}
+	<p class="error" role="alert">{rerollError}</p>
+{/if}
