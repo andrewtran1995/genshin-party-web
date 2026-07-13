@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Enemy } from '$lib/types';
 	import { getBossImageUrl } from '$lib/boss-image';
+	import { tilt } from '$lib/tilt';
 
 	interface Props {
 		boss: Enemy;
@@ -60,48 +61,6 @@
 	});
 
 	const showArt = $derived(!!imageUrl && !imgError);
-
-	/**
-	 * Pointer-driven tilt + foil. Enhancement only — the card is fully legible
-	 * without it, so it's gated to fine pointers and disabled for reduced motion.
-	 */
-	function tilt(node: HTMLElement) {
-		const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
-		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-		const MAX = 7;
-		let frame = 0;
-
-		function onMove(event: PointerEvent) {
-			if (!canHover.matches || reduce.matches) return;
-			const rect = node.getBoundingClientRect();
-			const px = (event.clientX - rect.left) / rect.width;
-			const py = (event.clientY - rect.top) / rect.height;
-			cancelAnimationFrame(frame);
-			frame = requestAnimationFrame(() => {
-				node.style.setProperty('--rx', `${(0.5 - py) * MAX}deg`);
-				node.style.setProperty('--ry', `${(px - 0.5) * MAX}deg`);
-				node.style.setProperty('--mx', `${px * 100}%`);
-				node.style.setProperty('--my', `${py * 100}%`);
-				node.style.setProperty('--active', '1');
-			});
-		}
-		function reset() {
-			cancelAnimationFrame(frame);
-			node.style.setProperty('--rx', '0deg');
-			node.style.setProperty('--ry', '0deg');
-			node.style.setProperty('--active', '0');
-		}
-
-		node.addEventListener('pointermove', onMove);
-		node.addEventListener('pointerleave', reset);
-		return {
-			destroy() {
-				cancelAnimationFrame(frame);
-				node.removeEventListener('pointermove', onMove);
-				node.removeEventListener('pointerleave', reset);
-			}
-		};
-	}
 </script>
 
 <article class="card boss-card" class:card-reveal={reveal} use:tilt>
