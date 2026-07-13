@@ -1,12 +1,38 @@
+/**
+ * Heading face, subset to Latin from the Simplified-Chinese UI font shipped in
+ * the Genshin Impact client (`SDK_SC_Web Heavy`, © Beijing HanYi Keyin). The
+ * source is a proprietary foundry font — see `docs/fonts.md` before reusing,
+ * re-subsetting, or swapping it.
+ */
+@font-face {
+	font-family: 'Genshin Heavy';
+	src: url('/fonts/genshin-heavy-latin.woff2') format('woff2');
+
+	/**
+	 * One static Heavy cut, but claimed across the whole weight range: callers
+	 * asking for 650 or `bold` then map onto it directly instead of getting a
+	 * synthesised bold smeared over an already-heavy face.
+	 */
+	font-weight: 400 900;
+	font-style: normal;
+	font-display: swap;
+}
+
 :root {
-	font-family:
-		system-ui,
-		-apple-system,
-		'Segoe UI',
-		Roboto,
-		sans-serif;
+	--font-body: system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
+	--font-heading: 'Genshin Heavy', var(--font-body);
+
+	font-family: var(--font-body);
 	line-height: 1.5;
 	color-scheme: light dark;
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--font-heading);
+	line-height: 1.2;
+	letter-spacing: 0.01em;
 }
 
 body {
