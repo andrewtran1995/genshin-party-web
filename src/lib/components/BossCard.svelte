@@ -110,7 +110,6 @@
 
 		<header class="card-header">
 			<h3 class="card-name">{boss.name}</h3>
-			<span class="card-category">{categoryLabel}</span>
 		</header>
 
 		<div class="card-window" class:is-loading={showArt && !imgLoaded}>
@@ -233,8 +232,6 @@
 	.card-header {
 		display: flex;
 		align-items: baseline;
-		justify-content: space-between;
-		gap: 2cqi;
 	}
 
 	.card-name {
@@ -245,18 +242,6 @@
 		letter-spacing: -0.02em;
 		color: var(--ink);
 		text-wrap: balance;
-	}
-
-	.card-category {
-		flex: none;
-		font-size: 3.4cqi;
-		font-weight: 600;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: var(--frame);
-		padding: 1cqi 2.4cqi;
-		border-radius: 999px;
-		border: 1px solid color-mix(in oklch, var(--frame) 45%, transparent);
 	}
 
 	.card-window {
