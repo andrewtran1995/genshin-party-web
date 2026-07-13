@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Char } from '$lib/types';
 	import { getCharImageUrl } from '$lib/char-image';
+	import { tilt } from '$lib/tilt';
 	import ElementIcon from './ElementIcon.svelte';
 	import WeaponIcon from './WeaponIcon.svelte';
 
@@ -31,48 +32,6 @@
 	const showArt = $derived(!!imageUrl && !imgError);
 	// Wide splash art fills the window (cover); a square avatar (icon fallback) floats centered.
 	const isPortrait = $derived(!!char.portrait && !imgError);
-
-	/**
-	 * Pointer-driven tilt + foil. Enhancement only — the card is fully legible
-	 * without it, so it's gated to fine pointers and disabled for reduced motion.
-	 */
-	function tilt(node: HTMLElement) {
-		const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
-		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-		const MAX = 7; // degrees
-		let frame = 0;
-
-		function onMove(event: PointerEvent) {
-			if (!canHover.matches || reduce.matches) return;
-			const rect = node.getBoundingClientRect();
-			const px = (event.clientX - rect.left) / rect.width;
-			const py = (event.clientY - rect.top) / rect.height;
-			cancelAnimationFrame(frame);
-			frame = requestAnimationFrame(() => {
-				node.style.setProperty('--rx', `${(0.5 - py) * MAX}deg`);
-				node.style.setProperty('--ry', `${(px - 0.5) * MAX}deg`);
-				node.style.setProperty('--mx', `${px * 100}%`);
-				node.style.setProperty('--my', `${py * 100}%`);
-				node.style.setProperty('--active', '1');
-			});
-		}
-		function reset() {
-			cancelAnimationFrame(frame);
-			node.style.setProperty('--rx', '0deg');
-			node.style.setProperty('--ry', '0deg');
-			node.style.setProperty('--active', '0');
-		}
-
-		node.addEventListener('pointermove', onMove);
-		node.addEventListener('pointerleave', reset);
-		return {
-			destroy() {
-				cancelAnimationFrame(frame);
-				node.removeEventListener('pointermove', onMove);
-				node.removeEventListener('pointerleave', reset);
-			}
-		};
-	}
 </script>
 
 <article
