@@ -18,6 +18,12 @@
 	font-display: swap;
 }
 
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
 :root {
 	--font-body: system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
 	--font-heading: 'Genshin Heavy', var(--font-body);

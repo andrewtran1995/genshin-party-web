@@ -51,7 +51,9 @@
 		<p class="error" role="alert">This boss does not match the requested filter.</p>
 	{/if}
 
-	<BossCard boss={data.boss} />
+	<div class="card-stage">
+		<BossCard boss={data.boss} />
+	</div>
 
 	<RerollControls entry="/boss" criteria={{ weekly: weekly ? '1' : '' }} onreroll={handleReroll} />
 
@@ -59,3 +61,11 @@
 		<p class="error" role="alert">{rerollError}</p>
 	{/if}
 </div>
+
+<style>
+	/* Horizontal centring only — `.stacked` owns the vertical rhythm. */
+	.card-stage {
+		display: flex;
+		justify-content: center;
+	}
+</style>
