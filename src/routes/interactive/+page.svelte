@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import CharCard from '$lib/components/CharCard.svelte';
 	import PartyResult from '$lib/components/PartyResult.svelte';
 	import { sortBy, prop } from 'remeda';
@@ -21,6 +22,9 @@
 	let discardedChoice = $state<PlayerChoice | undefined>();
 	let loading = $state(false);
 	let error = $state('');
+	let playerInputRefs = $state<HTMLInputElement[]>([]);
+	let acceptButtonRef = $state<HTMLButtonElement | undefined>();
+	let startOverButtonRef = $state<HTMLButtonElement | undefined>();
 
 	const isDone = $derived(selectionState?.status === 'done');
 	const canGoBack = $derived((selectionState?.playerChoices.length ?? 0) > 0);
@@ -30,12 +34,14 @@
 	);
 	const lastChoice = $derived(selectionState?.playerChoices.at(-1));
 
-	function start() {
+	async function start() {
 		expandedNames = expandPlayerNames(playerNames);
 		const initialState = createPlayerSelectionState();
 		selectionState = initialState;
 		currentPlayerNumber = getCurrentPlayerNumber(initialState);
 		fetchCandidate();
+		await tick();
+		acceptButtonRef?.focus();
 	}
 
 	function fetchCandidate() {
@@ -60,7 +66,7 @@
 		loading = false;
 	}
 
-	function accept(isMain: boolean) {
+	async function accept(isMain: boolean) {
 		if (selectionState?.status !== 'active' || !candidate || currentPlayerNumber === undefined)
 			return;
 		selectionState = transition(selectionState, {
@@ -68,18 +74,24 @@
 			type: 'push'
 		});
 		candidate = undefined;
-		if (selectionState.status === 'active') {
+
+		await tick();
+		if (selectionState.status === 'done') {
+			startOverButtonRef?.focus();
+		} else {
 			currentPlayerNumber = getCurrentPlayerNumber(selectionState);
 			fetchCandidate();
+			await tick();
+			acceptButtonRef?.focus();
 		}
 	}
 
 	function acceptNormal() {
-		accept(false);
+		void accept(false);
 	}
 
 	function acceptAsMain() {
-		accept(true);
+		void accept(true);
 	}
 
 	function reroll() {
@@ -87,7 +99,7 @@
 		fetchCandidate();
 	}
 
-	function goBack() {
+	async function goBack() {
 		if (!selectionState) return;
 		const previousChoice = selectionState.playerChoices.at(-1);
 		if (!previousChoice) return;
@@ -98,9 +110,11 @@
 			currentPlayerNumber = getCurrentPlayerNumber(selectionState);
 			fetchCandidate();
 		}
+		await tick();
+		acceptButtonRef?.focus();
 	}
 
-	function reset() {
+	async function reset() {
 		selectionState = undefined;
 		currentPlayerNumber = undefined;
 		candidate = undefined;
@@ -109,17 +123,24 @@
 		error = '';
 		playerNames = [''];
 		expandedNames = [];
+		await tick();
+		playerInputRefs[0]?.focus();
 	}
 
-	function addPlayer() {
+	async function addPlayer() {
 		if (playerNames.length < 4) {
 			playerNames = [...playerNames, ''];
+			await tick();
+			playerInputRefs.at(-1)?.focus();
 		}
 	}
 
-	function removePlayer(index: number) {
+	async function removePlayer(index: number) {
 		if (playerNames.length > 1) {
+			const nextIndex = index === 0 ? 0 : index - 1;
 			playerNames = playerNames.filter((_, i) => i !== index);
+			await tick();
+			playerInputRefs[nextIndex]?.focus();
 		}
 	}
 </script>
@@ -132,13 +153,11 @@
 
 {#if !selectionState}
 	<form
-		method="dialog"
 		class="player-form"
-		class:player-form={true}
 		aria-label="Player names"
 		onsubmit={(event) => {
 			event.preventDefault();
-			start();
+			void start();
 		}}
 	>
 		<fieldset>
@@ -148,14 +167,19 @@
 					<div class="player-input-row">
 						<label>
 							Player {index + 1}
-							<input bind:value={playerNames[index]} placeholder="Name (optional)" type="text" />
+							<input
+								bind:this={playerInputRefs[index]}
+								bind:value={playerNames[index]}
+								placeholder="Name (optional)"
+								type="text"
+							/>
 						</label>
 						{#if playerNames.length > 1}
 							<button
 								aria-label={`Remove player ${index + 1}`}
 								class="remove-player"
 								onclick={() => {
-									removePlayer(index);
+									void removePlayer(index);
 								}}
 								type="button"
 							>
@@ -166,17 +190,19 @@
 				{/each}
 			</div>
 			{#if playerNames.length < 4}
-				<button class="add-player" onclick={addPlayer} type="button">Add player</button>
+				<button class="add-player" onclick={() => void addPlayer()} type="button">Add player</button
+				>
 			{/if}
 		</fieldset>
 		<button type="submit">Start</button>
 	</form>
 {:else if isDone}
 	<h2>Chosen characters</h2>
+	<p class="visually-hidden" aria-live="polite">Party complete. All characters chosen.</p>
 
 	<PartyResult choices={finalChoices} names={expandedNames} />
 
-	<button type="button" onclick={reset}>Start over</button>
+	<button type="button" bind:this={startOverButtonRef} onclick={reset}>Start over</button>
 {:else}
 	{#if currentPlayerNumber !== undefined}
 		<p>Now choosing for {formatPlayer(currentPlayerNumber, expandedNames)}.</p>
@@ -187,6 +213,7 @@
 	{:else if error}
 		<p class="error" role="alert">{error}</p>
 	{:else if candidate}
+		<p class="visually-hidden" aria-live="polite">Candidate: {candidate.name}</p>
 		{#key candidate.id}
 			<div class="candidate">
 				<CharCard char={candidate} reveal />
@@ -195,7 +222,12 @@
 	{/if}
 
 	<div class="controls">
-		<button disabled={!candidate || loading} onclick={acceptNormal} type="button">Accept</button>
+		<button
+			bind:this={acceptButtonRef}
+			disabled={!candidate || loading}
+			onclick={acceptNormal}
+			type="button">Accept</button
+		>
 		<button disabled={!candidate || loading || isFinalPick} onclick={acceptAsMain} type="button">
 			Accept as main
 		</button>
