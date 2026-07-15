@@ -17,12 +17,23 @@
 	<title>Random order — genshin-party</title>
 </svelte:head>
 
-<h1>Random selection order</h1>
+<div class="stacked">
+	<h1>Random selection order</h1>
 
-<form method="POST" onsubmit={handleSubmit}>
-	<button type="submit">Shuffle</button>
-</form>
+	<p class="lede">Shuffle four player numbers into a random pick order.</p>
 
-{#if clientError}
-	<p class="error" role="alert">{clientError}</p>
-{/if}
+	<form method="POST" onsubmit={handleSubmit}>
+		<button class="btn btn-primary btn-wide" type="submit">Shuffle</button>
+	</form>
+
+	{#if clientError}
+		<p class="error" role="alert">{clientError}</p>
+	{/if}
+</div>
+
+<style>
+	.lede {
+		margin: 0;
+		color: var(--ink-muted);
+	}
+</style>

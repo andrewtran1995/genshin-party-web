@@ -26,36 +26,27 @@
 			<input type="hidden" {name} {value} />
 		{/if}
 	{/each}
-	<button class="reroll" type="submit">Reroll</button>
-	<a class="change-criteria" href={action}>Change criteria</a>
+	<button class="btn btn-primary reroll" type="submit">Reroll</button>
+	<a class="btn btn-ghost change-criteria" href={action}>Change criteria</a>
 </form>
 
 <style>
 	.reroll-controls {
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
-		align-items: center;
+		gap: 0.5rem;
+		align-items: stretch;
 	}
 
 	.reroll {
 		width: 100%;
-		padding: 0.5rem 1rem;
-		border: 1px solid currentcolor;
-		border-radius: 9999px;
-		font-weight: 600;
-		background: ButtonFace;
-		color: ButtonText;
-	}
-
-	.change-criteria {
-		font-size: 0.875rem;
 	}
 
 	@media (width >= 30rem) {
 		.reroll-controls {
 			flex-direction: row;
 			align-items: center;
+			justify-content: center;
 		}
 
 		.reroll {

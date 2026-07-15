@@ -42,32 +42,36 @@
 	<title>Random character — genshin-party</title>
 </svelte:head>
 
-<h1>Random character</h1>
+<div class="stacked">
+	<h1>Random character</h1>
 
-<form method="POST" onsubmit={handleSubmit}>
-	<label>
-		Element:
-		<select name="element">
-			<option value="">any</option>
-			{#each data.elements as element (element)}
-				<option value={element}>{element}</option>
-			{/each}
-		</select>
-	</label>
+	<form class="control-panel" method="POST" onsubmit={handleSubmit}>
+		<div class="field-row">
+			<label class="field">
+				<span>Element</span>
+				<select name="element">
+					<option value="">Any</option>
+					{#each data.elements as element (element)}
+						<option value={element}>{element}</option>
+					{/each}
+				</select>
+			</label>
 
-	<label>
-		Rarity:
-		<select name="rarity">
-			<option value="">any</option>
-			{#each data.rarities as rarity (rarity)}
-				<option value={rarity}>{rarity}★</option>
-			{/each}
-		</select>
-	</label>
+			<label class="field">
+				<span>Rarity</span>
+				<select name="rarity">
+					<option value="">Any</option>
+					{#each data.rarities as rarity (rarity)}
+						<option value={rarity}>{rarity}★</option>
+					{/each}
+				</select>
+			</label>
+		</div>
 
-	<button type="submit">Roll</button>
-</form>
+		<button class="btn btn-primary btn-wide" type="submit">Roll</button>
+	</form>
 
-{#if clientError || form?.error}
-	<p class="error" role="alert">{clientError || form?.error}</p>
-{/if}
+	{#if clientError || form?.error}
+		<p class="error" role="alert">{clientError || form?.error}</p>
+	{/if}
+</div>

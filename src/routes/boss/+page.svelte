@@ -42,22 +42,26 @@
 	<title>Random boss — genshin-party</title>
 </svelte:head>
 
-<h1>Random boss</h1>
+<div class="stacked">
+	<h1>Random boss</h1>
 
-<form method="POST" onsubmit={handleSubmit}>
-	<label>
-		<input type="checkbox" name="gauntlet" />
-		Gauntlet (3 bosses)
-	</label>
+	<form class="control-panel" method="POST" onsubmit={handleSubmit}>
+		<fieldset class="option-group">
+			<label class="option">
+				<input type="checkbox" name="gauntlet" />
+				<span>Gauntlet (3 bosses)</span>
+			</label>
 
-	<label>
-		<input type="checkbox" name="weekly" checked value="on" />
-		Weekly bosses only
-	</label>
+			<label class="option">
+				<input type="checkbox" name="weekly" checked value="on" />
+				<span>Weekly bosses only</span>
+			</label>
+		</fieldset>
 
-	<button type="submit">Roll</button>
-</form>
+		<button class="btn btn-primary btn-wide" type="submit">Roll</button>
+	</form>
 
-{#if clientError || form?.error}
-	<p class="error" role="alert">{clientError || form?.error}</p>
-{/if}
+	{#if clientError || form?.error}
+		<p class="error" role="alert">{clientError || form?.error}</p>
+	{/if}
+</div>
