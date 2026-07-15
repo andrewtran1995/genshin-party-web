@@ -2,6 +2,7 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { AppBar } from '@skeletonlabs/skeleton-svelte';
 
 	let { children } = $props();
 
@@ -17,16 +18,20 @@
 	});
 </script>
 
-<header>
-	<nav>
-		<a href={resolve('/')}>Home</a> ·
-		<a href={resolve('/char')}>Random character</a> ·
-		<a href={resolve('/boss')}>Random boss</a> ·
-		<a href={resolve('/order')}>Random order</a> ·
-		<a href={resolve('/interactive')}>Interactive party</a>
-	</nav>
-</header>
+<AppBar>
+	<AppBar.Lead>
+		<a href={resolve('/')} class="h4">genshin-party</a>
+	</AppBar.Lead>
+	<AppBar.Trail>
+		<nav class="flex flex-wrap gap-4">
+			<a href={resolve('/char')}>Random character</a>
+			<a href={resolve('/boss')}>Random boss</a>
+			<a href={resolve('/order')}>Random order</a>
+			<a href={resolve('/interactive')}>Interactive party</a>
+		</nav>
+	</AppBar.Trail>
+</AppBar>
 
-<main>
+<main class="mx-auto w-full max-w-5xl p-4 md:p-6">
 	{@render children()}
 </main>
