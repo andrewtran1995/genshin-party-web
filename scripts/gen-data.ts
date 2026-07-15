@@ -17,6 +17,14 @@ import type { Char, Element, Enemy } from '../src/lib/types.ts';
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), '../src/lib/genshin/data');
 const staticBossIconsDir = join(dirname(fileURLToPath(import.meta.url)), '../static/icons/bosses');
+const staticElementIconsDir = join(
+	dirname(fileURLToPath(import.meta.url)),
+	'../static/icons/elements'
+);
+const staticWeaponIconsDir = join(
+	dirname(fileURLToPath(import.meta.url)),
+	'../static/icons/weapons'
+);
 
 const queryOptions = { matchCategories: true, verboseCategories: true } as const;
 
@@ -119,5 +127,48 @@ const bosses: Enemy[] = await Promise.all(
 mkdirSync(dataDir, { recursive: true });
 writeFileSync(join(dataDir, 'characters.json'), `${JSON.stringify(characters, undefined, '\t')}\n`);
 writeFileSync(join(dataDir, 'bosses.json'), `${JSON.stringify(bosses, undefined, '\t')}\n`);
+
+async function fetchAndSaveIcon(url: string, dir: string, filename: string): Promise<void> {
+	try {
+		const response = await fetch(url);
+		if (!response.ok) {
+			console.warn(`Failed to fetch icon ${url}: ${response.status}`);
+			return;
+		}
+		const buffer = Buffer.from(await response.arrayBuffer());
+		writeFileSync(join(dir, filename), buffer);
+	} catch (err) {
+		console.warn(`Failed to fetch icon ${url}:`, err);
+	}
+}
+
+mkdirSync(staticElementIconsDir, { recursive: true });
+mkdirSync(staticWeaponIconsDir, { recursive: true });
+
+const elementIcons = genshinDb.elements('names', queryOptions) as {
+	name: string;
+	images: { wikia?: string };
+}[];
+
+const elementIconFetches = elementIcons.map(async (el) => {
+	const key = el.name.toLowerCase();
+	const url = el.images.wikia;
+	if (!url) return;
+	await fetchAndSaveIcon(url, staticElementIconsDir, `${key}.png`);
+});
+
+const weaponIconUrls: Record<string, string> = {
+	sword: 'https://static.wikia.nocookie.net/gensin-impact/images/8/81/Icon_Sword.png',
+	claymore: 'https://static.wikia.nocookie.net/gensin-impact/images/6/66/Icon_Claymore.png',
+	bow: 'https://static.wikia.nocookie.net/gensin-impact/images/8/81/Icon_Bow.png',
+	polearm: 'https://static.wikia.nocookie.net/gensin-impact/images/6/6a/Icon_Polearm.png',
+	catalyst: 'https://static.wikia.nocookie.net/gensin-impact/images/2/27/Icon_Catalyst.png'
+};
+
+const weaponIconFetches = Object.entries(weaponIconUrls).map(async ([key, url]) => {
+	await fetchAndSaveIcon(url, staticWeaponIconsDir, `${key}.png`);
+});
+
+await Promise.all([...elementIconFetches, ...weaponIconFetches]);
 
 console.log(`Wrote ${characters.length} characters and ${bosses.length} bosses to ${dataDir}`);
