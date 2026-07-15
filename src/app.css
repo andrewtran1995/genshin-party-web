@@ -1,8 +1,19 @@
-/* stylelint-disable import-notation */
+/* stylelint-disable import-notation, no-invalid-position-at-import-rule, at-rule-no-unknown, at-rule-empty-line-before */
 @import 'tailwindcss';
+@plugin '@tailwindcss/forms';
 @import '@skeletonlabs/skeleton';
 @import '@skeletonlabs/skeleton-svelte';
 @import './lib/themes/genshin.css';
+/* stylelint-enable import-notation, no-invalid-position-at-import-rule, at-rule-no-unknown, at-rule-empty-line-before */
+
+/* Windows browser fix for form element backgrounds until Skeleton v5. */
+.select,
+.input,
+.textarea,
+.input-group {
+	background-color: var(--color-surface-50-950);
+	color: var(--color-surface-950-50);
+}
 
 /**
  * Heading face, subset to Latin from the Simplified-Chinese UI font shipped in

@@ -26,7 +26,7 @@
 			<input type="hidden" {name} {value} />
 		{/if}
 	{/each}
-	<button class="reroll" type="submit">Reroll</button>
+	<button class="reroll btn preset-filled-primary-500" type="submit">Reroll</button>
 	<a class="change-criteria" href={action}>Change criteria</a>
 </form>
 
@@ -38,16 +38,6 @@
 		align-items: center;
 	}
 
-	.reroll {
-		width: 100%;
-		padding: 0.5rem 1rem;
-		border: 1px solid currentcolor;
-		border-radius: 9999px;
-		font-weight: 600;
-		background: ButtonFace;
-		color: ButtonText;
-	}
-
 	.change-criteria {
 		font-size: 0.875rem;
 	}
@@ -56,10 +46,6 @@
 		.reroll-controls {
 			flex-direction: row;
 			align-items: center;
-		}
-
-		.reroll {
-			width: auto;
 		}
 	}
 </style>
