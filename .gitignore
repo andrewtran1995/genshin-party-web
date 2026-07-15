@@ -5,6 +5,8 @@ dist/
 coverage/
 src/lib/genshin/data/
 static/icons/bosses/
+static/icons/elements/
+static/icons/weapons/
 
 # Dependencies
 node_modules/
