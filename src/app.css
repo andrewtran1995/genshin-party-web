@@ -64,6 +64,40 @@ h3 {
 	border: 0;
 }
 
+a {
+	color: var(--anchor-font-color);
+	text-decoration: underline;
+	text-decoration-color: var(--anchor-font-color);
+	text-underline-offset: 0.15em;
+	transition:
+		color 150ms ease-in-out,
+		text-decoration-color 150ms ease-in-out;
+}
+
+a:hover {
+	color: var(--color-primary-500);
+	text-decoration-color: var(--color-primary-500);
+}
+
+a:focus-visible {
+	outline: 2px solid var(--color-primary-500);
+	outline-offset: 2px;
+	border-radius: 0.125rem;
+}
+
+a.appbar-link {
+	text-decoration: none;
+	color: inherit;
+}
+
+a.appbar-link:hover {
+	color: var(--anchor-font-color);
+}
+
+a.appbar-link:focus-visible {
+	outline-color: var(--anchor-font-color);
+}
+
 /**
  * Vertical rhythm between a page's top-level blocks. Global rather than
  * component-scoped so it reaches child components' root elements, which never
