@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import Link from './Link.svelte';
 	import type { Pathname } from '$app/types';
 
 	interface Props {
@@ -27,7 +28,7 @@
 		{/if}
 	{/each}
 	<button class="reroll btn preset-filled-primary-500" type="submit">Reroll</button>
-	<a class="change-criteria" href={action}>Change criteria</a>
+	<Link class="change-criteria" href={action}>Change criteria</Link>
 </form>
 
 <style>
@@ -38,7 +39,7 @@
 		align-items: center;
 	}
 
-	.change-criteria {
+	.reroll-controls :global(.change-criteria) {
 		font-size: 0.875rem;
 	}
 

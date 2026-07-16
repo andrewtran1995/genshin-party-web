@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { AppBar } from '@skeletonlabs/skeleton-svelte';
+	import NavLink from '$lib/components/NavLink.svelte';
 
 	let { children } = $props();
 
@@ -20,14 +21,14 @@
 
 <AppBar>
 	<AppBar.Lead>
-		<a href={resolve('/')} class="appbar-link h4">genshin-party</a>
+		<NavLink href={resolve('/')} class="h4">genshin-party</NavLink>
 	</AppBar.Lead>
 	<AppBar.Trail>
 		<nav class="flex flex-wrap gap-4">
-			<a class="appbar-link" href={resolve('/char')}>Random character</a>
-			<a class="appbar-link" href={resolve('/boss')}>Random boss</a>
-			<a class="appbar-link" href={resolve('/order')}>Random order</a>
-			<a class="appbar-link" href={resolve('/interactive')}>Interactive party</a>
+			<NavLink href={resolve('/char')}>Random character</NavLink>
+			<NavLink href={resolve('/boss')}>Random boss</NavLink>
+			<NavLink href={resolve('/order')}>Random order</NavLink>
+			<NavLink href={resolve('/interactive')}>Interactive party</NavLink>
 		</nav>
 	</AppBar.Trail>
 </AppBar>

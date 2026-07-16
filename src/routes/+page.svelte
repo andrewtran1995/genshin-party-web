@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import Link from '$lib/components/Link.svelte';
 </script>
 
 <svelte:head>
@@ -10,14 +11,14 @@
 
 <p>
 	Random pickers for Genshin Impact multiplayer sessions. The web counterpart to the
-	<a href="https://www.npmjs.com/package/genshin-party"><code>genshin-party</code></a> CLI.
+	<Link href="https://www.npmjs.com/package/genshin-party"><code>genshin-party</code></Link> CLI.
 </p>
 
 <ul>
-	<li><a href={resolve('/char')}>Random character</a> — element/rarity filters.</li>
-	<li><a href={resolve('/boss')}>Random boss</a> — single or three-boss gauntlet.</li>
-	<li><a href={resolve('/order')}>Random order</a> — shuffle four player numbers.</li>
+	<li><Link href={resolve('/char')}>Random character</Link> — element/rarity filters.</li>
+	<li><Link href={resolve('/boss')}>Random boss</Link> — single or three-boss gauntlet.</li>
+	<li><Link href={resolve('/order')}>Random order</Link> — shuffle four player numbers.</li>
 	<li>
-		<a href={resolve('/interactive')}>Interactive party</a> — guided 4-player roll with mains.
+		<Link href={resolve('/interactive')}>Interactive party</Link> — guided 4-player roll with mains.
 	</li>
 </ul>
