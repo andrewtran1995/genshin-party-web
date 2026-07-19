@@ -47,7 +47,7 @@
 <form class="stacked" method="POST" onsubmit={handleSubmit}>
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 		<label class="label">
-			<span class="label-text">Element</span>
+			<span class="label-text">Element:</span>
 			<select class="select" name="element">
 				<option value="">Any</option>
 				{#each data.elements as element (element)}
@@ -57,7 +57,7 @@
 		</label>
 
 		<label class="label">
-			<span class="label-text">Rarity</span>
+			<span class="label-text">Rarity:</span>
 			<select class="select" name="rarity">
 				<option value="">Any</option>
 				{#each data.rarities as rarity (rarity)}
