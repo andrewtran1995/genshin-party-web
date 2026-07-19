@@ -20,9 +20,16 @@
 <h1>Random selection order</h1>
 
 <form class="stacked" method="POST" onsubmit={handleSubmit}>
-	<button class="btn preset-filled-primary-500" type="submit">Shuffle</button>
+	<p class="intro">Shuffle four player numbers into a random pick order.</p>
+	<button class="btn preset-filled-primary-500 w-full sm:w-auto" type="submit">Shuffle</button>
 </form>
 
 {#if clientError}
 	<p class="error" role="alert">{clientError}</p>
 {/if}
+
+<style>
+	.intro {
+		opacity: 0.75;
+	}
+</style>

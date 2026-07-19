@@ -277,12 +277,28 @@
 	}
 
 	.candidate {
-		margin-block: 1rem;
+		margin-block: 1.5rem;
 	}
 
+	/* Thumb-friendly 2×2 grid on phones; a single inline row once there's room. */
 	.controls {
-		display: flex;
-		flex-wrap: wrap;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
 		gap: 0.5rem;
+	}
+
+	.controls > :global(.btn) {
+		width: 100%;
+	}
+
+	@media (width >= 34rem) {
+		.controls {
+			display: flex;
+			flex-wrap: wrap;
+		}
+
+		.controls > :global(.btn) {
+			width: auto;
+		}
 	}
 </style>
