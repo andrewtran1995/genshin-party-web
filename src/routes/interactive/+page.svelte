@@ -133,7 +133,8 @@
 {#if !selectionState}
 	<form
 		method="dialog"
-		class="player-form control-panel"
+		class="player-form"
+		class:player-form={true}
 		aria-label="Player names"
 		onsubmit={(event) => {
 			event.preventDefault();
@@ -145,14 +146,19 @@
 			<div class="player-inputs">
 				{#each playerNames, index (index)}
 					<div class="player-input-row">
-						<label class="field">
-							<span>Player {index + 1}</span>
-							<input bind:value={playerNames[index]} placeholder="Name (optional)" type="text" />
+						<label>
+							Player {index + 1}
+							<input
+								class="input"
+								bind:value={playerNames[index]}
+								placeholder="Name (optional)"
+								type="text"
+							/>
 						</label>
 						{#if playerNames.length > 1}
 							<button
 								aria-label={`Remove player ${index + 1}`}
-								class="btn btn-ghost remove-player"
+								class="remove-player btn btn-sm preset-tonal-error"
 								onclick={() => {
 									removePlayer(index);
 								}}
@@ -165,19 +171,21 @@
 				{/each}
 			</div>
 			{#if playerNames.length < 4}
-				<button class="btn btn-secondary add-player" onclick={addPlayer} type="button">
-					Add player
-				</button>
+				<button
+					class="add-player btn btn-sm preset-tonal-secondary"
+					onclick={addPlayer}
+					type="button">Add player</button
+				>
 			{/if}
 		</fieldset>
-		<button class="btn btn-primary btn-wide" type="submit">Start</button>
+		<button class="btn preset-filled-primary-500" type="submit">Start</button>
 	</form>
 {:else if isDone}
 	<h2>Chosen characters</h2>
 
 	<PartyResult choices={finalChoices} names={expandedNames} />
 
-	<button class="btn btn-primary" type="button" onclick={reset}>Start over</button>
+	<button class="btn preset-tonal-surface" type="button" onclick={reset}>Start over</button>
 {:else}
 	{#if currentPlayerNumber !== undefined}
 		<p>Now choosing for {formatPlayer(currentPlayerNumber, expandedNames)}.</p>
@@ -197,23 +205,28 @@
 
 	<div class="controls">
 		<button
-			class="btn btn-primary"
+			class="btn preset-filled-primary-500"
 			disabled={!candidate || loading}
 			onclick={acceptNormal}
 			type="button">Accept</button
 		>
 		<button
-			class="btn btn-secondary"
+			class="btn preset-filled-secondary-500"
 			disabled={!candidate || loading || isFinalPick}
 			onclick={acceptAsMain}
 			type="button"
 		>
 			Accept as main
 		</button>
-		<button class="btn btn-secondary" disabled={loading} onclick={reroll} type="button">
-			Reroll
-		</button>
-		<button class="btn btn-ghost" disabled={!canGoBack || loading} onclick={goBack} type="button">
+		<button class="btn preset-tonal-surface" disabled={loading} onclick={reroll} type="button"
+			>Reroll</button
+		>
+		<button
+			class="btn preset-tonal-surface"
+			disabled={!canGoBack || loading}
+			onclick={goBack}
+			type="button"
+		>
 			{#if lastChoice}
 				Go back to {formatPlayer(lastChoice.number, expandedNames)}
 			{:else}
@@ -227,18 +240,17 @@
 	.player-form fieldset {
 		border: 0;
 		padding: 0;
-		margin: 0;
+		margin: 0 0 1rem;
 	}
 
 	.player-form legend {
 		font-weight: 600;
-		margin-bottom: 0.75rem;
-		padding: 0;
+		margin-bottom: 0.5rem;
 	}
 
 	.player-inputs {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
 		gap: 0.75rem;
 		margin-bottom: 0.75rem;
 	}
@@ -249,13 +261,19 @@
 		gap: 0.5rem;
 	}
 
-	.player-input-row .field {
+	.player-input-row label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
 		flex: 1;
 	}
 
 	.remove-player {
-		flex: none;
-		padding-inline: 0.75rem;
+		padding-inline: 0.5rem;
+	}
+
+	.add-player {
+		margin-bottom: 1rem;
 	}
 
 	.candidate {
@@ -269,7 +287,7 @@
 		gap: 0.5rem;
 	}
 
-	.controls :global(.btn) {
+	.controls > :global(.btn) {
 		width: 100%;
 	}
 
@@ -279,7 +297,7 @@
 			flex-wrap: wrap;
 		}
 
-		.controls :global(.btn) {
+		.controls > :global(.btn) {
 			width: auto;
 		}
 	}

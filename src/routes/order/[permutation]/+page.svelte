@@ -48,9 +48,9 @@
 		align-items: center;
 		gap: 0.85rem;
 		padding: 0.65rem 0.85rem;
-		background: var(--surface);
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
+		background: var(--color-surface-50);
+		border: var(--default-border-width) solid var(--color-surface-200);
+		border-radius: var(--radius-base);
 	}
 
 	.pick-index {
@@ -60,14 +60,20 @@
 		flex: none;
 		width: 1.85rem;
 		height: 1.85rem;
-		border-radius: var(--radius-pill);
-		background: var(--accent-soft);
-		color: var(--ink);
+		border-radius: 9999px;
+		background: color-mix(in oklch, var(--color-primary-500) 16%, transparent);
 		font-weight: 700;
 		font-size: 0.9rem;
 	}
 
 	.pick-player {
 		font-weight: 600;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.pick-order li {
+			background: var(--color-surface-900);
+			border-color: var(--color-surface-800);
+		}
 	}
 </style>

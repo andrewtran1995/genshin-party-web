@@ -42,36 +42,34 @@
 	<title>Random character — genshin-party</title>
 </svelte:head>
 
-<div class="stacked">
-	<h1>Random character</h1>
+<h1>Random character</h1>
 
-	<form class="control-panel" method="POST" onsubmit={handleSubmit}>
-		<div class="field-row">
-			<label class="field">
-				<span>Element</span>
-				<select name="element">
-					<option value="">Any</option>
-					{#each data.elements as element (element)}
-						<option value={element}>{element}</option>
-					{/each}
-				</select>
-			</label>
+<form class="stacked" method="POST" onsubmit={handleSubmit}>
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+		<label class="label">
+			<span class="label-text">Element</span>
+			<select class="select" name="element">
+				<option value="">Any</option>
+				{#each data.elements as element (element)}
+					<option value={element}>{element}</option>
+				{/each}
+			</select>
+		</label>
 
-			<label class="field">
-				<span>Rarity</span>
-				<select name="rarity">
-					<option value="">Any</option>
-					{#each data.rarities as rarity (rarity)}
-						<option value={rarity}>{rarity}★</option>
-					{/each}
-				</select>
-			</label>
-		</div>
+		<label class="label">
+			<span class="label-text">Rarity</span>
+			<select class="select" name="rarity">
+				<option value="">Any</option>
+				{#each data.rarities as rarity (rarity)}
+					<option value={rarity}>{rarity}★</option>
+				{/each}
+			</select>
+		</label>
+	</div>
 
-		<button class="btn btn-primary btn-wide" type="submit">Roll</button>
-	</form>
+	<button class="btn preset-filled-primary-500 w-full sm:w-auto" type="submit">Roll</button>
+</form>
 
-	{#if clientError || form?.error}
-		<p class="error" role="alert">{clientError || form?.error}</p>
-	{/if}
-</div>
+{#if clientError || form?.error}
+	<p class="error" role="alert">{clientError || form?.error}</p>
+{/if}

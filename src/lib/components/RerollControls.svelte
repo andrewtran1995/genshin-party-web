@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import Link from './Link.svelte';
 	import type { Pathname } from '$app/types';
 
 	interface Props {
@@ -26,20 +27,25 @@
 			<input type="hidden" {name} {value} />
 		{/if}
 	{/each}
-	<button class="btn btn-primary reroll" type="submit">Reroll</button>
-	<a class="btn btn-ghost change-criteria" href={action}>Change criteria</a>
+	<button class="reroll btn preset-filled-primary-500" type="submit">Reroll</button>
+	<Link class="change-criteria" href={action}>Change criteria</Link>
 </form>
 
 <style>
 	.reroll-controls {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: 0.75rem;
 		align-items: stretch;
 	}
 
 	.reroll {
 		width: 100%;
+	}
+
+	.reroll-controls :global(.change-criteria) {
+		font-size: 0.875rem;
+		text-align: center;
 	}
 
 	@media (width >= 30rem) {

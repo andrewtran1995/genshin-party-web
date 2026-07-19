@@ -1,3 +1,20 @@
+/* stylelint-disable import-notation, no-invalid-position-at-import-rule, at-rule-no-unknown, at-rule-empty-line-before */
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton-svelte';
+@import './lib/themes/genshin.css';
+/* stylelint-enable import-notation, no-invalid-position-at-import-rule, at-rule-no-unknown, at-rule-empty-line-before */
+
+/* Windows browser fix for form element backgrounds until Skeleton v5. */
+.select,
+.input,
+.textarea,
+.input-group {
+	background-color: var(--color-surface-50-950);
+	color: var(--color-surface-950-50);
+}
+
 /**
  * Heading face, subset to Latin from the Simplified-Chinese UI font shipped in
  * the Genshin Impact client (`SDK_SC_Web Heavy`, © Beijing HanYi Keyin). The
@@ -24,76 +41,66 @@
 	box-sizing: border-box;
 }
 
-:root {
-	--font-body: system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
-	--font-heading: 'Genshin Heavy', var(--font-body);
-
-	/* Accent — Genshin gold, shared across light and dark. Primary actions and
-	   the current-page marker only; never decoration (product register). */
-	--accent: oklch(80% 0.13 86deg);
-	--accent-strong: oklch(72% 0.14 80deg);
-	--accent-soft: oklch(80% 0.13 86deg / 16%);
-	--on-accent: oklch(24% 0.04 80deg);
-
-	/* Neutral surfaces + ink — light theme defaults, overridden for dark below. */
-	--surface: oklch(99% 0.003 90deg);
-	--surface-2: oklch(96.5% 0.005 90deg);
-	--ink: oklch(28% 0.02 280deg);
-	--ink-muted: oklch(47% 0.02 280deg);
-	--border: oklch(88% 0.008 280deg);
-	--border-strong: oklch(74% 0.015 280deg);
-	--danger: oklch(52% 0.19 27deg);
-
-	/* Control geometry. 2.75rem ≈ 44px, the touch-target floor. */
-	--control-h: 2.75rem;
-	--radius: 10px;
-	--radius-lg: 14px;
-	--radius-pill: 999px;
-
-	font-family: var(--font-body);
-	line-height: 1.5;
-	color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--surface: oklch(25% 0.012 285deg);
-		--surface-2: oklch(30% 0.016 285deg);
-		--ink: oklch(93% 0.008 285deg);
-		--ink-muted: oklch(72% 0.016 285deg);
-		--border: oklch(40% 0.014 285deg);
-		--border-strong: oklch(53% 0.02 285deg);
-		--danger: oklch(74% 0.15 27deg);
-	}
-}
-
 h1,
 h2,
 h3 {
-	font-family: var(--font-heading);
+	font-family: var(--heading-font-family);
+	font-weight: var(--heading-font-weight);
+	font-style: var(--heading-font-style);
+	letter-spacing: var(--heading-letter-spacing);
 	line-height: 1.2;
-	letter-spacing: 0.01em;
-	text-wrap: balance;
 }
 
-body {
-	margin: 0;
-	padding: 1rem;
-	padding-inline: max(1rem, env(safe-area-inset-left));
-	padding-bottom: max(1rem, env(safe-area-inset-bottom));
-	max-width: 60rem;
-	margin-inline: auto;
-	color: var(--ink);
-	text-size-adjust: 100%;
+/* Space between a page's heading and the content below it. */
+main > h1 {
+	margin-block-end: var(--stack-gap, 1.5rem);
+}
+
+/* Screen-reader-only text (e.g., live-region announcements). */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
 }
 
 a {
+	color: var(--anchor-font-color);
+	text-decoration: underline;
+	text-decoration-color: var(--anchor-font-color);
+	text-underline-offset: 0.15em;
+	transition:
+		color 150ms ease-in-out,
+		text-decoration-color 150ms ease-in-out;
+}
+
+a:hover {
+	color: var(--color-primary-500);
+	text-decoration-color: var(--color-primary-500);
+}
+
+a:focus-visible {
+	outline: 2px solid var(--color-primary-500);
+	outline-offset: 2px;
+	border-radius: 0.125rem;
+}
+
+a.appbar-link {
+	text-decoration: none;
 	color: inherit;
 }
 
-.error {
-	color: var(--danger);
-	font-weight: 500;
+a.appbar-link:hover {
+	color: var(--anchor-font-color);
+}
+
+a.appbar-link:focus-visible {
+	outline-color: var(--anchor-font-color);
 }
 
 /**
@@ -103,211 +110,4 @@ a {
  */
 .stacked > * + * {
 	margin-block-start: var(--stack-gap, 1.5rem);
-}
-
-/* ---------------------------------------------------------------------------
-   Controls — one shared vocabulary reused across every form and page so the
-   same action always looks the same (product register: earned familiarity).
-   --------------------------------------------------------------------------- */
-
-.btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	min-height: var(--control-h);
-	padding: 0.5rem 1.25rem;
-	border: 1px solid transparent;
-	border-radius: var(--radius-pill);
-	font: inherit;
-	font-weight: 600;
-	line-height: 1.1;
-	color: var(--ink);
-	background: var(--surface-2);
-	text-decoration: none;
-	cursor: pointer;
-	transition:
-		background-color 160ms ease,
-		border-color 160ms ease,
-		box-shadow 160ms ease,
-		transform 100ms ease;
-}
-
-.btn:focus-visible {
-	outline: 2px solid var(--accent-strong);
-	outline-offset: 2px;
-}
-
-.btn:active:not(:disabled) {
-	transform: translateY(1px);
-}
-
-.btn:disabled,
-.btn[aria-disabled='true'] {
-	opacity: 0.5;
-	cursor: not-allowed;
-}
-
-.btn-primary {
-	background: var(--accent);
-	color: var(--on-accent);
-	box-shadow: 0 1px 2px oklch(0% 0 0deg / 12%);
-}
-
-.btn-secondary {
-	background: var(--surface-2);
-	color: var(--ink);
-	border-color: var(--border-strong);
-}
-
-.btn-ghost {
-	background: transparent;
-	color: var(--ink-muted);
-	padding-inline: 0.85rem;
-}
-
-@media (hover: hover) {
-	.btn-primary:hover:not(:disabled) {
-		background: var(--accent-strong);
-	}
-
-	.btn-secondary:hover:not(:disabled) {
-		border-color: var(--accent);
-		background: var(--surface);
-	}
-
-	.btn-ghost:hover:not(:disabled) {
-		color: var(--ink);
-		background: var(--surface-2);
-	}
-}
-
-/* Touch devices get taller, wider hit areas regardless of screen size. */
-@media (pointer: coarse) {
-	.btn {
-		min-height: 3rem;
-		padding-inline: 1.4rem;
-	}
-}
-
-/* Full-width when the row would be cramped; auto once there's room. */
-.btn-wide {
-	width: 100%;
-}
-
-@media (width >= 30rem) {
-	.btn-wide {
-		width: auto;
-	}
-}
-
-/* ---- Form fields ---------------------------------------------------------- */
-
-.control-panel {
-	display: flex;
-	flex-direction: column;
-	gap: 1.25rem;
-	align-items: stretch;
-	padding: 1.25rem;
-	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: var(--radius-lg);
-}
-
-@media (width >= 30rem) {
-	.control-panel {
-		align-items: flex-start;
-	}
-}
-
-.field {
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
-	font-weight: 600;
-	font-size: 0.9rem;
-	color: var(--ink);
-}
-
-/* Filters sit side by side on wider screens, stack when they'd get too narrow. */
-.field-row {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 1rem;
-	width: 100%;
-}
-
-.field-row > .field {
-	flex: 1 1 12rem;
-}
-
-select,
-input[type='text'] {
-	width: 100%;
-	min-height: var(--control-h);
-	padding: 0.5rem 0.85rem;
-	font: inherit;
-	font-weight: 400;
-	color: var(--ink);
-	background: var(--surface);
-	border: 1px solid var(--border-strong);
-	border-radius: var(--radius);
-	appearance: none;
-}
-
-select {
-	padding-right: 2.25rem;
-	cursor: pointer;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239a9a9a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-	background-repeat: no-repeat;
-	background-position: right 0.75rem center;
-}
-
-select:focus-visible,
-input[type='text']:focus-visible {
-	outline: none;
-	border-color: var(--accent);
-	box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-/* Whole-row toggles: the label is the tap target, not just the tick box. */
-.option-group {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin: 0;
-	padding: 0;
-	border: 0;
-	width: 100%;
-}
-
-.option {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	min-height: var(--control-h);
-	padding: 0.5rem 0.85rem;
-	font-weight: 500;
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	background: var(--surface);
-	cursor: pointer;
-}
-
-.option:has(input:checked) {
-	border-color: var(--accent);
-	background: var(--accent-soft);
-}
-
-.option:focus-within {
-	border-color: var(--accent);
-	box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-input[type='checkbox'] {
-	flex: none;
-	width: 1.2rem;
-	height: 1.2rem;
-	accent-color: var(--accent-strong);
-	cursor: pointer;
 }

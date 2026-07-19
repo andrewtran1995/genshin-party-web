@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import Link from '$lib/components/Link.svelte';
 
 	const pickers = [
 		{
@@ -29,83 +30,91 @@
 	<title>genshin-party</title>
 </svelte:head>
 
-<div class="stacked">
-	<div class="intro">
-		<h1>genshin-party</h1>
-		<p>
-			Random pickers for Genshin Impact multiplayer sessions. The web counterpart to the
-			<a href="https://www.npmjs.com/package/genshin-party"><code>genshin-party</code></a> CLI.
-		</p>
-	</div>
+<h1>genshin-party</h1>
 
-	<nav class="menu" aria-label="Pickers">
-		{#each pickers as picker (picker.href)}
-			<a class="menu-item" href={picker.href}>
-				<span class="menu-title">{picker.title}</span>
-				<span class="menu-blurb">{picker.blurb}</span>
-			</a>
-		{/each}
-	</nav>
-</div>
+<p class="intro">
+	Random pickers for Genshin Impact multiplayer sessions. The web counterpart to the
+	<Link href="https://www.npmjs.com/package/genshin-party"><code>genshin-party</code></Link> CLI.
+</p>
+
+<nav class="picker-grid" aria-label="Pickers">
+	{#each pickers as picker (picker.href)}
+		<a class="picker-tile" href={picker.href}>
+			<span class="picker-title">{picker.title}</span>
+			<span class="picker-blurb">{picker.blurb}</span>
+		</a>
+	{/each}
+</nav>
 
 <style>
-	.intro p {
+	.intro {
 		max-width: 60ch;
-		color: var(--ink-muted);
+		margin-block-end: var(--stack-gap, 1.5rem);
 	}
 
-	.menu {
+	.picker-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 		gap: 1rem;
 	}
 
-	.menu-item {
+	.picker-tile {
 		display: flex;
 		flex-direction: column;
 		gap: 0.35rem;
-		min-height: var(--control-h);
 		padding: 1.1rem 1.25rem;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-lg);
-		background: var(--surface);
+		border: var(--default-border-width) solid var(--color-surface-200);
+		border-radius: var(--radius-container);
+		background: var(--color-surface-50);
+		color: var(--base-font-color);
 		text-decoration: none;
-		color: var(--ink);
 		transition:
 			border-color 160ms ease,
 			background-color 160ms ease,
 			transform 160ms ease;
 	}
 
-	.menu-title {
+	.picker-title {
 		font-weight: 700;
 		font-size: 1.05rem;
 	}
 
-	.menu-blurb {
+	.picker-blurb {
 		font-size: 0.9rem;
-		color: var(--ink-muted);
+		opacity: 0.75;
 	}
 
-	.menu-item:focus-visible {
-		outline: 2px solid var(--accent-strong);
+	.picker-tile:focus-visible {
+		outline: var(--default-ring-width) solid var(--color-primary-500);
 		outline-offset: 2px;
 	}
 
 	@media (hover: hover) {
-		.menu-item:hover {
-			border-color: var(--accent);
-			background: var(--surface-2);
+		.picker-tile:hover {
+			border-color: var(--color-primary-500);
+			background: var(--color-surface-100);
 			transform: translateY(-2px);
 		}
 	}
 
+	@media (prefers-color-scheme: dark) {
+		.picker-tile {
+			border-color: var(--color-surface-800);
+			background: var(--color-surface-900);
+			color: var(--base-font-color-dark);
+		}
+
+		.picker-tile:hover {
+			background: var(--color-surface-800);
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
-		.menu-item {
+		.picker-tile {
 			transition: border-color 160ms ease;
 		}
 
-		.menu-item:hover {
+		.picker-tile:hover {
 			transform: none;
 		}
 	}
