@@ -24,11 +24,11 @@
 		<NavLink href={resolve('/')} class="h4">genshin-party</NavLink>
 	</AppBar.Lead>
 	<AppBar.Trail>
-		<nav class="flex flex-wrap gap-4">
-			<NavLink href={resolve('/char')}>Random character</NavLink>
-			<NavLink href={resolve('/boss')}>Random boss</NavLink>
-			<NavLink href={resolve('/order')}>Random order</NavLink>
-			<NavLink href={resolve('/interactive')}>Interactive party</NavLink>
+		<nav class="flex flex-wrap justify-end gap-x-4 gap-y-1">
+			<NavLink href={resolve('/char')}>Character</NavLink>
+			<NavLink href={resolve('/boss')}>Boss</NavLink>
+			<NavLink href={resolve('/order')}>Order</NavLink>
+			<NavLink href={resolve('/interactive')}>Interactive</NavLink>
 		</nav>
 	</AppBar.Trail>
 </AppBar>

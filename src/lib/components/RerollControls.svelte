@@ -36,17 +36,27 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
-		align-items: center;
+		align-items: stretch;
+	}
+
+	.reroll {
+		width: 100%;
 	}
 
 	.reroll-controls :global(.change-criteria) {
 		font-size: 0.875rem;
+		text-align: center;
 	}
 
 	@media (width >= 30rem) {
 		.reroll-controls {
 			flex-direction: row;
 			align-items: center;
+			justify-content: center;
+		}
+
+		.reroll {
+			width: auto;
 		}
 	}
 </style>
