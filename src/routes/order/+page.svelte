@@ -19,8 +19,8 @@
 
 <h1>Random selection order</h1>
 
-<form method="POST" onsubmit={handleSubmit}>
-	<button type="submit">Shuffle</button>
+<form class="stacked" method="POST" onsubmit={handleSubmit}>
+	<button class="btn preset-filled-primary-500" type="submit">Shuffle</button>
 </form>
 
 {#if clientError}
