@@ -51,6 +51,11 @@ h3 {
 	line-height: 1.2;
 }
 
+/* Space between a page's heading and the content below it. */
+main > h1 {
+	margin-block-end: var(--stack-gap, 1.5rem);
+}
+
 /* Screen-reader-only text (e.g., live-region announcements). */
 .visually-hidden {
 	position: absolute;
