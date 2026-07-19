@@ -1,3 +1,20 @@
+/* stylelint-disable import-notation, no-invalid-position-at-import-rule, at-rule-no-unknown, at-rule-empty-line-before */
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton-svelte';
+@import './lib/themes/genshin.css';
+/* stylelint-enable import-notation, no-invalid-position-at-import-rule, at-rule-no-unknown, at-rule-empty-line-before */
+
+/* Windows browser fix for form element backgrounds until Skeleton v5. */
+.select,
+.input,
+.textarea,
+.input-group {
+	background-color: var(--color-surface-50-950);
+	color: var(--color-surface-950-50);
+}
+
 /**
  * Heading face, subset to Latin from the Simplified-Chinese UI font shipped in
  * the Genshin Impact client (`SDK_SC_Web Heavy`, © Beijing HanYi Keyin). The
@@ -24,36 +41,53 @@
 	box-sizing: border-box;
 }
 
-:root {
-	--font-body: system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
-	--font-heading: 'Genshin Heavy', var(--font-body);
-
-	font-family: var(--font-body);
-	line-height: 1.5;
-	color-scheme: light dark;
-}
-
 h1,
 h2,
 h3 {
-	font-family: var(--font-heading);
+	font-family: var(--heading-font-family);
+	font-weight: var(--heading-font-weight);
+	font-style: var(--heading-font-style);
+	letter-spacing: var(--heading-letter-spacing);
 	line-height: 1.2;
-	letter-spacing: 0.01em;
 }
 
-body {
-	margin: 0;
-	padding: 1rem;
-	max-width: 60rem;
-	margin-inline: auto;
+/* Space between a page's heading and the content below it. */
+main > h1 {
+	margin-block-end: var(--stack-gap, 1.5rem);
 }
 
 a {
+	color: var(--anchor-font-color);
+	text-decoration: underline;
+	text-decoration-color: var(--anchor-font-color);
+	text-underline-offset: 0.15em;
+	transition:
+		color 150ms ease-in-out,
+		text-decoration-color 150ms ease-in-out;
+}
+
+a:hover {
+	color: var(--color-primary-500);
+	text-decoration-color: var(--color-primary-500);
+}
+
+a:focus-visible {
+	outline: 2px solid var(--color-primary-500);
+	outline-offset: 2px;
+	border-radius: 0.125rem;
+}
+
+a.appbar-link {
+	text-decoration: none;
 	color: inherit;
 }
 
-button {
-	cursor: pointer;
+a.appbar-link:hover {
+	color: var(--anchor-font-color);
+}
+
+a.appbar-link:focus-visible {
+	outline-color: var(--anchor-font-color);
 }
 
 /* Consistent keyboard focus indicator across all interactive elements. */

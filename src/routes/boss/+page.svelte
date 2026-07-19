@@ -44,18 +44,18 @@
 
 <h1>Random boss</h1>
 
-<form method="POST" onsubmit={handleSubmit}>
-	<label>
-		<input type="checkbox" name="gauntlet" />
-		Gauntlet (3 bosses)
+<form class="stacked" method="POST" onsubmit={handleSubmit}>
+	<label class="flex items-center gap-2">
+		<input class="checkbox" type="checkbox" name="gauntlet" />
+		<span>Gauntlet (3 bosses)</span>
 	</label>
 
-	<label>
-		<input type="checkbox" name="weekly" checked value="on" />
-		Weekly bosses only
+	<label class="flex items-center gap-2">
+		<input class="checkbox" type="checkbox" name="weekly" checked value="on" />
+		<span>Weekly bosses only</span>
 	</label>
 
-	<button type="submit">Roll</button>
+	<button class="btn preset-filled-primary-500" type="submit">Roll</button>
 </form>
 
 {#if clientError || form?.error}

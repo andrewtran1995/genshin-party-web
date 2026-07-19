@@ -44,10 +44,10 @@
 
 <h1>Random character</h1>
 
-<form method="POST" onsubmit={handleSubmit}>
-	<label>
-		Element:
-		<select name="element">
+<form class="stacked" method="POST" onsubmit={handleSubmit}>
+	<label class="label">
+		<span class="label-text">Element:</span>
+		<select class="select" name="element">
 			<option value="">any</option>
 			{#each data.elements as element (element)}
 				<option value={element}>{element}</option>
@@ -55,9 +55,9 @@
 		</select>
 	</label>
 
-	<label>
-		Rarity:
-		<select name="rarity">
+	<label class="label">
+		<span class="label-text">Rarity:</span>
+		<select class="select" name="rarity">
 			<option value="">any</option>
 			{#each data.rarities as rarity (rarity)}
 				<option value={rarity}>{rarity}★</option>
@@ -65,7 +65,7 @@
 		</select>
 	</label>
 
-	<button type="submit">Roll</button>
+	<button class="btn preset-filled-primary-500" type="submit">Roll</button>
 </form>
 
 {#if clientError || form?.error}

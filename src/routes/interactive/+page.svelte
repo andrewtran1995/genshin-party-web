@@ -169,6 +169,7 @@
 							Player {index + 1}
 							<input
 								bind:this={playerInputRefs[index]}
+								class="input"
 								bind:value={playerNames[index]}
 								placeholder="Name (optional)"
 								type="text"
@@ -177,7 +178,7 @@
 						{#if playerNames.length > 1}
 							<button
 								aria-label={`Remove player ${index + 1}`}
-								class="remove-player"
+								class="remove-player btn btn-sm preset-tonal-error"
 								onclick={() => {
 									void removePlayer(index);
 								}}
@@ -190,11 +191,14 @@
 				{/each}
 			</div>
 			{#if playerNames.length < 4}
-				<button class="add-player" onclick={() => void addPlayer()} type="button">Add player</button
+				<button
+					class="add-player btn btn-sm preset-tonal-secondary"
+					onclick={() => void addPlayer()}
+					type="button">Add player</button
 				>
 			{/if}
 		</fieldset>
-		<button type="submit">Start</button>
+		<button class="btn preset-filled-primary-500" type="submit">Start</button>
 	</form>
 {:else if isDone}
 	<h2>Chosen characters</h2>
@@ -202,7 +206,12 @@
 
 	<PartyResult choices={finalChoices} names={expandedNames} />
 
-	<button type="button" bind:this={startOverButtonRef} onclick={reset}>Start over</button>
+	<button
+		class="btn preset-tonal-surface"
+		type="button"
+		bind:this={startOverButtonRef}
+		onclick={reset}>Start over</button
+	>
 {:else}
 	{#if currentPlayerNumber !== undefined}
 		<p>Now choosing for {formatPlayer(currentPlayerNumber, expandedNames)}.</p>
@@ -224,15 +233,28 @@
 	<div class="controls">
 		<button
 			bind:this={acceptButtonRef}
+			class="btn preset-filled-primary-500"
 			disabled={!candidate || loading}
 			onclick={acceptNormal}
 			type="button">Accept</button
 		>
-		<button disabled={!candidate || loading || isFinalPick} onclick={acceptAsMain} type="button">
+		<button
+			class="btn preset-filled-secondary-500"
+			disabled={!candidate || loading || isFinalPick}
+			onclick={acceptAsMain}
+			type="button"
+		>
 			Accept as main
 		</button>
-		<button disabled={loading} onclick={reroll} type="button">Reroll</button>
-		<button disabled={!canGoBack || loading} onclick={goBack} type="button">
+		<button class="btn preset-tonal-surface" disabled={loading} onclick={reroll} type="button"
+			>Reroll</button
+		>
+		<button
+			class="btn preset-tonal-surface"
+			disabled={!canGoBack || loading}
+			onclick={goBack}
+			type="button"
+		>
 			{#if lastChoice}
 				Go back to {formatPlayer(lastChoice.number, expandedNames)}
 			{:else}
