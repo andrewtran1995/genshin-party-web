@@ -27,7 +27,7 @@
 		fetchCandidate();
 	}
 
-	function fetchCandidate() {
+	function fetchCandidate(alsoExclude: string[] = []) {
 		if (!selectionState) return;
 		loading = true;
 		error = '';
@@ -41,7 +41,7 @@
 
 		const { playerChoices } = selectionState;
 		const rarity = playerChoices.at(-1)?.isMain ? '4' : '5';
-		const exclude = playerChoices.map((choice) => choice.char.name);
+		const exclude = [...playerChoices.map((choice) => choice.char.name), ...alsoExclude];
 		candidate = getRandomChar({ rarity, exclude, includeTraveler: false });
 		if (!candidate) {
 			error = 'No eligible character.';
@@ -65,8 +65,10 @@
 	}
 
 	function reroll() {
+		// Exclude the current candidate so a reroll always shows a different one.
+		const current = candidate?.name;
 		candidate = undefined;
-		fetchCandidate();
+		fetchCandidate(current ? [current] : []);
 	}
 
 	function goBack() {
