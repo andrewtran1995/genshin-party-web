@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { Char } from '$lib/types';
 import {
 	getBossByName,
 	getBosses,
@@ -7,7 +6,6 @@ import {
 	getChars,
 	getRandomBosses,
 	getRandomChar,
-	randomChars,
 	sample
 } from './index';
 
@@ -74,6 +72,13 @@ describe('getBosses', () => {
 		expect(bosses.length).toBeGreaterThan(0);
 		expect(bosses.every((boss) => boss.enemyType === 'BOSS')).toBe(true);
 	});
+
+	it('excludes bosses by name when requested', () => {
+		const allNames = getBosses().map((boss) => boss.name);
+		const excluded = allNames.slice(0, 5);
+		const bosses = getBosses({ exclude: excluded });
+		expect(bosses.some((boss) => excluded.includes(boss.name))).toBe(false);
+	});
 });
 
 describe('getBossByName', () => {
@@ -95,21 +100,6 @@ describe('sample', () => {
 
 	it('caps at the pool size', () => {
 		expect(sample([1, 2], 5)).toHaveLength(2);
-	});
-});
-
-describe('randomChars', () => {
-	it('exhausts the full eligible set before repeating', () => {
-		const eligible = getChars({ rarity: '5' });
-
-		const firstCycle: Char[] = [];
-		for (const char of randomChars({ rarity: '5' })) {
-			firstCycle.push(char);
-			if (firstCycle.length === eligible.length) break;
-		}
-
-		expect(new Set(firstCycle.map((char) => char.name)).size).toBe(eligible.length);
-		expect(new Set(firstCycle)).toEqual(new Set(eligible));
 	});
 });
 

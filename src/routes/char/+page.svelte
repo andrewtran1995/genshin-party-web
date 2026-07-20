@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import type { Pathname } from '$app/types';
 	import type { ActionData, PageData } from './$types';
-	import { isElement, isRarity } from '$lib/types';
-	import { getRandomChar } from '$lib/genshin';
+	import { CHAR_ERROR, rollCharUrl, parseCharFilters } from '$lib/genshin';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let clientError = $state('');
@@ -13,28 +13,13 @@
 		clientError = '';
 
 		const formData = new FormData(event.currentTarget as HTMLFormElement);
-		const elementRaw = formData.get('element');
-		const rarityRaw = formData.get('rarity');
-		const element = typeof elementRaw === 'string' ? elementRaw : '';
-		const rarity = typeof rarityRaw === 'string' ? rarityRaw : '';
-
-		const char = getRandomChar({
-			element: isElement(element) ? element : undefined,
-			rarity: isRarity(rarity) ? rarity : undefined
-		});
-		if (!char) {
-			clientError = 'No character matches those filters.';
+		const url = rollCharUrl(parseCharFilters(formData));
+		if (!url) {
+			clientError = CHAR_ERROR;
 			return;
 		}
 
-		const query = [
-			element && `element=${encodeURIComponent(element)}`,
-			rarity && `rarity=${encodeURIComponent(rarity)}`
-		]
-			.filter(Boolean)
-			.join('&');
-
-		void goto(resolve(`/char/${encodeURIComponent(char.name)}${query ? `?${query}` : ''}`));
+		void goto(resolve(url as Pathname));
 	}
 </script>
 

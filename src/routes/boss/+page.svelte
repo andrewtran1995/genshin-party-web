@@ -1,40 +1,25 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import type { Pathname } from '$app/types';
 	import type { ActionData } from './$types';
-	import { getRandomBoss, getRandomBosses } from '$lib/genshin';
+	import { BOSS_ERROR, rollBossUrl, parseBossFilters } from '$lib/genshin';
 
 	let { form }: { form: ActionData } = $props();
 	let clientError = $state('');
-
-	function buildQuery(weekly: boolean) {
-		return weekly ? '?weekly=1' : '';
-	}
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
 		clientError = '';
 
 		const data = new FormData(event.currentTarget as HTMLFormElement);
-		const gauntlet = data.has('gauntlet');
-		const weekly = data.has('weekly');
-
-		if (gauntlet) {
-			const bosses = getRandomBosses({ weekly }, 3);
-			if (bosses.length === 0) {
-				clientError = 'No bosses match those filters.';
-				return;
-			}
-			const names = bosses.map((boss) => boss.name);
-			void goto(resolve(`/boss/${names.map(encodeURIComponent).join('/')}${buildQuery(weekly)}`));
-		} else {
-			const boss = getRandomBoss({ weekly });
-			if (!boss) {
-				clientError = 'No bosses match those filters.';
-				return;
-			}
-			void goto(resolve(`/boss/${encodeURIComponent(boss.name)}${buildQuery(weekly)}`));
+		const { gauntlet, weekly } = parseBossFilters(data);
+		const url = rollBossUrl({ gauntlet, weekly });
+		if (!url) {
+			clientError = BOSS_ERROR;
+			return;
 		}
+		void goto(resolve(url as Pathname));
 	}
 </script>
 
