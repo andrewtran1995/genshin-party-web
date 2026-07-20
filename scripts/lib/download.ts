@@ -26,21 +26,9 @@ export const downloadIcon = async (
 	deps.writeFileSync(path, buffer);
 };
 
-const downloadWithRetry = async (
-	task: DownloadTask,
-	deps: DownloadDeps,
-	force = false
-): Promise<void> => {
-	try {
-		await downloadIcon(task, deps, force);
-	} catch {
-		await downloadIcon(task, deps, force);
-	}
-};
-
 export const downloadAll = (
 	tasks: readonly DownloadTask[],
 	deps: DownloadDeps,
 	force = false
 ): Promise<void> =>
-	Promise.all(tasks.map((task) => downloadWithRetry(task, deps, force))).then(() => undefined);
+	Promise.all(tasks.map((task) => downloadIcon(task, deps, force))).then(() => undefined);

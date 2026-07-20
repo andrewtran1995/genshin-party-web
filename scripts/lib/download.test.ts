@@ -46,20 +46,12 @@ describe('downloadIcon', () => {
 });
 
 describe('downloadAll', () => {
-	it('retries once on failure and succeeds', async () => {
-		const body = new Uint8Array([1]);
-		const deps = emptyDeps();
-		deps.existsSync.mockReturnValue(false);
-		deps.fetch.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce(okResponse(body));
-		await downloadAll([baseTask], deps);
-		expect(deps.fetch).toHaveBeenCalledTimes(2);
-	});
-
-	it('throws after two failures', async () => {
+	it('throws after a single failure', async () => {
 		const deps = emptyDeps();
 		deps.existsSync.mockReturnValue(false);
 		deps.fetch.mockRejectedValue(new Error('network'));
 		await expect(downloadAll([baseTask], deps)).rejects.toThrow('network');
+		expect(deps.fetch).toHaveBeenCalledTimes(1);
 	});
 
 	it('downloads even if file exists when force is true', async () => {
