@@ -11,7 +11,6 @@
 		type PlayerSelectionState
 	} from '$lib/player-selection-stack';
 
-	let playerNames = $state(['']);
 	let expandedNames = $state<string[]>([]);
 	let selectionState = $state<PlayerSelectionState | undefined>();
 	let currentPlayerNumber = $state<number | undefined>();
@@ -20,7 +19,7 @@
 	let loading = $state(false);
 	let error = $state('');
 
-	function start() {
+	function start(playerNames: string[]) {
 		expandedNames = expandPlayerNames(playerNames);
 		const initialState = createPlayerSelectionState();
 		selectionState = initialState;
@@ -90,7 +89,6 @@
 		discardedChoice = undefined;
 		loading = false;
 		error = '';
-		playerNames = [''];
 		expandedNames = [];
 	}
 </script>
@@ -102,7 +100,6 @@
 <h1>Interactive party selection</h1>
 
 <InteractiveFlow
-	bind:playerNames
 	{selectionState}
 	{currentPlayerNumber}
 	{candidate}

@@ -8,15 +8,14 @@
 	import type { PlayerSelectionState } from '$lib/player-selection-stack';
 
 	interface Props {
-		/** Draft player names, bound so the parent can read them when the flow starts. */
-		playerNames?: string[];
 		selectionState: PlayerSelectionState | undefined;
 		currentPlayerNumber: number | undefined;
 		candidate: Char | undefined;
 		loading: boolean;
 		error: string;
 		expandedNames: string[];
-		onstart: () => void | Promise<void>;
+		/** Receives the draft player names when the flow starts. */
+		onstart: (playerNames: string[]) => void | Promise<void>;
 		onaccept: (isMain: boolean) => void | Promise<void>;
 		onreroll: () => void;
 		ongoback: () => void | Promise<void>;
@@ -24,7 +23,6 @@
 	}
 
 	let {
-		playerNames = $bindable(['']),
 		selectionState,
 		currentPlayerNumber,
 		candidate,
@@ -38,6 +36,10 @@
 		onreset
 	}: Props = $props();
 
+	// The draft names are a self-contained editing concern, owned here as deep
+	// reactive state (so per-input bindings stay reactive) and handed to the
+	// parent only when the flow starts.
+	let playerNames = $state(['']);
 	let playerInputRefs = $state<HTMLInputElement[]>([]);
 	let acceptButtonRef = $state<HTMLButtonElement | undefined>();
 	let startOverButtonRef = $state<HTMLButtonElement | undefined>();
@@ -55,7 +57,7 @@
 	// tied to the handler (rather than a state effect) means a reroll — which
 	// swaps the candidate without an intent to move focus — leaves focus put.
 	async function start() {
-		await onstart();
+		await onstart(playerNames);
 		await tick();
 		acceptButtonRef?.focus();
 	}
@@ -90,6 +92,7 @@
 
 	async function reset() {
 		await onreset();
+		playerNames = [''];
 		await tick();
 		playerInputRefs[0]?.focus();
 	}
