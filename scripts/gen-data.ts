@@ -7,13 +7,16 @@
  * reads (`src/lib/genshin/data/*`), which is a build artifact and not committed.
  *
  * Re-run with `pnpm gen:data` whenever the `genshin-db` version is bumped.
+ * Use `pnpm gen:data -- --force` to re-download all icons.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { filter, map, pipe } from 'remeda';
 import genshinDb from 'genshin-db';
-import type { Char, Element, Enemy } from '../src/lib/types.ts';
+import type { Char, Enemy } from '../src/lib/types.js';
+import { downloadAll } from './lib/download.js';
+import { planBossIconDownloads, planIconDownloads } from './lib/icon-plan.js';
+import { filterBossEnemies, trimBoss, trimCharacters } from './lib/trim.js';
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), '../src/lib/genshin/data');
 const staticBossIconsDir = join(dirname(fileURLToPath(import.meta.url)), '../static/icons/bosses');
@@ -26,39 +29,14 @@ const staticWeaponIconsDir = join(
 	'../static/icons/weapons'
 );
 
+const FORCE = process.argv.includes('--force');
+
 const queryOptions = { matchCategories: true, verboseCategories: true } as const;
 
-/** `ELEMENT_PYRO` → `pyro`, matching the `elements` form values. */
-const toElement = (elementType: string): Element =>
-	elementType.replace(/^ELEMENT_/, '').toLowerCase() as Element;
+const characters: Char[] = trimCharacters(genshinDb.characters('names', queryOptions));
 
-const characters: Char[] = pipe(
-	genshinDb.characters('names', queryOptions),
-	// Exclude Aether so the Traveler isn't returned twice (Aether + Lumine).
-	filter((char) => char.name !== 'Aether'),
-	map((char) => ({
-		id: char.id,
-		name: char.name,
-		title: char.title,
-		rarity: char.rarity,
-		element: toElement(char.elementType),
-		elementText: char.elementText,
-		weaponText: char.weaponText,
-		region: char.region,
-		// Fandom/Wikia portrait URLs (char.images.portrait) are broken as of mid-2026.
-		// Use enka.network which mirrors HoYoverse game assets reliably.
-		// filename_gachaSplash is undefined for Lumine (Traveler), so derive it
-		// from filename_icon as a fallback (UI_AvatarIcon_X → UI_Gacha_AvatarImg_X).
-		portrait: (() => {
-			const splash =
-				char.images.filename_gachaSplash ??
-				char.images.filename_icon?.replace('UI_AvatarIcon_', 'UI_Gacha_AvatarImg_');
-			return splash ? `https://enka.network/ui/${splash}.png` : undefined;
-		})(),
-		icon: char.images.mihoyo_icon ?? undefined,
-		fandomUrl: char.url?.fandom ?? undefined
-	}))
-);
+const rawEnemies = genshinDb.enemies('names', queryOptions);
+const bossEnemies = filterBossEnemies(rawEnemies);
 
 interface YattaMonster {
 	id: number;
@@ -80,82 +58,66 @@ async function fetchYattaMonsterIcons(): Promise<Map<number, string>> {
 	return icons;
 }
 
-const yattaIcons = await fetchYattaMonsterIcons();
+const isBossIconDownloaded = (filename: string) => existsSync(join(staticBossIconsDir, filename));
 
-const bossEnemies = pipe(
-	genshinDb.enemies('names', queryOptions),
-	// Keep only enemies reachable by either boss filter; drop the rest of the
-	// bestiary so the shipped JSON stays small. Exclude Stormterror (the CLI
-	// does too — it has no weekly-boss arena).
-	filter(
+const needsYattaFetch =
+	!FORCE &&
+	bossEnemies.some(
 		(enemy) =>
-			enemy.name !== 'Stormterror' &&
-			(enemy.enemyType === 'BOSS' || enemy.categoryType === 'CODEX_SUBTYPE_BOSS')
-	)
-);
+			!enemy.images?.filename_icon || !isBossIconDownloaded(`${enemy.images.filename_icon}.png`)
+	);
 
-const bosses: Enemy[] = await Promise.all(
-	bossEnemies.map(async (enemy) => {
-		const filename = yattaIcons.get(enemy.id) ?? enemy.images?.filename_icon;
-		let icon: string | undefined;
-		if (filename) {
-			const remoteUrl = `https://gi.yatta.moe/assets/UI/monster/${filename}.png`;
-			try {
-				const response = await fetch(remoteUrl);
-				if (response.ok) {
-					mkdirSync(staticBossIconsDir, { recursive: true });
-					const buffer = Buffer.from(await response.arrayBuffer());
-					writeFileSync(join(staticBossIconsDir, `${filename}.png`), buffer);
-					icon = `/icons/bosses/${filename}.png`;
-				} else {
-					console.warn(`Failed to fetch icon for ${enemy.name}: ${response.status}`);
-				}
-			} catch (err) {
-				console.warn(`Failed to fetch icon for ${enemy.name}:`, err);
-			}
-		}
-		return {
-			name: enemy.name,
-			description: enemy.description,
-			categoryType: enemy.categoryType,
-			enemyType: enemy.enemyType,
-			icon
-		};
-	})
+let yattaIconById: Map<number, string> | undefined;
+if (needsYattaFetch) {
+	try {
+		yattaIconById = await fetchYattaMonsterIcons();
+	} catch (err) {
+		console.warn('Yatta API unavailable; falling back to genshin-db icon filenames:', err);
+	}
+}
+
+const bossPlan = planBossIconDownloads(bossEnemies, {
+	iconsDir: staticBossIconsDir,
+	publicPath: '/icons/bosses',
+	yattaIconById,
+	isIconDownloaded: isBossIconDownloaded,
+	force: FORCE
+});
+
+const downloadDeps = {
+	fetch,
+	existsSync,
+	mkdirSync: (dir: string) => mkdirSync(dir, { recursive: true }),
+	writeFileSync
+};
+
+await downloadAll(bossPlan.tasks, downloadDeps, FORCE);
+
+const bosses: Enemy[] = bossEnemies.map((enemy) =>
+	trimBoss(enemy, bossPlan.iconByName.get(enemy.name))
 );
 
 mkdirSync(dataDir, { recursive: true });
 writeFileSync(join(dataDir, 'characters.json'), `${JSON.stringify(characters, undefined, '\t')}\n`);
 writeFileSync(join(dataDir, 'bosses.json'), `${JSON.stringify(bosses, undefined, '\t')}\n`);
 
-async function fetchAndSaveIcon(url: string, dir: string, filename: string): Promise<void> {
-	try {
-		const response = await fetch(url);
-		if (!response.ok) {
-			console.warn(`Failed to fetch icon ${url}: ${response.status}`);
-			return;
-		}
-		const buffer = Buffer.from(await response.arrayBuffer());
-		writeFileSync(join(dir, filename), buffer);
-	} catch (err) {
-		console.warn(`Failed to fetch icon ${url}:`, err);
-	}
-}
-
-mkdirSync(staticElementIconsDir, { recursive: true });
-mkdirSync(staticWeaponIconsDir, { recursive: true });
-
 const elementIcons = genshinDb.elements('names', queryOptions) as {
 	name: string;
 	images: { wikia?: string };
 }[];
 
-const elementIconFetches = elementIcons.map(async (el) => {
-	const key = el.name.toLowerCase();
-	const url = el.images.wikia;
-	if (!url) return;
-	await fetchAndSaveIcon(url, staticElementIconsDir, `${key}.png`);
+const elementIconSources = elementIcons.map((el) => ({
+	key: el.name.toLowerCase(),
+	remoteUrl: el.images.wikia
+}));
+
+const elementIconPlan = planIconDownloads(elementIconSources, {
+	iconsDir: staticElementIconsDir,
+	publicPath: '/icons/elements',
+	isIconDownloaded: (filename) => existsSync(join(staticElementIconsDir, filename)),
+	force: FORCE
 });
+await downloadAll(elementIconPlan.tasks, downloadDeps, FORCE);
 
 const weaponIconUrls: Record<string, string> = {
 	sword: 'https://static.wikia.nocookie.net/gensin-impact/images/8/81/Icon_Sword.png',
@@ -165,10 +127,17 @@ const weaponIconUrls: Record<string, string> = {
 	catalyst: 'https://static.wikia.nocookie.net/gensin-impact/images/2/27/Icon_Catalyst.png'
 };
 
-const weaponIconFetches = Object.entries(weaponIconUrls).map(async ([key, url]) => {
-	await fetchAndSaveIcon(url, staticWeaponIconsDir, `${key}.png`);
-});
+const weaponIconSources = Object.entries(weaponIconUrls).map(([key, remoteUrl]) => ({
+	key,
+	remoteUrl
+}));
 
-await Promise.all([...elementIconFetches, ...weaponIconFetches]);
+const weaponIconPlan = planIconDownloads(weaponIconSources, {
+	iconsDir: staticWeaponIconsDir,
+	publicPath: '/icons/weapons',
+	isIconDownloaded: (filename) => existsSync(join(staticWeaponIconsDir, filename)),
+	force: FORCE
+});
+await downloadAll(weaponIconPlan.tasks, downloadDeps, FORCE);
 
 console.log(`Wrote ${characters.length} characters and ${bosses.length} bosses to ${dataDir}`);
