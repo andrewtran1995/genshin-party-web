@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Element } from '$lib/types';
-	import { getElementIconUrl } from '$lib/element-image';
+	import { getElementIconUrl } from '$lib/icon-tables';
 
 	let { element }: { element: Element } = $props();
 

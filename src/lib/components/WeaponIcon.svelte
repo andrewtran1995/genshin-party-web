@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getWeaponIconUrl } from '$lib/weapon-image';
+	import { getWeaponIconUrl } from '$lib/icon-tables';
 
 	let { weapon }: { weapon: string } = $props();
 

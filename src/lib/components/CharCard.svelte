@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Char } from '$lib/types';
-	import { getCharImageUrl } from '$lib/char-image';
 	import { tilt } from '$lib/tilt';
 	import ElementIcon from './ElementIcon.svelte';
 	import WeaponIcon from './WeaponIcon.svelte';
@@ -14,7 +13,7 @@
 
 	let { char, loading = 'lazy', reveal = false }: Props = $props();
 
-	const imageUrl = $derived(getCharImageUrl(char));
+	const imageUrl = $derived(char.portrait ?? char.icon);
 	const stars = $derived('★'.repeat(char.rarity));
 
 	// Loaded / error state, reset whenever the source image changes.
