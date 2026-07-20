@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import type { Pathname } from '$app/types';
 	import RerollControls from '$lib/components/RerollControls.svelte';
-	import { sample } from '$lib/genshin';
+	import { rollOrderUrl } from '$lib/genshin';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	function handleReroll() {
-		const order = sample([1, 2, 3, 4], 4).join(',');
-		void goto(resolve(`/order/${order}`));
+		void goto(resolve(rollOrderUrl({ exclude: data.order.join(',') }) as Pathname));
 	}
 </script>
 

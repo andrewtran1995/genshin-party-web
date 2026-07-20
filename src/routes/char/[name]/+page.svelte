@@ -1,34 +1,29 @@
 <script lang="ts">
-	import { afterNavigate, goto } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import type { Pathname } from '$app/types';
 	import CharCard from '$lib/components/CharCard.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
-	import { getRandomChar } from '$lib/genshin';
-	import { isElement, isRarity } from '$lib/types';
+	import { CHAR_ERROR, rollCharUrl, parseCharFilters } from '$lib/genshin';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	let searchParams = $state(new URLSearchParams(''));
 	let rerollError = $state('');
 
-	function updateSearchParams() {
-		searchParams = new URLSearchParams(window.location.search);
-	}
-
-	afterNavigate(updateSearchParams);
-	const rawElement = $derived(searchParams.get('element') ?? '');
-	const rawRarity = $derived(searchParams.get('rarity') ?? '');
-	// Unrecognised values are dropped rather than forwarded, so the no-JS POST
-	// fallback rolls with the same filters the client-side reroll would use.
-	const element = $derived(isElement(rawElement) ? rawElement : undefined);
-	const rarity = $derived(isRarity(rawRarity) ? rawRarity : undefined);
+	// `page.url.searchParams` throws during prerendering (this route is prerendered);
+	// the browser guard defers reading it until client-side hydration.
+	const filters = $derived(browser ? parseCharFilters(page.url.searchParams) : {});
+	const element = $derived(filters.element);
+	const rarity = $derived(filters.rarity);
 	const appliedFilters = $derived(
 		(() => {
-			const filters: string[] = [];
-			if (element) filters.push(element.charAt(0).toUpperCase() + element.slice(1));
-			if (rarity) filters.push(`${rarity}★`);
-			return filters;
+			const labels: string[] = [];
+			if (element) labels.push(element.charAt(0).toUpperCase() + element.slice(1));
+			if (rarity) labels.push(`${rarity}★`);
+			return labels;
 		})()
 	);
 	const mismatch = $derived(
@@ -41,15 +36,12 @@
 
 	function handleReroll() {
 		rerollError = '';
-		const char = getRandomChar({ element, rarity });
-		if (!char) {
-			rerollError = 'No character matches those filters.';
+		const url = rollCharUrl({ ...filters, exclude: [data.char.name] });
+		if (!url) {
+			rerollError = CHAR_ERROR;
 			return;
 		}
-		const query = [element && `element=${element}`, rarity && `rarity=${rarity}`]
-			.filter(Boolean)
-			.join('&');
-		void goto(resolve(`/char/${encodeURIComponent(char.name)}${query ? `?${query}` : ''}`));
+		void goto(resolve(url as Pathname));
 	}
 </script>
 

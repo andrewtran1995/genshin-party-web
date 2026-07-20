@@ -1,38 +1,33 @@
 <script lang="ts">
-	import { afterNavigate, goto } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import type { Pathname } from '$app/types';
 	import BossCard from '$lib/components/BossCard.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
-	import { getRandomBoss } from '$lib/genshin';
+	import { BOSS_ERROR, isWeeklyBoss, rollBossUrl, parseBossFilters } from '$lib/genshin';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	let searchParams = $state(new URLSearchParams(''));
 	let rerollError = $state('');
 
-	function updateSearchParams() {
-		searchParams = new URLSearchParams(window.location.search);
-	}
-
-	afterNavigate(updateSearchParams);
-	const weekly = $derived(searchParams.get('weekly') === '1');
-	const mismatch = $derived(
-		(() => {
-			if (weekly && data.boss.categoryType !== 'CODEX_SUBTYPE_BOSS') return true;
-			return false;
-		})()
+	// `page.url.searchParams` throws during prerendering (this route is prerendered);
+	// the browser guard defers reading it until client-side hydration.
+	const { weekly } = $derived(
+		browser ? parseBossFilters(page.url.searchParams) : { weekly: false }
 	);
+	const mismatch = $derived(weekly && !isWeeklyBoss(data.boss));
 
 	function handleReroll() {
 		rerollError = '';
-		const boss = getRandomBoss({ weekly });
-		if (!boss) {
-			rerollError = 'No bosses match those filters.';
+		const url = rollBossUrl({ weekly, exclude: [data.boss.name] });
+		if (!url) {
+			rerollError = BOSS_ERROR;
 			return;
 		}
-		const query = weekly ? '?weekly=1' : '';
-		void goto(resolve(`/boss/${encodeURIComponent(boss.name)}${query}`));
+		void goto(resolve(url as Pathname));
 	}
 </script>
 

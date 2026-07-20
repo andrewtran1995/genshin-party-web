@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { sample } from '$lib/genshin';
+	import type { Pathname } from '$app/types';
+	import { rollOrderUrl } from '$lib/genshin';
 
 	let clientError = $state('');
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
 		clientError = '';
-		const order = sample([1, 2, 3, 4], 4).join(',');
-		void goto(resolve(`/order/${order}`));
+		void goto(resolve(rollOrderUrl() as Pathname));
 	}
 </script>
 

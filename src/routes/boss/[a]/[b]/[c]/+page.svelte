@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import type { Pathname } from '$app/types';
 	import BossCard from '$lib/components/BossCard.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
-	import { getRandomBosses } from '$lib/genshin';
+	import { BOSS_ERROR, rollBossUrl } from '$lib/genshin';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -11,14 +12,16 @@
 
 	function handleReroll() {
 		rerollError = '';
-		const bosses = getRandomBosses({ weekly: data.weekly }, 3);
-		if (bosses.length === 0) {
-			rerollError = 'No bosses match those filters.';
+		const url = rollBossUrl({
+			gauntlet: true,
+			weekly: data.weekly,
+			exclude: data.bosses.map((boss) => boss.name)
+		});
+		if (!url) {
+			rerollError = BOSS_ERROR;
 			return;
 		}
-		const names = bosses.map((boss) => boss.name);
-		const query = data.weekly ? '?weekly=1' : '';
-		void goto(resolve(`/boss/${names.map(encodeURIComponent).join('/')}${query}`));
+		void goto(resolve(url as Pathname));
 	}
 </script>
 
