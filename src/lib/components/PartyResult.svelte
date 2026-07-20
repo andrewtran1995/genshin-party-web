@@ -1,7 +1,7 @@
 <script lang="ts">
 	import CharCard from './CharCard.svelte';
 	import { formatPlayer } from '$lib/player-names';
-	import type { PlayerChoice } from '$lib/player-selection-stack';
+	import type { PlayerChoice } from '$lib/party-flow.svelte';
 
 	let { choices, names }: { choices: readonly PlayerChoice[]; names: readonly string[] } = $props();
 </script>

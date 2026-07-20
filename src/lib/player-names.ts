@@ -1,5 +1,7 @@
+import { PARTY_SIZE } from '$lib/party-flow.svelte';
+
 /**
- * Expand a list of player names to exactly four team slots,
+ * Expand a list of player names to exactly `PARTY_SIZE` team slots,
  * matching the CLI's `-p, --players` behavior.
  *
  * Expansion rules:
@@ -23,7 +25,7 @@ export const expandPlayerNames = (names: readonly string[]): string[] => {
 	if (trimmed.length === 3 && first !== undefined && second !== undefined && third !== undefined) {
 		return [first, first, second, third];
 	}
-	return trimmed.slice(0, 4);
+	return trimmed.slice(0, PARTY_SIZE);
 };
 
 /** Format a player label like the CLI's `formatPlayer`. */
