@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import PartyResult from './PartyResult.svelte';
 import type { Char } from '$lib/types';
-import type { PlayerChoice } from '$lib/player-selection-stack';
+import type { PlayerChoice } from '$lib/party-flow.svelte';
 
 const makeChar = (name: string): Char => ({
 	id: name.length,

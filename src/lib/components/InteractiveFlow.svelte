@@ -3,38 +3,22 @@
 	import CharCard from '$lib/components/CharCard.svelte';
 	import PartyResult from '$lib/components/PartyResult.svelte';
 	import { sortBy, prop } from 'remeda';
-	import type { Char } from '$lib/types';
 	import { formatPlayer } from '$lib/player-names';
-	import type { PlayerSelectionState } from '$lib/player-selection-stack';
+	import { PARTY_SIZE, type PartyFlowState } from '$lib/party-flow.svelte';
 
 	interface Props {
-		selectionState: PlayerSelectionState | undefined;
-		currentPlayerNumber: number | undefined;
-		candidate: Char | undefined;
-		loading: boolean;
-		error: string;
+		flowState: PartyFlowState;
 		expandedNames: string[];
 		/** Receives the draft player names when the flow starts. */
-		onstart: (playerNames: string[]) => void | Promise<void>;
-		onaccept: (isMain: boolean) => void | Promise<void>;
+		onstart: (playerNames: string[]) => void;
+		onaccept: (isMain: boolean) => void;
 		onreroll: () => void;
-		ongoback: () => void | Promise<void>;
-		onreset: () => void | Promise<void>;
+		ongoback: () => void;
+		onreset: () => void;
 	}
 
-	let {
-		selectionState,
-		currentPlayerNumber,
-		candidate,
-		loading,
-		error,
-		expandedNames,
-		onstart,
-		onaccept,
-		onreroll,
-		ongoback,
-		onreset
-	}: Props = $props();
+	let { flowState, expandedNames, onstart, onaccept, onreroll, ongoback, onreset }: Props =
+		$props();
 
 	// The draft names are a self-contained editing concern, owned here as deep
 	// reactive state (so per-input bindings stay reactive) and handed to the
@@ -44,28 +28,27 @@
 	let acceptButtonRef = $state<HTMLButtonElement | undefined>();
 	let startOverButtonRef = $state<HTMLButtonElement | undefined>();
 
-	const isDone = $derived(selectionState?.status === 'done');
-	const canGoBack = $derived((selectionState?.playerChoices.length ?? 0) > 0);
-	const isFinalPick = $derived((selectionState?.playerChoices.length ?? 0) === 3);
+	const canGoBack = $derived(flowState.playerChoices.length > 0);
+	const isFinalPick = $derived(flowState.playerChoices.length === PARTY_SIZE - 1);
 	const finalChoices = $derived(
-		selectionState?.status === 'done' ? sortBy(selectionState.playerChoices, prop('number')) : []
+		flowState.status === 'done' ? sortBy(flowState.playerChoices, prop('number')) : []
 	);
-	const lastChoice = $derived(selectionState?.playerChoices.at(-1));
+	const lastChoice = $derived(flowState.playerChoices.at(-1));
 
 	// Focus follows the action: the parent applies the state change, then we wait
 	// for the resulting view to render before moving focus into it. Keeping this
 	// tied to the handler (rather than a state effect) means a reroll — which
 	// swaps the candidate without an intent to move focus — leaves focus put.
 	async function start() {
-		await onstart(playerNames);
+		onstart(playerNames);
 		await tick();
 		acceptButtonRef?.focus();
 	}
 
 	async function accept(isMain: boolean) {
-		await onaccept(isMain);
+		onaccept(isMain);
 		await tick();
-		if (isDone) {
+		if (flowState.status === 'done') {
 			startOverButtonRef?.focus();
 		} else {
 			acceptButtonRef?.focus();
@@ -85,20 +68,20 @@
 	}
 
 	async function goBack() {
-		await ongoback();
+		ongoback();
 		await tick();
 		acceptButtonRef?.focus();
 	}
 
 	async function reset() {
-		await onreset();
+		onreset();
 		playerNames = [''];
 		await tick();
 		playerInputRefs[0]?.focus();
 	}
 
 	async function addPlayer() {
-		if (playerNames.length < 4) {
+		if (playerNames.length < PARTY_SIZE) {
 			playerNames = [...playerNames, ''];
 			await tick();
 			playerInputRefs.at(-1)?.focus();
@@ -115,7 +98,7 @@
 	}
 </script>
 
-{#if !selectionState}
+{#if flowState.status === 'idle'}
 	<form
 		class="player-form"
 		aria-label="Player names"
@@ -154,7 +137,7 @@
 					</div>
 				{/each}
 			</div>
-			{#if playerNames.length < 4}
+			{#if playerNames.length < PARTY_SIZE}
 				<button
 					class="add-player btn btn-sm preset-tonal-secondary"
 					onclick={() => void addPlayer()}
@@ -164,7 +147,7 @@
 		</fieldset>
 		<button class="btn preset-filled-primary-500" type="submit">Start</button>
 	</form>
-{:else if isDone}
+{:else if flowState.status === 'done'}
 	<h2>Chosen characters</h2>
 	<p class="visually-hidden" aria-live="polite">Party complete. All characters chosen.</p>
 
@@ -177,19 +160,17 @@
 		onclick={reset}>Start over</button
 	>
 {:else}
-	{#if currentPlayerNumber !== undefined}
-		<p>Now choosing for {formatPlayer(currentPlayerNumber, expandedNames)}.</p>
+	{#if flowState.currentPlayerNumber !== undefined}
+		<p>Now choosing for {formatPlayer(flowState.currentPlayerNumber, expandedNames)}.</p>
 	{/if}
 
-	{#if loading}
-		<p aria-live="polite">Rolling…</p>
-	{:else if error}
-		<p class="error" role="alert">{error}</p>
-	{:else if candidate}
-		<p class="visually-hidden" aria-live="polite">Candidate: {candidate.name}</p>
-		{#key candidate.id}
+	{#if flowState.error}
+		<p class="error" role="alert">{flowState.error}</p>
+	{:else if flowState.candidate}
+		<p class="visually-hidden" aria-live="polite">Candidate: {flowState.candidate.name}</p>
+		{#key flowState.candidate.id}
 			<div class="candidate">
-				<CharCard char={candidate} reveal />
+				<CharCard char={flowState.candidate} reveal />
 			</div>
 		{/key}
 	{/if}
@@ -198,27 +179,20 @@
 		<button
 			bind:this={acceptButtonRef}
 			class="btn preset-filled-primary-500"
-			disabled={!candidate || loading}
+			disabled={!flowState.candidate}
 			onclick={acceptNormal}
 			type="button">Accept</button
 		>
 		<button
 			class="btn preset-filled-secondary-500"
-			disabled={!candidate || loading || isFinalPick}
+			disabled={!flowState.candidate || isFinalPick}
 			onclick={acceptAsMain}
 			type="button"
 		>
 			Accept as main
 		</button>
-		<button class="btn preset-tonal-surface" disabled={loading} onclick={reroll} type="button"
-			>Reroll</button
-		>
-		<button
-			class="btn preset-tonal-surface"
-			disabled={!canGoBack || loading}
-			onclick={goBack}
-			type="button"
-		>
+		<button class="btn preset-tonal-surface" onclick={reroll} type="button">Reroll</button>
+		<button class="btn preset-tonal-surface" disabled={!canGoBack} onclick={goBack} type="button">
 			{#if lastChoice}
 				Go back to {formatPlayer(lastChoice.number, expandedNames)}
 			{:else}

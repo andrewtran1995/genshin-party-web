@@ -3,7 +3,7 @@ import type { ComponentProps } from 'svelte';
 import { render } from 'vitest-browser-svelte';
 import InteractiveFlow from './InteractiveFlow.svelte';
 import type { Char } from '$lib/types';
-import type { PlayerChoice, PlayerSelectionState } from '$lib/player-selection-stack';
+import type { PartyFlowState, PlayerChoice } from '$lib/party-flow.svelte';
 
 const makeChar = (name: string): Char => ({
 	id: name.length,
@@ -25,32 +25,46 @@ const pick = (number: number, name: string, isMain = false): PlayerChoice => ({
 	number
 });
 
-const activeState: PlayerSelectionState = {
+const idleState: PartyFlowState = {
+	status: 'idle',
+	playerChoices: [],
+	playerOrder: [],
+	currentPlayerNumber: undefined,
+	candidate: undefined,
+	error: ''
+};
+
+const activeState: PartyFlowState = {
 	status: 'active',
 	playerChoices: [],
-	playerOrder: [1, 2, 3, 4]
+	playerOrder: [1, 2, 3, 4],
+	currentPlayerNumber: 1,
+	candidate: makeChar('Furina'),
+	error: ''
 };
 
-const finalPickState: PlayerSelectionState = {
+const finalPickState: PartyFlowState = {
 	status: 'active',
 	playerChoices: [pick(1, 'Furina'), pick(2, 'Kazuha'), pick(3, 'Nahida')],
-	playerOrder: [1, 2, 3, 4]
+	playerOrder: [1, 2, 3, 4],
+	currentPlayerNumber: 4,
+	candidate: makeChar('Bennett'),
+	error: ''
 };
 
-const doneState: PlayerSelectionState = {
+const doneState: PartyFlowState = {
 	status: 'done',
 	playerChoices: [pick(1, 'Furina'), pick(2, 'Kazuha'), pick(3, 'Nahida'), pick(4, 'Bennett')],
-	playerOrder: [1, 2, 3, 4]
+	playerOrder: [1, 2, 3, 4],
+	currentPlayerNumber: undefined,
+	candidate: undefined,
+	error: ''
 };
 
 type Props = ComponentProps<typeof InteractiveFlow>;
 
 const baseProps = (overrides: Partial<Props> = {}): Props => ({
-	selectionState: undefined,
-	currentPlayerNumber: undefined,
-	candidate: undefined,
-	loading: false,
-	error: '',
+	flowState: idleState,
 	expandedNames: [],
 	onstart: vi.fn(),
 	onaccept: vi.fn(),
@@ -62,9 +76,7 @@ const baseProps = (overrides: Partial<Props> = {}): Props => ({
 
 const choosing = (overrides: Partial<Props> = {}): Props =>
 	baseProps({
-		selectionState: activeState,
-		currentPlayerNumber: 1,
-		candidate: makeChar('Furina'),
+		flowState: activeState,
 		...overrides
 	});
 
@@ -89,7 +101,7 @@ const activeLabel = () => document.activeElement?.textContent.trim();
 
 describe('InteractiveFlow', () => {
 	describe('view selection', () => {
-		it('shows the player-names form when there is no selection state', async () => {
+		it('shows the player-names form when idle', async () => {
 			const { container } = await render(InteractiveFlow, { props: baseProps() });
 			expect(container.querySelector('form.player-form')).not.toBeNull();
 			expect(button(container, 'Start')).toBeInstanceOf(HTMLButtonElement);
@@ -107,7 +119,7 @@ describe('InteractiveFlow', () => {
 
 		it('announces completion and offers a restart when done', async () => {
 			const { container } = await render(InteractiveFlow, {
-				props: baseProps({ selectionState: doneState })
+				props: baseProps({ flowState: doneState })
 			});
 			const live = container.querySelector('.visually-hidden[aria-live="polite"]');
 			expect(live?.textContent).toContain('Party complete');
@@ -115,17 +127,11 @@ describe('InteractiveFlow', () => {
 			expect(button(container, 'Start over')).toBeInstanceOf(HTMLButtonElement);
 		});
 
-		it('shows a rolling announcement instead of a card while loading', async () => {
-			const { container } = await render(InteractiveFlow, {
-				props: choosing({ loading: true, candidate: undefined })
-			});
-			expect(container.textContent).toContain('Rolling…');
-			expect(container.querySelector('.candidate')).toBeNull();
-		});
-
 		it('surfaces an error as an alert', async () => {
 			const { container } = await render(InteractiveFlow, {
-				props: choosing({ candidate: undefined, error: 'No eligible character.' })
+				props: choosing({
+					flowState: { ...activeState, candidate: undefined, error: 'No eligible character.' }
+				})
 			});
 			const alert = container.querySelector('[role="alert"]');
 			expect(alert?.textContent).toContain('No eligible character.');
@@ -135,14 +141,14 @@ describe('InteractiveFlow', () => {
 	describe('disabled states', () => {
 		it('disables Accept when there is no candidate', async () => {
 			const { container } = await render(InteractiveFlow, {
-				props: choosing({ candidate: undefined })
+				props: choosing({ flowState: { ...activeState, candidate: undefined } })
 			});
 			expect(button(container, 'Accept').disabled).toBe(true);
 		});
 
 		it('disables "Accept as main" on the final pick', async () => {
 			const { container } = await render(InteractiveFlow, {
-				props: choosing({ selectionState: finalPickState, currentPlayerNumber: 4 })
+				props: choosing({ flowState: finalPickState })
 			});
 			expect(button(container, 'Accept as main').disabled).toBe(true);
 			expect(button(container, 'Accept').disabled).toBe(false);
@@ -156,8 +162,7 @@ describe('InteractiveFlow', () => {
 		it('labels "Go back" with the previous player once there is a choice', async () => {
 			const { container } = await render(InteractiveFlow, {
 				props: choosing({
-					selectionState: finalPickState,
-					currentPlayerNumber: 4,
+					flowState: finalPickState,
 					expandedNames: ['Ann', 'Bob', 'Cat']
 				})
 			});
@@ -190,7 +195,7 @@ describe('InteractiveFlow', () => {
 
 			const onreset = vi.fn();
 			const done = await render(InteractiveFlow, {
-				props: baseProps({ selectionState: doneState, onreset })
+				props: baseProps({ flowState: doneState, onreset })
 			});
 			button(done.container, 'Start over').click();
 			await expect.poll(() => onreset).toHaveBeenCalledOnce();
@@ -242,7 +247,9 @@ describe('InteractiveFlow', () => {
 		it('leaves focus on Reroll — a reroll must not steal it', async () => {
 			const onreroll = vi.fn(async () => {
 				// A real reroll swaps the candidate; focus should stay put regardless.
-				await rerender(choosing({ candidate: makeChar('Amber'), onreroll }));
+				await rerender(
+					choosing({ flowState: { ...activeState, candidate: makeChar('Amber') }, onreroll })
+				);
 			});
 			const { container, rerender } = await render(InteractiveFlow, {
 				props: choosing({ onreroll })
@@ -258,13 +265,11 @@ describe('InteractiveFlow', () => {
 
 		it('moves focus to Start over when the final pick completes the party', async () => {
 			const onaccept = vi.fn(async () => {
-				await rerender(baseProps({ selectionState: doneState, onaccept }));
+				await rerender(baseProps({ flowState: doneState, onaccept }));
 			});
 			const { container, rerender } = await render(InteractiveFlow, {
 				props: choosing({
-					selectionState: finalPickState,
-					currentPlayerNumber: 4,
-					candidate: makeChar('Bennett'),
+					flowState: { ...finalPickState, candidate: makeChar('Bennett') },
 					onaccept
 				})
 			});
