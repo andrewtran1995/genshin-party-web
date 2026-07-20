@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Enemy } from '$lib/types';
-	import { tilt } from '$lib/tilt';
+	import CardChrome, { type CardPalette } from './CardChrome.svelte';
 
 	interface Props {
 		boss: Enemy;
@@ -12,9 +12,6 @@
 	const imageUrl = $derived(boss.icon);
 	const isWeekly = $derived(boss.categoryType === 'CODEX_SUBTYPE_BOSS');
 	const categoryLabel = $derived(isWeekly ? 'Weekly boss' : 'Boss');
-
-	let imgLoaded = $state(false);
-	let imgError = $state(false);
 
 	let expanded = $state(false);
 	let descriptionEl: HTMLParagraphElement | undefined = $state();
@@ -52,54 +49,55 @@
 		};
 	});
 
-	$effect(() => {
-		if (imageUrl !== undefined) {
-			imgLoaded = false;
-			imgError = false;
-		}
-	});
-
-	const showArt = $derived(!!imageUrl && !imgError);
+	// Dark, menacing boss identity with a warm gold frame.
+	const palette: CardPalette = {
+		'--stock': 'oklch(18% 0.02 320deg)',
+		'--stock-2': 'oklch(22% 0.025 320deg)',
+		'--el': 'oklch(70% 0.14 25deg)',
+		'--el-splash': 'oklch(78% 0.16 30deg)',
+		'--ink': 'oklch(96% 0.01 320deg)',
+		'--muted': 'oklch(76% 0.02 320deg)',
+		'--frame': 'oklch(72% 0.1 80deg)',
+		'--frame-2': 'oklch(58% 0.12 80deg)',
+		'--foil-max': '0.35'
+	};
 </script>
 
-<article class="card boss-card" class:card-reveal={reveal} use:tilt>
-	<div class="card-inner">
-		<div class="card-glow" aria-hidden="true"></div>
+<CardChrome {reveal} {palette} {imageUrl} layout={{ variant: 'fixed', windowAspectRatio: '2 / 1' }}>
+	{#snippet header()}
+		<h3 class="card-name">{boss.name}</h3>
+	{/snippet}
 
-		<header class="card-header">
-			<h3 class="card-name">{boss.name}</h3>
-		</header>
+	{#snippet art({ showArt, onload, onerror })}
+		{#if showArt}
+			<img
+				class="card-art"
+				alt={boss.name}
+				src={imageUrl}
+				width="256"
+				height="256"
+				decoding="async"
+				{onload}
+				{onerror}
+			/>
+		{:else}
+			<div class="card-placeholder" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+					<path d="M12 2L2 7l10 5 10-5-10-5z" stroke-linecap="round" stroke-linejoin="round" />
+					<path d="M2 17l10 5 10-5" stroke-linecap="round" stroke-linejoin="round" />
+					<path d="M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>
+				<span>Icon unavailable</span>
+			</div>
+		{/if}
+	{/snippet}
 
-		<div class="card-window" class:is-loading={showArt && !imgLoaded}>
-			<div class="card-splash" aria-hidden="true"></div>
-			{#if showArt}
-				<img
-					class="card-art"
-					alt={boss.name}
-					src={imageUrl}
-					width="256"
-					height="256"
-					decoding="async"
-					onload={() => (imgLoaded = true)}
-					onerror={() => (imgError = true)}
-				/>
-			{:else}
-				<div class="card-placeholder" aria-hidden="true">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-						<path d="M12 2L2 7l10 5 10-5-10-5z" stroke-linecap="round" stroke-linejoin="round" />
-						<path d="M2 17l10 5 10-5" stroke-linecap="round" stroke-linejoin="round" />
-						<path d="M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round" />
-					</svg>
-					<span>Icon unavailable</span>
-				</div>
-			{/if}
-		</div>
+	{#snippet typeline()}
+		<span class="card-dot" aria-hidden="true">◈</span>
+		<span>{categoryLabel}</span>
+	{/snippet}
 
-		<p class="card-typeline">
-			<span class="card-dot" aria-hidden="true">◈</span>
-			<span>{categoryLabel}</span>
-		</p>
-
+	{#snippet footer()}
 		{#if boss.description}
 			<footer class="card-plate">
 				<p
@@ -125,73 +123,10 @@
 				</div>
 			</footer>
 		{/if}
-
-		<div class="card-foil" aria-hidden="true"></div>
-	</div>
-</article>
+	{/snippet}
+</CardChrome>
 
 <style>
-	.boss-card {
-		/* Dark, menacing boss identity with a warm gold frame. */
-		--stock: oklch(18% 0.02 320deg);
-		--stock-2: oklch(22% 0.025 320deg);
-		--el: oklch(70% 0.14 25deg);
-		--el-splash: oklch(78% 0.16 30deg);
-		--ink: oklch(96% 0.01 320deg);
-		--muted: oklch(76% 0.02 320deg);
-		--frame: oklch(72% 0.1 80deg);
-		--frame-2: oklch(58% 0.12 80deg);
-		--foil-max: 0.35;
-
-		container-type: inline-size;
-		display: block;
-		width: 100%;
-		max-width: 20rem;
-		perspective: 1000px;
-		margin: 0;
-	}
-
-	.card-inner {
-		position: relative;
-		width: 100%;
-		height: auto;
-		display: flex;
-		flex-direction: column;
-		padding: 3.5cqi;
-		gap: 2.5cqi;
-		border-radius: 14px;
-		background: linear-gradient(160deg, var(--stock-2), var(--stock) 55%), var(--stock);
-		border: 1.5px solid color-mix(in oklch, var(--frame) 55%, var(--stock));
-		box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--frame) 30%, transparent);
-		transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
-			scale(calc(1 + var(--active, 0) * 0.02));
-		transform-style: preserve-3d;
-		transition:
-			transform 140ms cubic-bezier(0.22, 1, 0.36, 1),
-			border-color 200ms ease;
-		will-change: transform;
-	}
-
-	.card:hover .card-inner {
-		border-color: color-mix(in oklch, var(--frame) 80%, var(--stock));
-	}
-
-	.card-glow {
-		position: absolute;
-		inset: 0;
-		border-radius: inherit;
-		box-shadow: 0 10px 40px -8px color-mix(in oklch, var(--frame) 70%, transparent);
-		opacity: var(--active, 0);
-		transition: opacity 260ms ease;
-		pointer-events: none;
-		z-index: -1;
-	}
-
-	.card-header {
-		display: flex;
-		align-items: baseline;
-	}
-
 	.card-name {
 		margin: 0;
 		font-size: 7.2cqi;
@@ -200,27 +135,6 @@
 		letter-spacing: -0.02em;
 		color: var(--ink);
 		text-wrap: balance;
-	}
-
-	.card-window {
-		position: relative;
-		aspect-ratio: 2 / 1;
-		width: 100%;
-		border-radius: 9px;
-		overflow: hidden;
-		background: radial-gradient(120% 90% at 50% 100%, var(--stock-2), var(--stock) 70%);
-		box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--frame) 22%, transparent);
-	}
-
-	.card-splash {
-		position: absolute;
-		inset: 0;
-		background: radial-gradient(
-			75% 60% at 50% 42%,
-			color-mix(in oklch, var(--el-splash) 60%, transparent),
-			transparent 70%
-		);
-		opacity: 0.85;
 	}
 
 	.card-art {
@@ -252,41 +166,6 @@
 
 	.card-placeholder span {
 		font-size: 3.6cqi;
-		color: var(--muted);
-	}
-
-	/* Skeleton shimmer while the remote icon loads. */
-	.card-window.is-loading::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background: linear-gradient(
-			100deg,
-			transparent 30%,
-			color-mix(in oklch, var(--el) 22%, transparent) 50%,
-			transparent 70%
-		);
-		background-size: 220% 100%;
-		animation: shimmer 1.2s ease-in-out infinite;
-	}
-
-	@keyframes shimmer {
-		from {
-			background-position: 180% 0;
-		}
-
-		to {
-			background-position: -80% 0;
-		}
-	}
-
-	.card-typeline {
-		display: flex;
-		align-items: center;
-		gap: 1.6cqi;
-		margin: 0;
-		font-size: 4.4cqi;
-		font-weight: 500;
 		color: var(--muted);
 	}
 
@@ -359,87 +238,5 @@
 	.card-expand:hover,
 	.card-expand:focus-visible {
 		text-decoration: underline;
-	}
-
-	.card-foil {
-		position: absolute;
-		inset: 0;
-		border-radius: 14px;
-		pointer-events: none;
-		mix-blend-mode: screen;
-		opacity: calc(var(--active, 0) * var(--foil-max));
-		background: radial-gradient(
-			32% 32% at var(--mx, 50%) var(--my, 50%),
-			rgb(255 255 255 / 85%),
-			transparent 60%
-		);
-		transition: opacity 220ms ease;
-	}
-
-	/* One-shot reveal entrance. */
-	.card-reveal .card-inner {
-		animation: reveal-in 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
-	}
-
-	.card-reveal .card-splash {
-		animation: splash-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
-	}
-
-	@keyframes reveal-in {
-		from {
-			opacity: 0;
-			transform: scale(0.94) translateY(2cqi);
-		}
-
-		to {
-			opacity: 1;
-			transform: scale(1) translateY(0);
-		}
-	}
-
-	@keyframes splash-in {
-		0% {
-			opacity: 0;
-			transform: scale(1.5);
-		}
-
-		60% {
-			opacity: 1;
-		}
-
-		100% {
-			transform: scale(1);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.card-inner {
-			transform: none !important;
-			transition: border-color 200ms ease;
-			will-change: auto;
-		}
-
-		.card-glow,
-		.card-window.is-loading::after {
-			animation: none;
-		}
-
-		.card-reveal .card-inner {
-			animation: reveal-fade 200ms ease both;
-		}
-
-		.card-reveal .card-splash {
-			animation: none;
-		}
-
-		@keyframes reveal-fade {
-			from {
-				opacity: 0;
-			}
-
-			to {
-				opacity: 1;
-			}
-		}
 	}
 </style>
