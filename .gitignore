@@ -44,7 +44,6 @@ playwright-report
 coverage
 
 # Agent harness directories and runtime files
-/.agents
 /.cursor
 /.kiro
 /.codex
@@ -61,12 +60,12 @@ CLAUDE.local.md
 .worktrees/
 /worktrees/
 
-# Agent skills installed by the Skills CLI (see skills-lock.json)
-/.agents
-/.agents/**
+# Agent skills: .agents/skills/ is vendored (committed) and is the source of
+# truth restored by `pnpm skills:install` per skills-lock.json — see
+# scripts/verify-skills-lock.ts. The per-agent copies/symlinks that
+# `pnpm skills:sync` fans it out to are regenerated, not committed.
 /.claude/skills/**
 /.opencode/skills/**
 /agent
 /agent/**
-
 
