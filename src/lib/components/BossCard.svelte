@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Enemy } from '$lib/types';
-	import { getBossImageUrl } from '$lib/boss-image';
 	import { tilt } from '$lib/tilt';
 
 	interface Props {
@@ -10,7 +9,7 @@
 
 	let { boss, reveal = false }: Props = $props();
 
-	const imageUrl = $derived(getBossImageUrl(boss));
+	const imageUrl = $derived(boss.icon);
 	const isWeekly = $derived(boss.categoryType === 'CODEX_SUBTYPE_BOSS');
 	const categoryLabel = $derived(isWeekly ? 'Weekly boss' : 'Boss');
 

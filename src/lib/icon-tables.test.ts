@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { getWeaponIconUrl } from './weapon-image';
+import { getElementIconUrl, getWeaponIconUrl } from './icon-tables';
+import { elements } from './types';
+
+describe('getElementIconUrl', () => {
+	it('maps every real element to a local icon path', () => {
+		for (const element of elements) {
+			if (element === 'none') {
+				expect(getElementIconUrl(element)).toBeUndefined();
+			} else {
+				expect(getElementIconUrl(element)).toBe(`/icons/elements/${element}.png`);
+			}
+		}
+	});
+});
 
 describe('getWeaponIconUrl', () => {
 	it('maps known weapon types to local icon paths', () => {
