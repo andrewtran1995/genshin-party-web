@@ -25,7 +25,8 @@
 		"format": "prettier --write .",
 		"skills:install": "npx skills experimental_install",
 		"skills:sync": "npx skills add pbakaus/impeccable --all",
-		"skills:update": "npx skills update -y"
+		"skills:update": "npx skills update -y",
+		"skills:verify": "SWC_NODE_PROJECT=tsconfig.scripts.json node --import @swc-node/register/esm-register scripts/verify-skills-lock.ts"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.1.0",

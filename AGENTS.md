@@ -68,20 +68,24 @@ The generated JSON files are **not committed** — they are build artifacts list
 
 ## Agent skills
 
-Agent skills are managed with the [Skills CLI](https://skills.sh/) (`npx skills`) instead of being committed to the repository.
+Agent skills are managed with the [Skills CLI](https://skills.sh/) (`npx skills`) and are **vendored**: `.agents/skills/` is committed to the repository, so a checkout has working skills without a network fetch.
 
-- `skills-lock.json` is the source of truth for installed skills and is tracked in git.
+- `skills-lock.json` is the source of truth for which skills are installed and is tracked in git.
+- `.agents/skills/` holds the actual vendored skill files (one directory per skill, matching the lockfile keys) and is also tracked in git.
+- `pnpm skills:verify` (`scripts/verify-skills-lock.ts`) recomputes each vendored skill folder's hash and checks it against `skills-lock.json`'s `computedHash`, failing if a skill is missing, out of date, or vendored without a lockfile entry. This runs in CI (`.github/workflows/ci.yml`) so a lockfile bump without a re-vendor (or vice versa) fails the build.
 - `pnpm skills:install` restores every skill listed in `skills-lock.json` into `.agents/skills/` (running `npx skills experimental_install`).
-- `pnpm skills:sync` only installs the one extra skill not tracked in the lockfile (`pbakaus/impeccable`, via `npx skills add pbakaus/impeccable --all`) and symlinks/copies it into every detected agent directory, including `.claude/skills/`.
+- `pnpm skills:sync` only installs the one extra skill not tracked in the lockfile (`pbakaus/impeccable`, via `npx skills add pbakaus/impeccable --all`) and symlinks/copies it into every detected agent directory, including `.claude/skills/`. Those per-agent copies/symlinks (`.claude/skills/`, `agent/skills/`) are regenerated, not committed.
 - `pnpm skills:update` updates installed skills to their latest versions.
 
-After a fresh clone, run `pnpm install` to install dependencies and automatically restore skills. If you need to restore skills manually, run:
+After changing `skills-lock.json` (e.g. via `skills:update`, or adding/removing a skill), re-vendor and verify before committing:
 
 ```bash
-pnpm skills:install && pnpm skills:sync
+pnpm skills:install && pnpm skills:sync && pnpm skills:verify
 ```
 
-**Caveat:** the two scripts above do not wire lockfile-restored skills (e.g. `grill-me`) into `.claude/skills/` — only `pbakaus/impeccable` lands there, because `skills:sync` targets that one skill specifically rather than syncing the whole lockfile. A lockfile skill still exists under `.agents/skills/<name>/SKILL.md` and can be read/followed directly even when it isn't registered with the `Skill` tool.
+Commit the resulting changes under `.agents/skills/` together with `skills-lock.json`.
+
+**Caveat:** `skills:sync` does not wire lockfile-restored skills (e.g. `grill-me`) into `.claude/skills/` — only `pbakaus/impeccable` lands there, because it targets that one skill specifically rather than syncing the whole lockfile. A lockfile skill still exists under `.agents/skills/<name>/SKILL.md` and can be read/followed directly even when it isn't registered with the `Skill` tool.
 
 ## Agent-specific configuration
 
