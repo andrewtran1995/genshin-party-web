@@ -2,8 +2,10 @@
 	import InteractiveFlow from '$lib/components/InteractiveFlow.svelte';
 	import { expandPlayerNames } from '$lib/player-names';
 	import { createPartyFlow } from '$lib/party-flow.svelte';
+	import { createPresetStore } from '$lib/player-presets.svelte';
 
 	const flow = createPartyFlow();
+	const presets = createPresetStore();
 	let expandedNames = $state<string[]>([]);
 
 	function start(playerNames: string[]) {
@@ -26,6 +28,8 @@
 <InteractiveFlow
 	flowState={flow.state}
 	{expandedNames}
+	presets={presets.presets}
+	defaultPresetId={presets.defaultId}
 	onstart={start}
 	onaccept={flow.accept}
 	onreroll={flow.roll}
