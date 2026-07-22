@@ -158,18 +158,23 @@
 		{:else}
 			<fieldset class="default-group">
 				<legend>Default party (pre-fills the interactive form)</legend>
-				<label class="default-option">
-					<input
-						type="radio"
-						name="default-preset"
-						checked={store.defaultId === null}
-						onchange={() => {
-							store.setDefault(null);
-						}}
-					/>
-					None
-				</label>
 				<ul class="preset-list">
+					<li class="preset-row">
+						<label class="default-option">
+							<input
+								type="radio"
+								name="default-preset"
+								checked={store.defaultId === null}
+								onchange={() => {
+									store.setDefault(null);
+								}}
+							/>
+							<span class="visually-hidden">No default preset</span>
+						</label>
+						<div class="preset-info">
+							<span class="preset-name">None</span>
+						</div>
+					</li>
 					{#each store.presets as preset (preset.id)}
 						<li class="preset-row">
 							<label class="default-option">
