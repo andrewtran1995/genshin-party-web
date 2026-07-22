@@ -48,7 +48,7 @@
 				<select class="select pl-9" name="element" bind:value={selectedElement}>
 					<option value="">Any</option>
 					{#each data.elements as element (element)}
-						<option value={element}>{element}</option>
+						<option value={element}>{element.charAt(0).toUpperCase() + element.slice(1)}</option>
 					{/each}
 				</select>
 			</div>
