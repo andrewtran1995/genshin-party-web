@@ -151,70 +151,72 @@
 		</div>
 	</form>
 
-	<h2>Saved parties</h2>
-	{#if store.presets.length === 0}
-		<p class="empty">No saved parties yet. Create one above to pre-fill the interactive form.</p>
-	{:else}
-		<fieldset class="default-group">
-			<legend>Default party (pre-fills the interactive form)</legend>
-			<label class="default-option">
-				<input
-					type="radio"
-					name="default-preset"
-					checked={store.defaultId === null}
-					onchange={() => {
-						store.setDefault(null);
-					}}
-				/>
-				None
-			</label>
-			<ul class="preset-list">
-				{#each store.presets as preset (preset.id)}
-					<li class="preset-row">
-						<label class="default-option">
-							<input
-								type="radio"
-								name="default-preset"
-								checked={store.defaultId === preset.id}
-								onchange={() => {
-									store.setDefault(preset.id);
-								}}
-							/>
-							<span class="visually-hidden">Set {preset.name} as default</span>
-						</label>
-						<div class="preset-info">
-							<span class="preset-name">
-								{preset.name}
-								{#if store.defaultId === preset.id}
-									<span class="badge">Default</span>
-								{/if}
-							</span>
-							<span class="preset-players">{preset.players.join(', ')}</span>
-						</div>
-						<div class="preset-actions">
-							<button
-								class="btn btn-sm preset-tonal-surface"
-								type="button"
-								onclick={() => void editPreset(preset.id)}
-							>
-								Edit
-							</button>
-							<button
-								aria-label={`Delete ${preset.name}`}
-								class="btn btn-sm preset-tonal-error"
-								type="button"
-								onclick={() => {
-									deletePreset(preset.id);
-								}}
-							>
-								Delete
-							</button>
-						</div>
-					</li>
-				{/each}
-			</ul>
-		</fieldset>
-	{/if}
+	<section class="saved-parties">
+		<h2>Saved parties</h2>
+		{#if store.presets.length === 0}
+			<p class="empty">No saved parties yet. Create one above to pre-fill the interactive form.</p>
+		{:else}
+			<fieldset class="default-group">
+				<legend>Default party (pre-fills the interactive form)</legend>
+				<label class="default-option">
+					<input
+						type="radio"
+						name="default-preset"
+						checked={store.defaultId === null}
+						onchange={() => {
+							store.setDefault(null);
+						}}
+					/>
+					None
+				</label>
+				<ul class="preset-list">
+					{#each store.presets as preset (preset.id)}
+						<li class="preset-row">
+							<label class="default-option">
+								<input
+									type="radio"
+									name="default-preset"
+									checked={store.defaultId === preset.id}
+									onchange={() => {
+										store.setDefault(preset.id);
+									}}
+								/>
+								<span class="visually-hidden">Set {preset.name} as default</span>
+							</label>
+							<div class="preset-info">
+								<span class="preset-name">
+									{preset.name}
+									{#if store.defaultId === preset.id}
+										<span class="badge">Default</span>
+									{/if}
+								</span>
+								<span class="preset-players">{preset.players.join(', ')}</span>
+							</div>
+							<div class="preset-actions">
+								<button
+									class="btn btn-sm preset-tonal-surface"
+									type="button"
+									onclick={() => void editPreset(preset.id)}
+								>
+									Edit
+								</button>
+								<button
+									aria-label={`Delete ${preset.name}`}
+									class="btn btn-sm preset-tonal-error"
+									type="button"
+									onclick={() => {
+										deletePreset(preset.id);
+									}}
+								>
+									Delete
+								</button>
+							</div>
+						</li>
+					{/each}
+				</ul>
+			</fieldset>
+		{/if}
+	</section>
 </section>
 
 <style>
@@ -228,9 +230,15 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-		padding: 1rem;
+		padding: 1.25rem 1.5rem;
 		border: 1px solid var(--color-surface-300, rgb(0 0 0 / 15%));
 		border-radius: 0.5rem;
+	}
+
+	.saved-parties {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
 	}
 
 	.field {
@@ -295,7 +303,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		padding: 0.5rem 0.75rem;
+		padding: 0.75rem 1rem;
 		border: 1px solid var(--color-surface-300, rgb(0 0 0 / 15%));
 		border-radius: 0.5rem;
 	}
@@ -324,7 +332,7 @@
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		padding: 0.1rem 0.4rem;
+		padding: 0.125rem 0.5rem;
 		border-radius: 0.25rem;
 		background: var(--color-primary-500, #3b82f6);
 		color: white;
@@ -333,7 +341,7 @@
 	.default-option {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.35rem;
+		gap: 0.5rem;
 	}
 
 	.preset-actions {

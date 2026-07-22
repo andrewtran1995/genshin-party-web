@@ -11,11 +11,13 @@
 	<title>Settings — genshin-party</title>
 </svelte:head>
 
-<h1>Settings</h1>
-<p>
-	Save a preset party of player names. Your default preset pre-fills the
-	<Link href={resolve('/interactive')}>interactive party</Link> form. Presets are stored in this browser
-	only.
-</p>
+<div class="stacked">
+	<h1>Settings</h1>
+	<p>
+		Save a preset party of player names. Your default preset pre-fills the
+		<Link href={resolve('/interactive')}>interactive party</Link> form. Presets are stored in this browser
+		only.
+	</p>
 
-<PresetManager {store} />
+	<PresetManager {store} />
+</div>
