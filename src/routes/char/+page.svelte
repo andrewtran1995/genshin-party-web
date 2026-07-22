@@ -4,9 +4,13 @@
 	import type { Pathname } from '$app/types';
 	import type { ActionData, PageData } from './$types';
 	import { CHAR_ERROR, rollCharUrl, parseCharFilters } from '$lib/genshin';
+	import { isElement } from '$lib/types';
+	import ElementIcon from '$lib/components/ElementIcon.svelte';
+	import AnyElementIcon from '$lib/components/AnyElementIcon.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let clientError = $state('');
+	let selectedElement = $state('');
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
@@ -33,12 +37,24 @@
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 		<label class="label">
 			<span class="label-text">Element:</span>
-			<select class="select" name="element">
-				<option value="">Any</option>
-				{#each data.elements as element (element)}
-					<option value={element}>{element}</option>
-				{/each}
-			</select>
+			<div class="relative">
+				<span
+					class="pointer-events-none absolute top-1/2 left-2 z-10 -translate-y-1/2 text-[1.25rem]"
+					aria-hidden="true"
+				>
+					{#if selectedElement !== '' && isElement(selectedElement)}
+						<ElementIcon element={selectedElement} />
+					{:else}
+						<AnyElementIcon />
+					{/if}
+				</span>
+				<select class="select pl-9" name="element" bind:value={selectedElement}>
+					<option value="">Any</option>
+					{#each data.elements as element (element)}
+						<option value={element}>{element.charAt(0).toUpperCase() + element.slice(1)}</option>
+					{/each}
+				</select>
+			</div>
 		</label>
 
 		<label class="label">
