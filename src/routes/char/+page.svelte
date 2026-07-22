@@ -6,6 +6,7 @@
 	import { CHAR_ERROR, rollCharUrl, parseCharFilters } from '$lib/genshin';
 	import { isElement } from '$lib/types';
 	import ElementIcon from '$lib/components/ElementIcon.svelte';
+	import AnyElementIcon from '$lib/components/AnyElementIcon.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let clientError = $state('');
@@ -37,14 +38,16 @@
 		<label class="label">
 			<span class="label-text">Element:</span>
 			<div class="relative">
-				{#if selectedElement !== '' && isElement(selectedElement)}
-					<span
-						class="pointer-events-none absolute top-1/2 left-2 z-10 -translate-y-1/2 text-[1.25rem]"
-						aria-hidden="true"
-					>
+				<span
+					class="pointer-events-none absolute top-1/2 left-2 z-10 -translate-y-1/2 text-[1.25rem]"
+					aria-hidden="true"
+				>
+					{#if selectedElement !== '' && isElement(selectedElement)}
 						<ElementIcon element={selectedElement} />
-					</span>
-				{/if}
+					{:else}
+						<AnyElementIcon />
+					{/if}
+				</span>
 				<select class="select pl-9" name="element" bind:value={selectedElement}>
 					<option value="">Any</option>
 					{#each data.elements as element (element)}
