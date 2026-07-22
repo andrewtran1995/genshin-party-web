@@ -56,6 +56,6 @@ export interface Enemy {
 	description: string;
 	categoryType: string;
 	enemyType: string;
-	/** Square icon URL (enka.network), or `undefined` when unavailable. */
-	icon: string | undefined;
+	/** Square icon URL; generation fails when no icon can be resolved. */
+	icon: string;
 }

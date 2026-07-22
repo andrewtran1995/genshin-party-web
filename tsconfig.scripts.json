@@ -3,11 +3,13 @@
 		"target": "ES2022",
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
+		"noEmit": true,
 		"allowJs": true,
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
-		"strict": true
+		"strict": true,
+		"types": ["node"]
 	},
 	"include": ["scripts/**/*.ts"]
 }
