@@ -65,7 +65,7 @@ export const isBoss = (enemy: RawEnemy): boolean =>
 export const filterBossEnemies = (rawEnemies: readonly RawEnemy[]): RawEnemy[] =>
 	rawEnemies.filter(isBoss);
 
-export const trimBoss = (enemy: RawEnemy, icon: string | undefined): Enemy => ({
+export const trimBoss = (enemy: RawEnemy, icon: string): Enemy => ({
 	name: enemy.name,
 	description: enemy.description,
 	categoryType: enemy.categoryType,

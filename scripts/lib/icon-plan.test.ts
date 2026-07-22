@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planBossIconDownloads, planIconDownloads } from './icon-plan.js';
+import { planIconDownloads, plannedTasks, toBossIconSources, toIconSource } from './icon-plan.js';
 
 const baseBoss = {
 	id: 1,
@@ -10,84 +10,114 @@ const baseBoss = {
 	images: { filename_icon: 'andrius' }
 };
 
-describe('planBossIconDownloads', () => {
-	it('skips existing icons and returns no tasks', () => {
-		const yatta = new Map<number, string>([[1, 'yatta_andrius']]);
-		const plan = planBossIconDownloads([baseBoss], {
-			iconsDir: '/tmp/icons/bosses',
-			publicPath: '/icons/bosses',
-			yattaIconById: yatta,
-			isIconDownloaded: (filename) => filename === 'yatta_andrius.png'
-		});
-		expect(plan.tasks).toHaveLength(0);
-		expect(plan.iconByName.get('Andrius')).toBe('/icons/bosses/yatta_andrius.png');
+const baseOptions = {
+	iconsDir: '/tmp/icons/bosses',
+	publicPath: '/icons/bosses',
+	isIconDownloaded: () => false
+};
+
+describe('toBossIconSources', () => {
+	it('prefers the Yatta filename as the first candidate', () => {
+		const [source] = toBossIconSources([baseBoss], new Map([[1, 'yatta_andrius']]));
+		expect(source.targets.map((target) => target.filename)).toEqual([
+			'yatta_andrius.png',
+			'andrius.png'
+		]);
+		expect(source.targets[0].url).toBe('https://gi.yatta.moe/assets/UI/monster/yatta_andrius.png');
 	});
 
-	it('prefers the Yatta filename when the file exists', () => {
-		const yatta = new Map<number, string>([[1, 'yatta_andrius']]);
-		const plan = planBossIconDownloads([baseBoss], {
-			iconsDir: '/tmp/icons/bosses',
-			publicPath: '/icons/bosses',
-			yattaIconById: yatta,
-			isIconDownloaded: (filename) => filename === 'yatta_andrius.png'
-		});
-		expect(plan.iconByName.get('Andrius')).toBe('/icons/bosses/yatta_andrius.png');
+	it('dedupes identical candidates', () => {
+		const [source] = toBossIconSources([baseBoss], new Map([[1, 'andrius']]));
+		expect(source.targets).toHaveLength(1);
 	});
 
-	it('falls back to genshin-db filename when Yatta is unavailable', () => {
-		const plan = planBossIconDownloads([baseBoss], {
-			iconsDir: '/tmp/icons/bosses',
-			publicPath: '/icons/bosses',
-			yattaIconById: undefined,
-			isIconDownloaded: () => false
-		});
-		expect(plan.tasks).toHaveLength(1);
-		expect(plan.tasks[0].url).toBe('https://gi.yatta.moe/assets/UI/monster/andrius.png');
-		expect(plan.iconByName.get('Andrius')).toBe('/icons/bosses/andrius.png');
+	it('falls back to the genshin-db filename when Yatta is unavailable', () => {
+		const [source] = toBossIconSources([baseBoss], new Map());
+		expect(source.targets.map((target) => target.filename)).toEqual(['andrius.png']);
 	});
 
-	it('throws when a boss has no resolvable icon', () => {
-		const boss = { ...baseBoss, images: {} };
-		expect(() =>
-			planBossIconDownloads([boss], {
-				iconsDir: '/tmp/icons/bosses',
-				publicPath: '/icons/bosses',
-				yattaIconById: undefined,
-				isIconDownloaded: () => false
-			})
-		).toThrow('Unable to resolve icon for Andrius');
+	it('carries the boss through for later trimming', () => {
+		const [source] = toBossIconSources([baseBoss], new Map());
+		expect(source.boss).toBe(baseBoss);
+	});
+});
+
+describe('toIconSource', () => {
+	it('builds a single target named after the key', () => {
+		expect(toIconSource('pyro', 'https://example.com/pyro.png').targets).toEqual([
+			{ url: 'https://example.com/pyro.png', filename: 'pyro.png' }
+		]);
+	});
+
+	it('yields no targets without a remote URL', () => {
+		expect(toIconSource('pyro', undefined).targets).toEqual([]);
 	});
 });
 
 describe('planIconDownloads', () => {
-	it('skips existing icons', () => {
-		const plan = planIconDownloads([{ key: 'pyro', remoteUrl: 'https://example.com/pyro.png' }], {
-			iconsDir: '/tmp/icons/elements',
-			publicPath: '/icons/elements',
+	it('returns a public path and no task for cached icons', () => {
+		const plan = planIconDownloads([toIconSource('pyro', 'https://example.com/pyro.png')], {
+			...baseOptions,
 			isIconDownloaded: (filename) => filename === 'pyro.png'
 		});
-		expect(plan.tasks).toHaveLength(0);
-		expect(plan.publicPathByKey.get('pyro')).toBe('/icons/elements/pyro.png');
+		expect(plan[0].publicPath).toBe('/icons/bosses/pyro.png');
+		expect(plan[0].task).toBeUndefined();
 	});
 
-	it('creates a task for missing icons', () => {
-		const plan = planIconDownloads([{ key: 'pyro', remoteUrl: 'https://example.com/pyro.png' }], {
-			iconsDir: '/tmp/icons/elements',
-			publicPath: '/icons/elements',
-			isIconDownloaded: () => false
+	it('uses the first cached candidate', () => {
+		const [source] = toBossIconSources([baseBoss], new Map([[1, 'yatta_andrius']]));
+		const plan = planIconDownloads([source], {
+			...baseOptions,
+			isIconDownloaded: (filename) => filename === 'andrius.png'
 		});
-		expect(plan.tasks).toHaveLength(1);
-		expect(plan.tasks[0].url).toBe('https://example.com/pyro.png');
-		expect(plan.tasks[0].filename).toBe('pyro.png');
+		expect(plan[0].publicPath).toBe('/icons/bosses/andrius.png');
+		expect(plan[0].task).toBeUndefined();
 	});
 
-	it('throws when remoteUrl is missing and icon is not downloaded', () => {
-		expect(() =>
-			planIconDownloads([{ key: 'pyro', remoteUrl: undefined }], {
-				iconsDir: '/tmp/icons/elements',
-				publicPath: '/icons/elements',
-				isIconDownloaded: () => false
-			})
-		).toThrow('No remote URL for icon: pyro');
+	it('creates a task from the first candidate when nothing is cached', () => {
+		const [source] = toBossIconSources([baseBoss], new Map([[1, 'yatta_andrius']]));
+		const plan = planIconDownloads([source], baseOptions);
+		expect(plan[0].task).toEqual({
+			url: 'https://gi.yatta.moe/assets/UI/monster/yatta_andrius.png',
+			dir: '/tmp/icons/bosses',
+			filename: 'yatta_andrius.png'
+		});
+		expect(plan[0].publicPath).toBe('/icons/bosses/yatta_andrius.png');
+	});
+
+	it('plans a download even for cached icons when force is set', () => {
+		const plan = planIconDownloads([toIconSource('pyro', 'https://example.com/pyro.png')], {
+			...baseOptions,
+			isIconDownloaded: () => true,
+			force: true
+		});
+		expect(plan[0].task).toBeDefined();
+	});
+
+	it('throws when a source has no resolvable icon', () => {
+		expect(() => planIconDownloads([toIconSource('pyro', undefined)], baseOptions)).toThrow(
+			'Unable to resolve icon for pyro'
+		);
+	});
+
+	it('keeps the source attached to the plan entry', () => {
+		const [source] = toBossIconSources([baseBoss], new Map());
+		const plan = planIconDownloads([source], baseOptions);
+		expect(plan[0].source.boss.name).toBe('Andrius');
+	});
+});
+
+describe('plannedTasks', () => {
+	it('collects only the planned download tasks', () => {
+		const plan = planIconDownloads(
+			[
+				toIconSource('pyro', 'https://example.com/pyro.png'),
+				toIconSource('hydro', 'https://example.com/hydro.png')
+			],
+			{ ...baseOptions, isIconDownloaded: (filename) => filename === 'pyro.png' }
+		);
+		expect(plannedTasks(plan)).toEqual([
+			{ url: 'https://example.com/hydro.png', dir: '/tmp/icons/bosses', filename: 'hydro.png' }
+		]);
 	});
 });

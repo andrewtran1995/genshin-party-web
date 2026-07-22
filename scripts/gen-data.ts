@@ -13,25 +13,39 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import genshinDb from 'genshin-db';
+import { map, values } from 'remeda';
 import type { Char, Enemy } from '../src/lib/types.js';
 import { downloadAll } from './lib/download.js';
-import { planBossIconDownloads, planIconDownloads } from './lib/icon-plan.js';
+import type { IconSource, PlannedIcon } from './lib/icon-plan.js';
+import {
+	planIconDownloads,
+	plannedTasks,
+	toBossIconSources,
+	toIconSource
+} from './lib/icon-plan.js';
 import { filterBossEnemies, trimBoss, trimCharacters } from './lib/trim.js';
 
-const dataDir = join(dirname(fileURLToPath(import.meta.url)), '../src/lib/genshin/data');
-const staticBossIconsDir = join(dirname(fileURLToPath(import.meta.url)), '../static/icons/bosses');
-const staticElementIconsDir = join(
-	dirname(fileURLToPath(import.meta.url)),
-	'../static/icons/elements'
-);
-const staticWeaponIconsDir = join(
-	dirname(fileURLToPath(import.meta.url)),
-	'../static/icons/weapons'
-);
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const dataDir = join(scriptDir, '../src/lib/genshin/data');
+const staticBossIconsDir = join(scriptDir, '../static/icons/bosses');
+const staticElementIconsDir = join(scriptDir, '../static/icons/elements');
+const staticWeaponIconsDir = join(scriptDir, '../static/icons/weapons');
 
 const FORCE = process.argv.includes('--force');
 
 const queryOptions = { matchCategories: true, verboseCategories: true } as const;
+
+const planIcons = <S extends IconSource>(
+	sources: readonly S[],
+	iconsDir: string,
+	publicPath: string
+): PlannedIcon<S>[] =>
+	planIconDownloads(sources, {
+		iconsDir,
+		publicPath,
+		isIconDownloaded: (filename) => existsSync(join(iconsDir, filename)),
+		force: FORCE
+	});
 
 const characters: Char[] = trimCharacters(genshinDb.characters('names', queryOptions));
 
@@ -51,23 +65,18 @@ async function fetchYattaMonsterIcons(): Promise<Map<number, string>> {
 		response: number;
 		data: { items: Record<string, YattaMonster> };
 	};
-	const icons = new Map<number, string>();
-	for (const item of Object.values(json.data.items)) {
-		icons.set(item.id, item.icon);
-	}
-	return icons;
+	return new Map(map(values(json.data.items), (item): [number, string] => [item.id, item.icon]));
 }
-
-const isBossIconDownloaded = (filename: string) => existsSync(join(staticBossIconsDir, filename));
 
 const needsYattaFetch =
 	!FORCE &&
 	bossEnemies.some(
 		(enemy) =>
-			!enemy.images?.filename_icon || !isBossIconDownloaded(`${enemy.images.filename_icon}.png`)
+			!enemy.images?.filename_icon ||
+			!existsSync(join(staticBossIconsDir, `${enemy.images.filename_icon}.png`))
 	);
 
-let yattaIconById: Map<number, string> | undefined;
+let yattaIconById = new Map<number, string>();
 if (needsYattaFetch) {
 	try {
 		yattaIconById = await fetchYattaMonsterIcons();
@@ -76,26 +85,21 @@ if (needsYattaFetch) {
 	}
 }
 
-const bossPlan = planBossIconDownloads(bossEnemies, {
-	iconsDir: staticBossIconsDir,
-	publicPath: '/icons/bosses',
-	yattaIconById,
-	isIconDownloaded: isBossIconDownloaded,
-	force: FORCE
-});
+const bossPlan = planIcons(
+	toBossIconSources(bossEnemies, yattaIconById),
+	staticBossIconsDir,
+	'/icons/bosses'
+);
 
 const downloadDeps = {
 	fetch,
-	existsSync,
 	mkdirSync: (dir: string) => mkdirSync(dir, { recursive: true }),
 	writeFileSync
 };
 
-await downloadAll(bossPlan.tasks, downloadDeps, FORCE);
+await downloadAll(plannedTasks(bossPlan), downloadDeps);
 
-const bosses: Enemy[] = bossEnemies.map((enemy) =>
-	trimBoss(enemy, bossPlan.iconByName.get(enemy.name))
-);
+const bosses: Enemy[] = bossPlan.map(({ source, publicPath }) => trimBoss(source.boss, publicPath));
 
 mkdirSync(dataDir, { recursive: true });
 writeFileSync(join(dataDir, 'characters.json'), `${JSON.stringify(characters, undefined, '\t')}\n`);
@@ -106,18 +110,12 @@ const elementIcons = genshinDb.elements('names', queryOptions) as {
 	images: { wikia?: string };
 }[];
 
-const elementIconSources = elementIcons.map((el) => ({
-	key: el.name.toLowerCase(),
-	remoteUrl: el.images.wikia
-}));
-
-const elementIconPlan = planIconDownloads(elementIconSources, {
-	iconsDir: staticElementIconsDir,
-	publicPath: '/icons/elements',
-	isIconDownloaded: (filename) => existsSync(join(staticElementIconsDir, filename)),
-	force: FORCE
-});
-await downloadAll(elementIconPlan.tasks, downloadDeps, FORCE);
+const elementIconPlan = planIcons(
+	elementIcons.map((el) => toIconSource(el.name.toLowerCase(), el.images.wikia)),
+	staticElementIconsDir,
+	'/icons/elements'
+);
+await downloadAll(plannedTasks(elementIconPlan), downloadDeps);
 
 const weaponIconUrls: Record<string, string> = {
 	sword: 'https://static.wikia.nocookie.net/gensin-impact/images/8/81/Icon_Sword.png',
@@ -127,17 +125,11 @@ const weaponIconUrls: Record<string, string> = {
 	catalyst: 'https://static.wikia.nocookie.net/gensin-impact/images/2/27/Icon_Catalyst.png'
 };
 
-const weaponIconSources = Object.entries(weaponIconUrls).map(([key, remoteUrl]) => ({
-	key,
-	remoteUrl
-}));
-
-const weaponIconPlan = planIconDownloads(weaponIconSources, {
-	iconsDir: staticWeaponIconsDir,
-	publicPath: '/icons/weapons',
-	isIconDownloaded: (filename) => existsSync(join(staticWeaponIconsDir, filename)),
-	force: FORCE
-});
-await downloadAll(weaponIconPlan.tasks, downloadDeps, FORCE);
+const weaponIconPlan = planIcons(
+	Object.entries(weaponIconUrls).map(([key, url]) => toIconSource(key, url)),
+	staticWeaponIconsDir,
+	'/icons/weapons'
+);
+await downloadAll(plannedTasks(weaponIconPlan), downloadDeps);
 
 console.log(`Wrote ${characters.length} characters and ${bosses.length} bosses to ${dataDir}`);

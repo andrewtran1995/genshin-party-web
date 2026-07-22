@@ -7,7 +7,7 @@ const shortBoss = {
 	description: 'A small slime that deals Hydro DMG.',
 	categoryType: 'BOSS',
 	enemyType: 'BOSS',
-	icon: undefined
+	icon: '/icons/bosses/test.png'
 };
 
 const overflowingBoss = {
@@ -16,7 +16,7 @@ const overflowingBoss = {
 		'"Childe" Tartaglia, Eleventh of the Fatui Harbingers. He draws power from the ominous Delusion he possesses and fights using martial arts that he learned in a land of darkness. He is a pure warrior with an insatiable lust for battle. Each bloody conflict, each life-and-death struggle is a delightful trial to him.',
 	categoryType: 'CODEX_SUBTYPE_BOSS',
 	enemyType: 'BOSS',
-	icon: undefined
+	icon: '/icons/bosses/test.png'
 };
 
 describe('BossCard', () => {
