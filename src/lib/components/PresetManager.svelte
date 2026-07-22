@@ -300,8 +300,9 @@
 	}
 
 	.preset-row {
-		display: flex;
-		align-items: center;
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: start;
 		gap: 0.75rem;
 		padding: 0.75rem 1rem;
 		border: 1px solid var(--color-surface-300, rgb(0 0 0 / 15%));
@@ -345,6 +346,7 @@
 	}
 
 	.preset-actions {
+		align-self: center;
 		display: flex;
 		gap: 0.5rem;
 	}
