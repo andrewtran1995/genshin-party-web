@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 import InteractiveFlow from './InteractiveFlow.svelte';
 import type { Char } from '$lib/types';
 import type { PartyFlowState, PlayerChoice } from '$lib/party-flow.svelte';
+import type { Preset } from '$lib/player-presets';
 
 const makeChar = (name: string): Char => ({
 	id: name.length,
@@ -227,6 +228,58 @@ describe('InteractiveFlow', () => {
 			await expect.poll(() => container.querySelectorAll('input')).toHaveLength(2);
 			const inputs = [...container.querySelectorAll('input')];
 			await expect.poll(() => document.activeElement === inputs[0]).toBe(true);
+		});
+	});
+
+	describe('preset pre-fill', () => {
+		const presets: Preset[] = [
+			{ id: 'p1', name: 'Crew', players: ['Ann', 'Bob'] },
+			{ id: 'p2', name: 'Solo', players: ['Zoe'] }
+		];
+
+		it('pre-fills the form from the default preset', async () => {
+			const { container } = await render(InteractiveFlow, {
+				props: baseProps({ presets, defaultPresetId: 'p1' })
+			});
+			const values = [...container.querySelectorAll('input')].map((i) => i.value);
+			expect(values).toEqual(['Ann', 'Bob']);
+		});
+
+		it('shows a blank single input when there is no default', async () => {
+			const { container } = await render(InteractiveFlow, {
+				props: baseProps({ presets, defaultPresetId: null })
+			});
+			const inputs = [...container.querySelectorAll('input')];
+			expect(inputs).toHaveLength(1);
+			expect(inputs[0]?.value).toBe('');
+		});
+
+		it('hides the preset picker when there are no presets', async () => {
+			const { container } = await render(InteractiveFlow, { props: baseProps() });
+			expect(container.querySelector('select')).toBeNull();
+		});
+
+		it('loads a different preset when picked', async () => {
+			const { container } = await render(InteractiveFlow, {
+				props: baseProps({ presets, defaultPresetId: 'p1' })
+			});
+			const select = container.querySelector('select');
+			if (!select) throw new Error('No preset picker');
+			select.value = 'p2';
+			select.dispatchEvent(new Event('change', { bubbles: true }));
+
+			await expect
+				.poll(() => [...container.querySelectorAll('input')].map((i) => i.value))
+				.toEqual(['Zoe']);
+		});
+
+		it('starts with the pre-filled names', async () => {
+			const onstart = vi.fn();
+			const { container } = await render(InteractiveFlow, {
+				props: baseProps({ presets, defaultPresetId: 'p1', onstart })
+			});
+			button(container, 'Start').click();
+			await expect.poll(() => onstart).toHaveBeenCalledWith(['Ann', 'Bob']);
 		});
 	});
 

@@ -1,14 +1,19 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import CharCard from '$lib/components/CharCard.svelte';
 	import PartyResult from '$lib/components/PartyResult.svelte';
 	import { sortBy, prop } from 'remeda';
 	import { formatPlayer } from '$lib/player-names';
 	import { PARTY_SIZE, type PartyFlowState } from '$lib/party-flow.svelte';
+	import type { Preset } from '$lib/player-presets';
 
 	interface Props {
 		flowState: PartyFlowState;
 		expandedNames: string[];
+		/** Saved parties available to pre-fill the form. */
+		presets?: readonly Preset[];
+		/** Id of the preset that seeds the form on load, or null for a blank form. */
+		defaultPresetId?: string | null;
 		/** Receives the draft player names when the flow starts. */
 		onstart: (playerNames: string[]) => void;
 		onaccept: (isMain: boolean) => void;
@@ -17,13 +22,38 @@
 		onreset: () => void;
 	}
 
-	let { flowState, expandedNames, onstart, onaccept, onreroll, ongoback, onreset }: Props =
-		$props();
+	let {
+		flowState,
+		expandedNames,
+		presets = [],
+		defaultPresetId = null,
+		onstart,
+		onaccept,
+		onreroll,
+		ongoback,
+		onreset
+	}: Props = $props();
+
+	// Names for a preset id (or a single blank slot when unmatched/blank). The
+	// preset supplies the raw 1..PARTY_SIZE names; expansion happens at start.
+	function namesFor(id: string | null): string[] {
+		const preset = presets.find((p) => p.id === id);
+		return preset?.players.length ? [...preset.players] : [''];
+	}
 
 	// The draft names are a self-contained editing concern, owned here as deep
 	// reactive state (so per-input bindings stay reactive) and handed to the
-	// parent only when the flow starts.
-	let playerNames = $state(['']);
+	// parent only when the flow starts. On the client they seed from the default
+	// preset; editing them never writes back to the saved preset.
+	let selectedPresetId = $state<string | null>(untrack(() => defaultPresetId));
+	let playerNames = $state(untrack(() => namesFor(defaultPresetId)));
+
+	async function loadPreset(id: string | null) {
+		selectedPresetId = id;
+		playerNames = namesFor(id);
+		await tick();
+		playerInputRefs[0]?.focus();
+	}
 	let playerInputRefs = $state<HTMLInputElement[]>([]);
 	let acceptButtonRef = $state<HTMLButtonElement | undefined>();
 	let startOverButtonRef = $state<HTMLButtonElement | undefined>();
@@ -75,7 +105,8 @@
 
 	async function reset() {
 		onreset();
-		playerNames = [''];
+		selectedPresetId = defaultPresetId;
+		playerNames = namesFor(defaultPresetId);
 		await tick();
 		playerInputRefs[0]?.focus();
 	}
@@ -107,6 +138,21 @@
 			void start();
 		}}
 	>
+		{#if presets.length > 0}
+			<label class="preset-picker">
+				Load a saved party
+				<select
+					class="select"
+					value={selectedPresetId ?? ''}
+					onchange={(event) => void loadPreset(event.currentTarget.value || null)}
+				>
+					<option value="">Start blank</option>
+					{#each presets as preset (preset.id)}
+						<option value={preset.id}>{preset.name}</option>
+					{/each}
+				</select>
+			</label>
+		{/if}
 		<fieldset>
 			<legend>Player names</legend>
 			<div class="player-inputs">
@@ -212,6 +258,15 @@
 	.player-form legend {
 		font-weight: 600;
 		margin-bottom: 0.5rem;
+	}
+
+	.preset-picker {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		margin-bottom: 1rem;
+		max-width: 18rem;
+		font-weight: 600;
 	}
 
 	.player-inputs {

@@ -29,6 +29,7 @@
 			<NavLink href={resolve('/boss')}>Boss</NavLink>
 			<NavLink href={resolve('/order')}>Order</NavLink>
 			<NavLink href={resolve('/interactive')}>Interactive</NavLink>
+			<NavLink href={resolve('/settings')}>Settings</NavLink>
 		</nav>
 	</AppBar.Trail>
 </AppBar>
