@@ -270,15 +270,16 @@
 	}
 
 	.player-inputs {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-		gap: 0.75rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		max-width: 18rem;
 		margin-bottom: 0.75rem;
 	}
 
 	.player-input-row {
 		display: flex;
-		align-items: flex-end;
+		flex-direction: column;
 		gap: 0.5rem;
 	}
 
@@ -286,10 +287,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
-		flex: 1;
 	}
 
 	.remove-player {
+		align-self: flex-end;
 		padding-inline: 0.5rem;
 	}
 
