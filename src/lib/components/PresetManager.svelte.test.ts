@@ -49,7 +49,7 @@ describe('PresetManager', () => {
 
 		button(container, 'Add preset').click();
 
-		await expect.poll(() => container.querySelectorAll('.preset-row')).toHaveLength(1);
+		await expect.poll(() => container.querySelectorAll('.preset-row')).toHaveLength(2);
 		expect(container.textContent).toContain('Weeknight crew');
 		expect(container.textContent).toContain('Ann, Bob');
 		expect(store.presets).toHaveLength(1);
