@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { PARTY_SIZE } from '$lib/party-flow.svelte';
+	import PlayerNameInputs from '$lib/components/PlayerNameInputs.svelte';
 	import { validatePresetInput } from '$lib/player-presets';
 	import type { PresetStoreController } from '$lib/player-presets.svelte';
 
@@ -17,7 +17,6 @@
 	let draftPlayers = $state<string[]>(['']);
 	let error = $state('');
 	let nameInputRef = $state<HTMLInputElement | undefined>();
-	let playerInputRefs = $state<HTMLInputElement[]>([]);
 
 	const isEditing = $derived(editingId !== null);
 
@@ -57,23 +56,6 @@
 		store.remove(id);
 		if (editingId === id) resetEditor();
 	}
-
-	async function addPlayer() {
-		if (draftPlayers.length < PARTY_SIZE) {
-			draftPlayers = [...draftPlayers, ''];
-			await tick();
-			playerInputRefs.at(-1)?.focus();
-		}
-	}
-
-	async function removePlayer(index: number) {
-		if (draftPlayers.length > 1) {
-			const nextIndex = index === 0 ? 0 : index - 1;
-			draftPlayers = draftPlayers.filter((_, i) => i !== index);
-			await tick();
-			playerInputRefs[nextIndex]?.focus();
-		}
-	}
 </script>
 
 <section class="preset-manager">
@@ -100,41 +82,7 @@
 
 		<fieldset>
 			<legend>Player names</legend>
-			<div class="player-inputs">
-				{#each draftPlayers, index (index)}
-					<div class="player-input-row">
-						<label>
-							Player {index + 1}
-							<input
-								bind:this={playerInputRefs[index]}
-								class="input"
-								bind:value={draftPlayers[index]}
-								placeholder="Name"
-								type="text"
-							/>
-						</label>
-						{#if draftPlayers.length > 1}
-							<button
-								aria-label={`Remove player ${index + 1}`}
-								class="remove-player btn btn-sm preset-tonal-error"
-								onclick={() => {
-									void removePlayer(index);
-								}}
-								type="button"
-							>
-								Remove
-							</button>
-						{/if}
-					</div>
-				{/each}
-			</div>
-			{#if draftPlayers.length < PARTY_SIZE}
-				<button
-					class="add-player btn btn-sm preset-tonal-secondary"
-					onclick={() => void addPlayer()}
-					type="button">Add player</button
-				>
-			{/if}
+			<PlayerNameInputs bind:players={draftPlayers} placeholder="Name" />
 		</fieldset>
 
 		{#if error}
@@ -264,30 +212,6 @@
 	.default-group legend {
 		font-weight: 600;
 		margin-bottom: 0.5rem;
-	}
-
-	.player-inputs {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-		gap: 0.75rem;
-		margin-bottom: 0.75rem;
-	}
-
-	.player-input-row {
-		display: flex;
-		align-items: flex-end;
-		gap: 0.5rem;
-	}
-
-	.player-input-row label {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		flex: 1;
-	}
-
-	.remove-player {
-		padding-inline: 0.5rem;
 	}
 
 	.editor-actions {

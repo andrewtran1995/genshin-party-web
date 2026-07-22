@@ -2,6 +2,7 @@
 	import { tick, untrack } from 'svelte';
 	import CharCard from '$lib/components/CharCard.svelte';
 	import PartyResult from '$lib/components/PartyResult.svelte';
+	import PlayerNameInputs from '$lib/components/PlayerNameInputs.svelte';
 	import { sortBy, prop } from 'remeda';
 	import { formatPlayer } from '$lib/player-names';
 	import { PARTY_SIZE, type PartyFlowState } from '$lib/party-flow.svelte';
@@ -52,9 +53,9 @@
 		selectedPresetId = id;
 		playerNames = namesFor(id);
 		await tick();
-		playerInputRefs[0]?.focus();
+		playerNameInputs?.focusFirst();
 	}
-	let playerInputRefs = $state<HTMLInputElement[]>([]);
+	let playerNameInputs = $state<{ focusFirst(): void; focusLast(): void } | undefined>(undefined);
 	let acceptButtonRef = $state<HTMLButtonElement | undefined>();
 	let startOverButtonRef = $state<HTMLButtonElement | undefined>();
 
@@ -108,24 +109,7 @@
 		selectedPresetId = defaultPresetId;
 		playerNames = namesFor(defaultPresetId);
 		await tick();
-		playerInputRefs[0]?.focus();
-	}
-
-	async function addPlayer() {
-		if (playerNames.length < PARTY_SIZE) {
-			playerNames = [...playerNames, ''];
-			await tick();
-			playerInputRefs.at(-1)?.focus();
-		}
-	}
-
-	async function removePlayer(index: number) {
-		if (playerNames.length > 1) {
-			const nextIndex = index === 0 ? 0 : index - 1;
-			playerNames = playerNames.filter((_, i) => i !== index);
-			await tick();
-			playerInputRefs[nextIndex]?.focus();
-		}
+		playerNameInputs?.focusFirst();
 	}
 </script>
 
@@ -155,41 +139,11 @@
 		{/if}
 		<fieldset>
 			<legend>Player names</legend>
-			<div class="player-inputs">
-				{#each playerNames, index (index)}
-					<div class="player-input-row">
-						<label>
-							Player {index + 1}
-							<input
-								bind:this={playerInputRefs[index]}
-								class="input"
-								bind:value={playerNames[index]}
-								placeholder="Name (optional)"
-								type="text"
-							/>
-						</label>
-						{#if playerNames.length > 1}
-							<button
-								aria-label={`Remove player ${index + 1}`}
-								class="remove-player btn btn-sm preset-tonal-error"
-								onclick={() => {
-									void removePlayer(index);
-								}}
-								type="button"
-							>
-								Remove
-							</button>
-						{/if}
-					</div>
-				{/each}
-			</div>
-			{#if playerNames.length < PARTY_SIZE}
-				<button
-					class="add-player btn btn-sm preset-tonal-secondary"
-					onclick={() => void addPlayer()}
-					type="button">Add player</button
-				>
-			{/if}
+			<PlayerNameInputs
+				bind:players={playerNames}
+				placeholder="Name (optional)"
+				bind:this={playerNameInputs}
+			/>
 		</fieldset>
 		<button class="btn preset-filled-primary-500" type="submit">Start</button>
 	</form>
@@ -267,35 +221,6 @@
 		margin-bottom: 1rem;
 		max-width: 18rem;
 		font-weight: 600;
-	}
-
-	.player-inputs {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		max-width: 18rem;
-		margin-bottom: 0.75rem;
-	}
-
-	.player-input-row {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.player-input-row label {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.remove-player {
-		align-self: flex-end;
-		padding-inline: 0.5rem;
-	}
-
-	.add-player {
-		margin-bottom: 1rem;
 	}
 
 	.candidate {
