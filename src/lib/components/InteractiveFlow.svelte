@@ -142,6 +142,7 @@
 			<PlayerNameInputs
 				bind:players={playerNames}
 				placeholder="Name (optional)"
+				advanceOnEnter
 				bind:this={playerNameInputs}
 			/>
 		</fieldset>
