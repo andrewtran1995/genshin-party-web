@@ -5,12 +5,21 @@
 	interface Props {
 		players: string[];
 		placeholder?: string;
+		/**
+		 * When true, Enter in a name input advances rather than submitting: on an
+		 * earlier row it moves focus to the next input; on the last row it opens a
+		 * new slot (up to PARTY_SIZE). Only at the cap does Enter fall through to
+		 * the form's native submit, so keyboard users are never stranded. Left off
+		 * (the default), Enter keeps the browser's implicit-submit behaviour.
+		 */
+		advanceOnEnter?: boolean;
 	}
 
 	let {
 		// eslint-disable-next-line @typescript-eslint/no-useless-default-assignment
 		players = $bindable(),
-		placeholder = 'Name'
+		placeholder = 'Name',
+		advanceOnEnter = false
 	}: Props = $props();
 
 	let inputRefs = $state<HTMLInputElement[]>([]);
@@ -39,6 +48,24 @@
 			inputRefs[nextIndex]?.focus();
 		}
 	}
+
+	function handleKeydown(event: KeyboardEvent, index: number) {
+		// Ignore Enter that confirms an IME composition (e.g. Japanese/Chinese
+		// input) — otherwise we'd swallow the character and spawn a stray slot.
+		if (event.key !== 'Enter' || event.isComposing) return;
+		const isLastRow = index === players.length - 1;
+		if (!isLastRow) {
+			// Advance down the list like Tab rather than submitting mid-form.
+			event.preventDefault();
+			inputRefs[index + 1]?.focus();
+			return;
+		}
+		if (players.length < PARTY_SIZE) {
+			event.preventDefault();
+			void addPlayer();
+		}
+		// At the cap on the last row: let native implicit submission run.
+	}
 </script>
 
 <div class="player-inputs">
@@ -50,6 +77,11 @@
 					bind:this={inputRefs[index]}
 					class="input"
 					bind:value={players[index]}
+					onkeydown={advanceOnEnter
+						? (event) => {
+								handleKeydown(event, index);
+							}
+						: undefined}
 					{placeholder}
 					type="text"
 				/>

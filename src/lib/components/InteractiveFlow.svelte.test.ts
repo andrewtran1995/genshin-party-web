@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import type { ComponentProps } from 'svelte';
 import { render } from 'vitest-browser-svelte';
 import InteractiveFlow from './InteractiveFlow.svelte';
@@ -330,6 +331,72 @@ describe('InteractiveFlow', () => {
 			button(container, 'Accept').click();
 
 			await expect.poll(activeLabel).toBe('Start over');
+		});
+	});
+
+	// Enter in a name input advances the list rather than submitting, until the
+	// party is full — then it falls through to the form's native submit.
+	describe('Enter-to-advance in the name inputs', () => {
+		const inputs = (container: HTMLElement) => [...container.querySelectorAll('input')];
+
+		it('opens a new slot and focuses it when Enter is pressed on the last row', async () => {
+			const onstart = vi.fn();
+			const { container } = await render(InteractiveFlow, { props: baseProps({ onstart }) });
+			expect(inputs(container)).toHaveLength(1);
+
+			inputs(container)[0]?.focus();
+			await userEvent.keyboard('{Enter}');
+
+			await expect.poll(() => inputs(container)).toHaveLength(2);
+			await expect.poll(() => document.activeElement === inputs(container)[1]).toBe(true);
+			expect(onstart).not.toHaveBeenCalled();
+		});
+
+		it('moves focus to the next input when Enter is pressed on an earlier row', async () => {
+			const onstart = vi.fn();
+			const { container } = await render(InteractiveFlow, { props: baseProps({ onstart }) });
+			button(container, 'Add player').click();
+			await expect.poll(() => inputs(container)).toHaveLength(2);
+
+			inputs(container)[0]?.focus();
+			await userEvent.keyboard('{Enter}');
+
+			// No extra slot; focus simply advances like Tab.
+			await expect.poll(() => document.activeElement === inputs(container)[1]).toBe(true);
+			expect(inputs(container)).toHaveLength(2);
+			expect(onstart).not.toHaveBeenCalled();
+		});
+
+		it('submits instead of adding a fifth slot once the party is full', async () => {
+			const onstart = vi.fn();
+			const { container } = await render(InteractiveFlow, { props: baseProps({ onstart }) });
+			for (let i = 0; i < 3; i++) button(container, 'Add player').click();
+			await expect.poll(() => inputs(container)).toHaveLength(4);
+
+			inputs(container).at(-1)?.focus();
+			await userEvent.keyboard('{Enter}');
+
+			await expect.poll(() => onstart).toHaveBeenCalledOnce();
+			expect(inputs(container)).toHaveLength(4);
+		});
+
+		it('ignores Enter that confirms an IME composition', async () => {
+			const onstart = vi.fn();
+			const { container } = await render(InteractiveFlow, { props: baseProps({ onstart }) });
+			const first = inputs(container)[0];
+			first?.focus();
+			first?.dispatchEvent(
+				new KeyboardEvent('keydown', {
+					key: 'Enter',
+					isComposing: true,
+					bubbles: true,
+					cancelable: true
+				})
+			);
+
+			// No slot added, no submit — the keystroke belonged to the IME.
+			expect(inputs(container)).toHaveLength(1);
+			expect(onstart).not.toHaveBeenCalled();
 		});
 	});
 });
