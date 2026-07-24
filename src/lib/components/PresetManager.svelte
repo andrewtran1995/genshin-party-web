@@ -82,7 +82,7 @@
 
 		<fieldset>
 			<legend>Player names</legend>
-			<PlayerNameInputs bind:players={draftPlayers} placeholder="Name" />
+			<PlayerNameInputs bind:players={draftPlayers} placeholder="Name" advanceOnEnter />
 		</fieldset>
 
 		{#if error}
