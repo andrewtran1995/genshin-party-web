@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 vi.mock('$app/environment', () => ({ browser: true }));
@@ -103,5 +104,36 @@ describe('PresetManager', () => {
 
 		await expect.poll(() => store.presets).toHaveLength(0);
 		expect(container.textContent).toContain('No saved parties yet');
+	});
+
+	// The player name inputs advance on Enter here just like the interactive
+	// party form, rather than submitting the editor mid-list.
+	describe('Enter-to-advance in the player name inputs', () => {
+		it('opens a new slot and focuses it when Enter is pressed on the last row', async () => {
+			const store = createPresetStore();
+			const { container } = await render(PresetManager, { props: { store } });
+			expect(playerInputs(container)).toHaveLength(1);
+
+			playerInputs(container)[0]?.focus();
+			await userEvent.keyboard('{Enter}');
+
+			await expect.poll(() => playerInputs(container)).toHaveLength(2);
+			await expect.poll(() => document.activeElement === playerInputs(container)[1]).toBe(true);
+			expect(store.presets).toHaveLength(0);
+		});
+
+		it('moves focus to the next input when Enter is pressed on an earlier row', async () => {
+			const store = createPresetStore();
+			const { container } = await render(PresetManager, { props: { store } });
+			button(container, 'Add player').click();
+			await expect.poll(() => playerInputs(container)).toHaveLength(2);
+
+			playerInputs(container)[0]?.focus();
+			await userEvent.keyboard('{Enter}');
+
+			await expect.poll(() => document.activeElement === playerInputs(container)[1]).toBe(true);
+			expect(playerInputs(container)).toHaveLength(2);
+			expect(store.presets).toHaveLength(0);
+		});
 	});
 });
