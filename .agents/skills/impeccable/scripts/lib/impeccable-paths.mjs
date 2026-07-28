@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolveProjectRoot } from '../context.mjs';
-import { designSidecarCandidatesFor } from './staleness.mjs';
 export { IMPECCABLE_COMMAND_PREFIX } from './provider.mjs';
 
 export const IMPECCABLE_DIR = '.impeccable';
@@ -17,7 +16,14 @@ export function getDesignSidecarPath(cwd = process.cwd(), options = {}) {
 }
 
 export function getDesignSidecarCandidates(cwd = process.cwd(), contextDir = cwd, options = {}) {
-  return designSidecarCandidatesFor(resolveProjectRoot(cwd, options), contextDir);
+  const projectRoot = resolveProjectRoot(cwd, options);
+  const candidates = [
+    getDesignSidecarPath(cwd, options),
+    path.join(projectRoot, 'DESIGN.json'),
+  ];
+  const contextLegacy = path.join(contextDir, 'DESIGN.json');
+  if (!candidates.includes(contextLegacy)) candidates.push(contextLegacy);
+  return candidates;
 }
 
 export function resolveDesignSidecarPath(cwd = process.cwd(), contextDir = cwd, options = {}) {
