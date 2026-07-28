@@ -4,10 +4,11 @@
 	interface Props {
 		href: string;
 		class?: string;
+		onclick?: (event: MouseEvent) => void;
 		children?: import('svelte').Snippet;
 	}
 
-	let { href, class: className = '', children }: Props = $props();
+	let { href, class: className = '', onclick, children }: Props = $props();
 
 	// Mark the link for the current section so the active page reads at a glance.
 	// Home only matches exactly; section links also match their sub-routes.
@@ -21,6 +22,7 @@
 	{href}
 	class={`appbar-link${className ? ` ${className}` : ''}${isActive ? ' is-active' : ''}`}
 	aria-current={isActive ? 'page' : undefined}
+	{onclick}
 >
 	{@render children?.()}
 </a>
