@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+	CARD_VARIANT_FILTER_LABELS,
 	CARD_VARIANT_LABELS,
 	cardVariants,
 	isCardVariant,
 	parseCardVariant,
 	parseCardVariantList,
+	parseVariantOverride,
 	rollCardVariant,
 	serializeCardVariantList,
 	type CardVariant
@@ -58,6 +60,24 @@ describe('parseCardVariant', () => {
 	});
 });
 
+describe('parseVariantOverride', () => {
+	it('parses a known variant, including normal as an explicit choice', () => {
+		expect(parseVariantOverride('holo')).toBe('holo');
+		expect(parseVariantOverride('normal')).toBe('normal');
+	});
+
+	it('returns undefined (no override) for unknown, empty, or missing values', () => {
+		expect(parseVariantOverride('glowing')).toBeUndefined();
+		expect(parseVariantOverride('')).toBeUndefined();
+		expect(parseVariantOverride(null)).toBeUndefined();
+		expect(parseVariantOverride(undefined)).toBeUndefined();
+	});
+
+	it('returns undefined for a File value (form field mismatch)', () => {
+		expect(parseVariantOverride(new File([], 'x'))).toBeUndefined();
+	});
+});
+
 describe('parseCardVariantList', () => {
 	it('parses each comma-separated entry', () => {
 		expect(parseCardVariantList('holo,foil,normal', 3)).toEqual(['holo', 'foil', 'normal']);
@@ -90,6 +110,14 @@ describe('CARD_VARIANT_LABELS', () => {
 		for (const variant of cardVariants) {
 			if (variant === 'normal') continue;
 			expect(CARD_VARIANT_LABELS[variant]).not.toBe('');
+		}
+	});
+});
+
+describe('CARD_VARIANT_FILTER_LABELS', () => {
+	it('has a non-empty label for every variant, including normal', () => {
+		for (const variant of cardVariants) {
+			expect(CARD_VARIANT_FILTER_LABELS[variant]).not.toBe('');
 		}
 	});
 });

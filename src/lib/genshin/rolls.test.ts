@@ -124,6 +124,24 @@ describe('rollCharUrl', () => {
 		const variant = new URLSearchParams(url.split('?')[1]).get('variant');
 		expect(cardVariants).toContain(variant);
 	});
+
+	it('does not mark the variant as forced when none is requested', () => {
+		const url = rollCharUrl({});
+		expect(url).toBeDefined();
+		if (!url) throw new Error('expected a url');
+		expect(new URLSearchParams(url.split('?')[1]).get('forceVariant')).toBeNull();
+	});
+
+	it('uses the requested variant instead of rolling one, and marks it forced', () => {
+		for (const variant of cardVariants) {
+			const url = rollCharUrl({}, variant);
+			expect(url).toBeDefined();
+			if (!url) throw new Error('expected a url');
+			const params = new URLSearchParams(url.split('?')[1]);
+			expect(params.get('variant')).toBe(variant);
+			expect(params.get('forceVariant')).toBe('1');
+		}
+	});
 });
 
 describe('rollBossUrl', () => {

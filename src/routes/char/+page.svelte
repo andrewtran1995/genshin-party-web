@@ -5,6 +5,7 @@
 	import type { ActionData, PageData } from './$types';
 	import { CHAR_ERROR, rollCharUrl, parseCharFilters } from '$lib/genshin';
 	import { isElement } from '$lib/types';
+	import { CARD_VARIANT_FILTER_LABELS, parseVariantOverride } from '$lib/card-variant';
 	import ElementIcon from '$lib/components/ElementIcon.svelte';
 	import AnyElementIcon from '$lib/components/AnyElementIcon.svelte';
 
@@ -17,7 +18,10 @@
 		clientError = '';
 
 		const formData = new FormData(event.currentTarget as HTMLFormElement);
-		const url = rollCharUrl(parseCharFilters(formData));
+		const url = rollCharUrl(
+			parseCharFilters(formData),
+			parseVariantOverride(formData.get('variant'))
+		);
 		if (!url) {
 			clientError = CHAR_ERROR;
 			return;
@@ -63,6 +67,16 @@
 				<option value="">Any</option>
 				{#each data.rarities as rarity (rarity)}
 					<option value={rarity}>{rarity}★</option>
+				{/each}
+			</select>
+		</label>
+
+		<label class="label">
+			<span class="label-text">Card variant:</span>
+			<select class="select" name="variant">
+				<option value="">Random</option>
+				{#each data.cardVariants as variant (variant)}
+					<option value={variant}>{CARD_VARIANT_FILTER_LABELS[variant]}</option>
 				{/each}
 			</select>
 		</label>

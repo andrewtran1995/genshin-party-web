@@ -8,7 +8,12 @@ import {
 } from './core';
 import type { GetCharsOptions } from './core';
 import { isElement, isRarity } from '$lib/types';
-import { rollCardVariant, serializeCardVariantList } from '$lib/card-variant';
+import { rollCardVariant, serializeCardVariantList, type CardVariant } from '$lib/card-variant';
+
+/** URL flag marking that the current `variant` was explicitly requested,
+ * rather than randomly rolled — so a client-side reroll knows to keep
+ * forcing it instead of rolling fresh. */
+export const FORCE_VARIANT_PARAM = 'forceVariant';
 
 export const CHAR_ERROR = 'No character matches those filters.';
 export const BOSS_ERROR = 'No bosses match those filters.';
@@ -55,11 +60,15 @@ export const serializeBossFilters = ({ weekly }: { weekly?: boolean }): string =
 	return params.toString();
 };
 
-export const rollCharUrl = (filters: GetCharsOptions): string | undefined => {
+export const rollCharUrl = (
+	filters: GetCharsOptions,
+	variantOverride?: CardVariant
+): string | undefined => {
 	const char = getRandomChar(filters);
 	if (!char) return undefined;
 	const params = new URLSearchParams(serializeCharFilters(filters));
-	params.set('variant', rollCardVariant());
+	params.set('variant', variantOverride ?? rollCardVariant());
+	if (variantOverride) params.set(FORCE_VARIANT_PARAM, '1');
 	const path = `/char/${encodeURIComponent(char.name)}`;
 	return `${path}?${params.toString()}`;
 };

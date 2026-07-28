@@ -6,8 +6,8 @@
 	import type { Pathname } from '$app/types';
 	import CharCard from '$lib/components/CharCard.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
-	import { CHAR_ERROR, rollCharUrl, parseCharFilters } from '$lib/genshin';
-	import { parseCardVariant } from '$lib/card-variant';
+	import { CHAR_ERROR, rollCharUrl, parseCharFilters, FORCE_VARIANT_PARAM } from '$lib/genshin';
+	import { CARD_VARIANT_FILTER_LABELS, parseCardVariant } from '$lib/card-variant';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -20,6 +20,12 @@
 	const variant = $derived(
 		browser ? parseCardVariant(page.url.searchParams.get('variant')) : 'normal'
 	);
+	// Only re-forced on reroll when the roll that produced this page was itself
+	// forced — an unforced roll that happened to land on `foil` must not lock
+	// every future reroll to `foil`.
+	const forcedVariant = $derived(
+		browser && page.url.searchParams.get(FORCE_VARIANT_PARAM) ? variant : undefined
+	);
 	const element = $derived(filters.element);
 	const rarity = $derived(filters.rarity);
 	const appliedFilters = $derived(
@@ -27,6 +33,7 @@
 			const labels: string[] = [];
 			if (element) labels.push(element.charAt(0).toUpperCase() + element.slice(1));
 			if (rarity) labels.push(`${rarity}★`);
+			if (forcedVariant) labels.push(CARD_VARIANT_FILTER_LABELS[forcedVariant]);
 			return labels;
 		})()
 	);
@@ -40,7 +47,7 @@
 
 	function handleReroll() {
 		rerollError = '';
-		const url = rollCharUrl({ ...filters, exclude: [data.char.name] });
+		const url = rollCharUrl({ ...filters, exclude: [data.char.name] }, forcedVariant);
 		if (!url) {
 			rerollError = CHAR_ERROR;
 			return;
@@ -70,7 +77,7 @@
 
 	<RerollControls
 		entry="/char"
-		criteria={{ element: element ?? '', rarity: rarity ?? '' }}
+		criteria={{ element: element ?? '', rarity: rarity ?? '', variant: forcedVariant ?? '' }}
 		onreroll={handleReroll}
 	/>
 

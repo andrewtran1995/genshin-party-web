@@ -29,6 +29,17 @@ export const CARD_VARIANT_LABELS: Record<CardVariant, string> = {
 	foil: 'Foil'
 };
 
+/**
+ * Dropdown label for a variant, used where `normal` needs to read as an
+ * explicit choice (e.g. "force no effect") rather than the blank card badge.
+ */
+export const CARD_VARIANT_FILTER_LABELS: Record<CardVariant, string> = {
+	normal: 'Normal',
+	holo: 'Holo',
+	'reverse-holo': 'Reverse Holo',
+	foil: 'Foil'
+};
+
 /** Roll a random card finish, weighted by `CARD_VARIANT_WEIGHTS`. */
 export const rollCardVariant = (): CardVariant => {
 	let roll = Math.random() * TOTAL_WEIGHT;
@@ -42,6 +53,18 @@ export const rollCardVariant = (): CardVariant => {
 /** Parse a single variant from a URL query value, falling back to `normal`. */
 export const parseCardVariant = (value: string | null | undefined): CardVariant =>
 	value && isCardVariant(value) ? value : 'normal';
+
+/**
+ * Parse a *requested* variant override from a form/URL field (e.g. the
+ * character roller's "Card variant" picker). Unlike `parseCardVariant`, a
+ * missing or unrecognized value means "no override" (roll randomly) rather
+ * than defaulting to `normal` — `normal` here is only returned when the
+ * caller explicitly asked to force it.
+ */
+export const parseVariantOverride = (
+	value: FormDataEntryValue | null | undefined
+): CardVariant | undefined =>
+	typeof value === 'string' && isCardVariant(value) ? value : undefined;
 
 /**
  * Parse a comma-separated list of variants (gauntlet URLs), padding or
