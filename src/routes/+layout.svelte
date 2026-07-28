@@ -32,8 +32,8 @@
 	<AppBar.Lead>
 		<NavLink href={resolve('/')} class="h4">genshin-party</NavLink>
 	</AppBar.Lead>
-	<AppBar.Trail>
-		<nav class="hidden flex-wrap justify-end gap-x-4 gap-y-1 md:flex">
+	<AppBar.Trail class="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
+		<nav class="hidden flex-wrap items-center gap-x-4 gap-y-1 md:flex">
 			{#each navItems as item (item.href)}
 				<NavLink href={item.href}>{item.label}</NavLink>
 			{/each}
