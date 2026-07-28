@@ -4,8 +4,17 @@
 	import { resolve } from '$app/paths';
 	import { AppBar } from '@skeletonlabs/skeleton-svelte';
 	import NavLink from '$lib/components/NavLink.svelte';
+	import NavDrawer from '$lib/components/NavDrawer.svelte';
 
 	let { children } = $props();
+
+	const navItems = [
+		{ href: resolve('/char'), label: 'Character' },
+		{ href: resolve('/boss'), label: 'Boss' },
+		{ href: resolve('/order'), label: 'Order' },
+		{ href: resolve('/interactive'), label: 'Interactive' },
+		{ href: resolve('/settings'), label: 'Settings' }
+	];
 
 	onMount(async () => {
 		const host = window.location.hostname;
@@ -24,13 +33,12 @@
 		<NavLink href={resolve('/')} class="h4">genshin-party</NavLink>
 	</AppBar.Lead>
 	<AppBar.Trail>
-		<nav class="flex flex-wrap justify-end gap-x-4 gap-y-1">
-			<NavLink href={resolve('/char')}>Character</NavLink>
-			<NavLink href={resolve('/boss')}>Boss</NavLink>
-			<NavLink href={resolve('/order')}>Order</NavLink>
-			<NavLink href={resolve('/interactive')}>Interactive</NavLink>
-			<NavLink href={resolve('/settings')}>Settings</NavLink>
+		<nav class="hidden flex-wrap justify-end gap-x-4 gap-y-1 md:flex">
+			{#each navItems as item (item.href)}
+				<NavLink href={item.href}>{item.label}</NavLink>
+			{/each}
 		</nav>
+		<NavDrawer {navItems} />
 	</AppBar.Trail>
 </AppBar>
 
