@@ -1,6 +1,25 @@
+import type { ComponentProps } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import RerollControls from './RerollControls.svelte';
+
+type Props = ComponentProps<typeof RerollControls>;
+
+const baseProps = (overrides: Partial<Props> = {}): Props => ({
+	entry: '/char',
+	criteria: {},
+	onreroll: vi.fn(),
+	...overrides
+});
+
+const renderControls = (overrides: Partial<Props> = {}) =>
+	render(RerollControls, { props: baseProps(overrides) });
+
+const formOf = (container: HTMLElement) => {
+	const form = container.querySelector('form');
+	if (!(form instanceof HTMLFormElement)) throw new Error('Expected a form');
+	return form;
+};
 
 const hiddenInputs = (container: HTMLElement) =>
 	Object.fromEntries(
@@ -13,13 +32,9 @@ const hiddenInputs = (container: HTMLElement) =>
 describe('RerollControls', () => {
 	it('rerolls without submitting the form when scripting is available', async () => {
 		const onreroll = vi.fn();
-		const { container } = await render(RerollControls, {
-			props: { entry: '/char', criteria: {}, onreroll }
-		});
+		const { container } = await renderControls({ onreroll });
 
-		const form = container.querySelector('form');
-		if (!(form instanceof HTMLFormElement)) throw new Error('Expected a form');
-
+		const form = formOf(container);
 		let submitted: SubmitEvent | undefined;
 		form.addEventListener('submit', (event) => {
 			submitted = event;
@@ -34,43 +49,32 @@ describe('RerollControls', () => {
 	});
 
 	it('posts to the entry form as a no-JS fallback', async () => {
-		const { container } = await render(RerollControls, {
-			props: { entry: '/boss', criteria: {}, onreroll: vi.fn() }
-		});
+		const { container } = await renderControls({ entry: '/boss' });
 
-		const form = container.querySelector('form');
-		expect(form?.getAttribute('method')).toBe('POST');
-		expect(form?.getAttribute('action')).toBe('/boss');
+		const form = formOf(container);
+		expect(form.getAttribute('method')).toBe('POST');
+		expect(form.getAttribute('action')).toBe('/boss');
 	});
 
 	it('forwards the active criteria so a fallback reroll keeps them', async () => {
-		const { container } = await render(RerollControls, {
-			props: {
-				entry: '/boss',
-				criteria: { weekly: '1', gauntlet: 'on' },
-				onreroll: vi.fn()
-			}
+		const { container } = await renderControls({
+			entry: '/boss',
+			criteria: { weekly: '1', gauntlet: 'on' }
 		});
 
 		expect(hiddenInputs(container)).toEqual({ weekly: '1', gauntlet: 'on' });
 	});
 
 	it('omits empty criteria so they read as absent filters', async () => {
-		const { container } = await render(RerollControls, {
-			props: {
-				entry: '/char',
-				criteria: { element: 'pyro', rarity: '' },
-				onreroll: vi.fn()
-			}
+		const { container } = await renderControls({
+			criteria: { element: 'pyro', rarity: '' }
 		});
 
 		expect(hiddenInputs(container)).toEqual({ element: 'pyro' });
 	});
 
 	it('links back to the entry form to change criteria', async () => {
-		const { container } = await render(RerollControls, {
-			props: { entry: '/char', criteria: {}, onreroll: vi.fn() }
-		});
+		const { container } = await renderControls();
 
 		const link = container.querySelector('.change-criteria');
 		expect(link?.getAttribute('href')).toBe('/char');
