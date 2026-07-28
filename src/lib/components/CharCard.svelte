@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Char } from '$lib/types';
+	import type { CardVariant } from '$lib/card-variant';
 	import CardChrome, { type CardPalette } from './CardChrome.svelte';
 	import ElementIcon from './ElementIcon.svelte';
 	import WeaponIcon from './WeaponIcon.svelte';
@@ -9,9 +10,11 @@
 		loading?: 'eager' | 'lazy';
 		/** Play the one-shot "wish splash" entrance. Only the candidate reveal uses this. */
 		reveal?: boolean;
+		/** Rolled card finish. Defaults to `normal` (no special effect). */
+		variant?: CardVariant | undefined;
 	}
 
-	let { char, loading = 'lazy', reveal = false }: Props = $props();
+	let { char, loading = 'lazy', reveal = false, variant = 'normal' }: Props = $props();
 
 	const imageUrl = $derived(char.portrait ?? char.icon);
 	const stars = $derived('★'.repeat(char.rarity));
@@ -109,6 +112,7 @@
 <CardChrome
 	element={char.element}
 	rarity={char.rarity}
+	{variant}
 	{reveal}
 	{palette}
 	{imageUrl}

@@ -26,6 +26,22 @@ describe('BossCard', () => {
 		expect(container.textContent).toContain('Weekly boss');
 	});
 
+	it('defaults to the normal variant with no badge', async () => {
+		const { container } = await render(BossCard, { props: { boss: shortBoss } });
+		const card = container.querySelector('.card');
+		expect(card?.getAttribute('data-variant')).toBe('normal');
+		expect(container.querySelector('.card-variant-badge')).toBeNull();
+	});
+
+	it('shows a badge naming the rolled variant', async () => {
+		const { container } = await render(BossCard, {
+			props: { boss: shortBoss, variant: 'holo' }
+		});
+		const card = container.querySelector('.card');
+		expect(card?.getAttribute('data-variant')).toBe('holo');
+		expect(container.querySelector('.card-variant-badge')?.textContent.trim()).toBe('Holo');
+	});
+
 	it('clamps the description and shows the shadow only when overflowing', async () => {
 		const { container } = await render(BossCard, { props: { boss: overflowingBoss } });
 		const flavor = container.querySelector('.card-flavor');

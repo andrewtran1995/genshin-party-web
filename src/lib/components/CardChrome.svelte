@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { tilt } from '$lib/tilt';
+	import { CARD_VARIANT_LABELS, type CardVariant } from '$lib/card-variant';
 
 	export interface CardPalette {
 		'--stock': string;
@@ -33,6 +34,8 @@
 	interface Props {
 		element?: string;
 		rarity?: number;
+		/** Rolled card finish. Defaults to `normal` (no special effect). */
+		variant?: CardVariant | undefined;
 		reveal?: boolean;
 		palette: CardPalette;
 		imageUrl: string | undefined;
@@ -46,6 +49,7 @@
 	let {
 		element,
 		rarity,
+		variant = 'normal',
 		reveal = false,
 		palette,
 		imageUrl,
@@ -55,6 +59,8 @@
 		typeline,
 		footer
 	}: Props = $props();
+
+	const variantLabel = $derived(CARD_VARIANT_LABELS[variant]);
 
 	// Loaded / error state, reset whenever the source image changes.
 	let imgLoaded = $state(false);
@@ -76,6 +82,7 @@
 	class:card-reveal={reveal}
 	data-element={element}
 	data-rarity={rarity}
+	data-variant={variant}
 	style:--stock={palette['--stock']}
 	style:--stock-2={palette['--stock-2']}
 	style:--el={palette['--el']}
@@ -90,6 +97,7 @@
 >
 	<div class="card-inner" class:card-inner-fill={layout.variant === 'fill'}>
 		<div class="card-glow" aria-hidden="true"></div>
+		<div class="card-variant-under" aria-hidden="true"></div>
 
 		<header class="card-header">
 			{@render header()}
@@ -108,6 +116,9 @@
 				onload: () => (imgLoaded = true),
 				onerror: () => (imgError = true)
 			})}
+			{#if variantLabel}
+				<span class="card-variant-badge">{variantLabel}</span>
+			{/if}
 		</div>
 
 		<p class="card-typeline">
@@ -117,6 +128,7 @@
 		{@render footer()}
 
 		<div class="card-foil" aria-hidden="true"></div>
+		<div class="card-variant-over" aria-hidden="true"></div>
 	</div>
 </article>
 
@@ -177,6 +189,28 @@
 		align-items: baseline;
 		justify-content: space-between;
 		gap: 2cqi;
+	}
+
+	/* Variant badge — a corner chip naming the rolled finish, so the outcome
+	   reads clearly regardless of motion or color perception. Anchored to the
+	   art window (not the header), so it never competes with the name/stars
+	   flex row for space. */
+	.card-variant-badge {
+		position: absolute;
+		top: 2.4cqi;
+		right: 2.4cqi;
+		z-index: 2;
+		font-size: 3cqi;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		white-space: nowrap;
+		padding: 0.8cqi 2cqi;
+		border-radius: 999px;
+		color: var(--ink);
+		background: color-mix(in oklch, var(--frame) 70%, black);
+		border: 1px solid color-mix(in oklch, var(--frame) 75%, transparent);
+		box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
 	}
 
 	.card-window {
@@ -284,6 +318,73 @@
 				oklch(85% 0.16 330deg),
 				oklch(85% 0.16 20deg)
 			);
+	}
+
+	/*
+	 * Variant finishes — holo / reverse-holo / foil. Each effect is scoped to
+	 * its own `[data-variant='…']` selector and its own layer element, so any
+	 * one of the three can be restyled or removed without touching the others
+	 * or the rarity-based `.card-foil` above. `--variant-active` carries the
+	 * shared resting-vs-interactive ramp (baseline visible at rest, fuller on
+	 * hover/tilt); it is not shared with `--foil-max`, which stays rarity-only.
+	 */
+	.card-variant-under,
+	.card-variant-over {
+		position: absolute;
+		inset: 0;
+		border-radius: 14px;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 220ms ease;
+	}
+
+	/* Reverse holographic — the rainbow band sits *behind* the art window in
+	   paint order, so the window's own opaque background hides it there; it
+	   only shows through the border, header, typeline and footer areas. */
+	.card[data-variant='reverse-holo'] .card-variant-under {
+		mix-blend-mode: screen;
+		opacity: calc(0.18 + var(--active, 0) * 0.55);
+		background: conic-gradient(
+			from calc(var(--mx, 50%) * 3.6deg) at var(--mx, 50%) var(--my, 50%),
+			oklch(82% 0.15 30deg),
+			oklch(82% 0.15 150deg),
+			oklch(82% 0.15 270deg),
+			oklch(82% 0.15 30deg)
+		);
+	}
+
+	/* Holographic — the boldest finish: a wide, saturated rainbow sweep drawn
+	   on the topmost layer, so it crosses the art as well as the frame. */
+	.card[data-variant='holo'] .card-variant-over {
+		mix-blend-mode: screen;
+		opacity: calc(0.2 + var(--active, 0) * 0.7);
+		background: conic-gradient(
+			from calc(var(--mx, 50%) * 3.6deg) at var(--mx, 50%) var(--my, 50%),
+			oklch(88% 0.19 10deg),
+			oklch(88% 0.19 100deg),
+			oklch(88% 0.19 190deg),
+			oklch(88% 0.19 280deg),
+			oklch(88% 0.19 10deg)
+		);
+	}
+
+	/* Foil — a scattered glitter texture instead of a color sweep: three
+	   differently-sized, offset dot grids read as sparkle rather than a band. */
+	.card[data-variant='foil'] .card-variant-over {
+		mix-blend-mode: screen;
+		opacity: calc(0.15 + var(--active, 0) * 0.45);
+		background-image:
+			radial-gradient(circle, rgb(255 255 255 / 95%) 0.5px, transparent 1.2px),
+			radial-gradient(circle, rgb(255 255 255 / 85%) 0.5px, transparent 1.2px),
+			radial-gradient(circle, rgb(255 255 255 / 75%) 0.5px, transparent 1.2px);
+		background-size:
+			9px 9px,
+			15px 15px,
+			21px 21px;
+		background-position:
+			0 0,
+			5px 8px,
+			11px 3px;
 	}
 
 	/* One-shot wish-splash entrance, scoped to the candidate reveal. */

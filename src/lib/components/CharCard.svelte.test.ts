@@ -113,6 +113,22 @@ describe('CharCard', () => {
 		expect(revealed.querySelector('.card')?.classList.contains('card-reveal')).toBe(true);
 	});
 
+	it('defaults to the normal variant with no badge', async () => {
+		const { container } = await render(CharCard, { props: { char: makeChar() } });
+		const card = container.querySelector('.card');
+		expect(card?.getAttribute('data-variant')).toBe('normal');
+		expect(container.querySelector('.card-variant-badge')).toBeNull();
+	});
+
+	it('shows a badge naming the rolled variant', async () => {
+		const { container } = await render(CharCard, {
+			props: { char: makeChar(), variant: 'reverse-holo' }
+		});
+		const card = container.querySelector('.card');
+		expect(card?.getAttribute('data-variant')).toBe('reverse-holo');
+		expect(container.querySelector('.card-variant-badge')?.textContent.trim()).toBe('Reverse Holo');
+	});
+
 	it('re-derives name and stars when a reroll swaps in a new character', async () => {
 		const { container, rerender } = await render(CharCard, {
 			props: { char: makeChar({ name: 'Furina', rarity: 5 }) }

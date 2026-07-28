@@ -7,6 +7,7 @@
 	import CharCard from '$lib/components/CharCard.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
 	import { CHAR_ERROR, rollCharUrl, parseCharFilters } from '$lib/genshin';
+	import { parseCardVariant } from '$lib/card-variant';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -16,6 +17,9 @@
 	// `page.url.searchParams` throws during prerendering (this route is prerendered);
 	// the browser guard defers reading it until client-side hydration.
 	const filters = $derived(browser ? parseCharFilters(page.url.searchParams) : {});
+	const variant = $derived(
+		browser ? parseCardVariant(page.url.searchParams.get('variant')) : 'normal'
+	);
 	const element = $derived(filters.element);
 	const rarity = $derived(filters.rarity);
 	const appliedFilters = $derived(
@@ -61,7 +65,7 @@
 	{/if}
 
 	<div class="card-stage">
-		<CharCard char={data.char} loading="eager" />
+		<CharCard char={data.char} loading="eager" {variant} />
 	</div>
 
 	<RerollControls

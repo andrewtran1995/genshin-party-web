@@ -1,13 +1,16 @@
 <script lang="ts">
 	import type { Enemy } from '$lib/types';
+	import type { CardVariant } from '$lib/card-variant';
 	import CardChrome, { type CardPalette } from './CardChrome.svelte';
 
 	interface Props {
 		boss: Enemy;
 		reveal?: boolean;
+		/** Rolled card finish. Defaults to `normal` (no special effect). */
+		variant?: CardVariant | undefined;
 	}
 
-	let { boss, reveal = false }: Props = $props();
+	let { boss, reveal = false, variant = 'normal' }: Props = $props();
 
 	const imageUrl = $derived(boss.icon);
 	const isWeekly = $derived(boss.categoryType === 'CODEX_SUBTYPE_BOSS');
@@ -63,7 +66,13 @@
 	};
 </script>
 
-<CardChrome {reveal} {palette} {imageUrl} layout={{ variant: 'fixed', windowAspectRatio: '2 / 1' }}>
+<CardChrome
+	{variant}
+	{reveal}
+	{palette}
+	{imageUrl}
+	layout={{ variant: 'fixed', windowAspectRatio: '2 / 1' }}
+>
 	{#snippet header()}
 		<h3 class="card-name">{boss.name}</h3>
 	{/snippet}

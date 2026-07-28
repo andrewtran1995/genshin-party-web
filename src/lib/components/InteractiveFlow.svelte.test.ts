@@ -23,6 +23,7 @@ const makeChar = (name: string): Char => ({
 
 const pick = (number: number, name: string, isMain = false): PlayerChoice => ({
 	char: makeChar(name),
+	variant: 'normal',
 	isMain,
 	number
 });
@@ -33,6 +34,7 @@ const idleState: PartyFlowState = {
 	playerOrder: [],
 	currentPlayerNumber: undefined,
 	candidate: undefined,
+	candidateVariant: undefined,
 	error: ''
 };
 
@@ -42,6 +44,7 @@ const activeState: PartyFlowState = {
 	playerOrder: [1, 2, 3, 4],
 	currentPlayerNumber: 1,
 	candidate: makeChar('Furina'),
+	candidateVariant: 'normal',
 	error: ''
 };
 
@@ -51,6 +54,7 @@ const finalPickState: PartyFlowState = {
 	playerOrder: [1, 2, 3, 4],
 	currentPlayerNumber: 4,
 	candidate: makeChar('Bennett'),
+	candidateVariant: 'normal',
 	error: ''
 };
 
@@ -60,6 +64,7 @@ const doneState: PartyFlowState = {
 	playerOrder: [1, 2, 3, 4],
 	currentPlayerNumber: undefined,
 	candidate: undefined,
+	candidateVariant: undefined,
 	error: ''
 };
 

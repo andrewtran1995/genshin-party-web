@@ -8,6 +8,7 @@ import {
 } from './core';
 import type { GetCharsOptions } from './core';
 import { isElement, isRarity } from '$lib/types';
+import { rollCardVariant, serializeCardVariantList } from '$lib/card-variant';
 
 export const CHAR_ERROR = 'No character matches those filters.';
 export const BOSS_ERROR = 'No bosses match those filters.';
@@ -57,9 +58,10 @@ export const serializeBossFilters = ({ weekly }: { weekly?: boolean }): string =
 export const rollCharUrl = (filters: GetCharsOptions): string | undefined => {
 	const char = getRandomChar(filters);
 	if (!char) return undefined;
-	const query = serializeCharFilters(filters);
+	const params = new URLSearchParams(serializeCharFilters(filters));
+	params.set('variant', rollCardVariant());
 	const path = `/char/${encodeURIComponent(char.name)}`;
-	return query ? `${path}?${query}` : path;
+	return `${path}?${params.toString()}`;
 };
 
 export const rollBossUrl = ({
@@ -71,17 +73,19 @@ export const rollBossUrl = ({
 	weekly?: boolean | undefined;
 	exclude?: readonly string[] | undefined;
 } = {}): string | undefined => {
-	const query = serializeBossFilters({ weekly });
+	const params = new URLSearchParams(serializeBossFilters({ weekly }));
 	if (gauntlet) {
 		const bosses = getRandomBosses({ weekly, exclude }, GAUNTLET_SIZE);
 		if (bosses.length === 0) return undefined;
+		params.set('variant', serializeCardVariantList(bosses.map(() => rollCardVariant())));
 		const path = `/boss/${bosses.map((boss) => encodeURIComponent(boss.name)).join('/')}`;
-		return query ? `${path}?${query}` : path;
+		return `${path}?${params.toString()}`;
 	}
 	const boss = getRandomBoss({ weekly, exclude });
 	if (!boss) return undefined;
+	params.set('variant', rollCardVariant());
 	const path = `/boss/${encodeURIComponent(boss.name)}`;
-	return query ? `${path}?${query}` : path;
+	return `${path}?${params.toString()}`;
 };
 
 export const permutations = (arr: number[]): number[][] => {

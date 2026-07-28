@@ -11,6 +11,7 @@ describe('createPartyFlow', () => {
 			playerOrder: [],
 			currentPlayerNumber: undefined,
 			candidate: undefined,
+			candidateVariant: undefined,
 			error: ''
 		});
 	});
@@ -24,20 +25,25 @@ describe('createPartyFlow', () => {
 		expect(new Set(flow.state.playerOrder)).toEqual(new Set([1, 2, 3, 4]));
 		expect(flow.state.currentPlayerNumber).toBe(flow.state.playerOrder[0]);
 		expect(flow.state.candidate).toBeDefined();
+		expect(flow.state.candidateVariant).toBeDefined();
 	});
 
 	it('accept pushes the choice and advances to the next slot', () => {
 		const flow = createPartyFlow();
 		flow.start();
 		const candidate = flow.state.candidate;
+		const candidateVariant = flow.state.candidateVariant;
 		const player = flow.state.currentPlayerNumber;
 
 		flow.accept(false);
 
-		expect(flow.state.playerChoices).toEqual([{ char: candidate, isMain: false, number: player }]);
+		expect(flow.state.playerChoices).toEqual([
+			{ char: candidate, variant: candidateVariant, isMain: false, number: player }
+		]);
 		expect(flow.state.status).toBe('active');
 		expect(flow.state.currentPlayerNumber).toBe(flow.state.playerOrder[1]);
 		expect(flow.state.candidate).toBeDefined();
+		expect(flow.state.candidateVariant).toBeDefined();
 	});
 
 	it('enters done after four accepts', () => {
@@ -105,6 +111,7 @@ describe('createPartyFlow', () => {
 		const flow = createPartyFlow();
 		flow.start();
 		const offered = flow.state.candidate;
+		const offeredVariant = flow.state.candidateVariant;
 
 		flow.accept(false);
 		expect(flow.state.playerChoices).toHaveLength(1);
@@ -114,6 +121,7 @@ describe('createPartyFlow', () => {
 		expect(flow.state.playerChoices).toHaveLength(0);
 		expect(flow.state.status).toBe('active');
 		expect(flow.state.candidate).toEqual(offered);
+		expect(flow.state.candidateVariant).toEqual(offeredVariant);
 		expect(flow.state.currentPlayerNumber).toBe(flow.state.playerOrder[0]);
 	});
 
@@ -141,6 +149,7 @@ describe('createPartyFlow', () => {
 			playerOrder: [],
 			currentPlayerNumber: undefined,
 			candidate: undefined,
+			candidateVariant: undefined,
 			error: ''
 		});
 	});
