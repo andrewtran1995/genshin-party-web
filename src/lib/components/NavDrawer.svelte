@@ -14,7 +14,7 @@
 	const animBackdrop =
 		'transition transition-discrete opacity-0 starting:data-[state=open]:opacity-0 data-[state=open]:opacity-100';
 	const animDrawer =
-		'transition transition-discrete opacity-0 -translate-x-full starting:data-[state=open]:opacity-0 starting:data-[state=open]:-translate-x-full data-[state=open]:opacity-100 data-[state=open]:translate-x-0';
+		'transition transition-discrete opacity-0 translate-x-full starting:data-[state=open]:opacity-0 starting:data-[state=open]:translate-x-full data-[state=open]:opacity-100 data-[state=open]:translate-x-0';
 </script>
 
 <Dialog {open} onOpenChange={(details) => (open = details.open)}>
@@ -32,7 +32,7 @@
 	</Dialog.Trigger>
 	<Portal>
 		<Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-50-950/50 {animBackdrop}" />
-		<Dialog.Positioner class="fixed inset-0 z-50 flex justify-start">
+		<Dialog.Positioner class="fixed inset-0 z-50 flex justify-end">
 			<Dialog.Content
 				class="card bg-surface-100-900 h-screen w-64 max-w-[80vw] space-y-4 p-4 shadow-xl {animDrawer}"
 			>

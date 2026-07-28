@@ -28,7 +28,7 @@
 	});
 </script>
 
-<AppBar>
+<AppBar class="flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2">
 	<AppBar.Lead>
 		<NavLink href={resolve('/')} class="h4">genshin-party</NavLink>
 	</AppBar.Lead>
