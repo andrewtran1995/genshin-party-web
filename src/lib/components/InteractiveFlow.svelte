@@ -19,6 +19,8 @@
 		onstart: (playerNames: string[]) => void;
 		onaccept: (isMain: boolean) => void;
 		onreroll: () => void;
+		onpreviousroll: () => void;
+		onnextroll: () => void;
 		ongoback: () => void;
 		onreset: () => void;
 	}
@@ -31,6 +33,8 @@
 		onstart,
 		onaccept,
 		onreroll,
+		onpreviousroll,
+		onnextroll,
 		ongoback,
 		onreset
 	}: Props = $props();
@@ -60,6 +64,15 @@
 	let startOverButtonRef = $state<HTMLButtonElement | undefined>();
 
 	const canGoBack = $derived(flowState.playerChoices.length > 0);
+	const canGoToPreviousRoll = $derived(flowState.candidateHistoryIndex > 0);
+	const canGoToNextRoll = $derived(
+		flowState.candidateHistoryIndex < flowState.candidateHistory.length - 1
+	);
+	const rollIndicator = $derived(
+		flowState.candidateHistory.length > 0
+			? `Roll ${flowState.candidateHistoryIndex + 1} of ${flowState.candidateHistory.length}`
+			: ''
+	);
 	const isFinalPick = $derived(flowState.playerChoices.length === PARTY_SIZE - 1);
 	const finalChoices = $derived(
 		flowState.status === 'done' ? sortBy(flowState.playerChoices, prop('number')) : []
@@ -96,6 +109,18 @@
 
 	function reroll() {
 		onreroll();
+	}
+
+	async function previousRoll() {
+		onpreviousroll();
+		await tick();
+		acceptButtonRef?.focus();
+	}
+
+	async function nextRoll() {
+		onnextroll();
+		await tick();
+		acceptButtonRef?.focus();
 	}
 
 	async function goBack() {
@@ -174,6 +199,9 @@
 				<CharCard char={flowState.candidate} reveal />
 			</div>
 		{/key}
+		{#if rollIndicator}
+			<p class="roll-indicator">{rollIndicator}</p>
+		{/if}
 	{/if}
 
 	<div class="controls">
@@ -193,6 +221,20 @@
 			Accept as main
 		</button>
 		<button class="btn preset-tonal-surface" onclick={reroll} type="button">Reroll</button>
+	</div>
+	<div class="controls">
+		<button
+			class="btn preset-tonal-surface"
+			disabled={!canGoToPreviousRoll}
+			onclick={previousRoll}
+			type="button">Previous roll</button
+		>
+		<button
+			class="btn preset-tonal-surface"
+			disabled={!canGoToNextRoll}
+			onclick={nextRoll}
+			type="button">Next roll</button
+		>
 		<button class="btn preset-tonal-surface" disabled={!canGoBack} onclick={goBack} type="button">
 			{#if lastChoice}
 				Go back to {formatPlayer(lastChoice.number, expandedNames)}
@@ -226,6 +268,12 @@
 
 	.candidate {
 		margin-block: 1rem;
+	}
+
+	.roll-indicator {
+		margin-block: 0 1rem;
+		font-size: 0.875rem;
+		color: var(--color-surface-700);
 	}
 
 	.controls {
