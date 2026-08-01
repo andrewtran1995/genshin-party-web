@@ -33,6 +33,8 @@
 	onstart={start}
 	onaccept={flow.accept}
 	onreroll={flow.roll}
+	onpreviousroll={flow.previousRoll}
+	onnextroll={flow.nextRoll}
 	ongoback={flow.goBack}
 	onreset={reset}
 />
