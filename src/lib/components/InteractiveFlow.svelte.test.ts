@@ -269,9 +269,10 @@ describe('InteractiveFlow', () => {
 		it('forwards Previous roll and Next roll to the parent', async () => {
 			const onpreviousroll = vi.fn();
 			const onnextroll = vi.fn();
+			// A middle index in a 3-entry history so both buttons are enabled at once.
 			const flowState: PartyFlowState = {
 				...activeState,
-				candidateHistory: [makeChar('Furina'), makeChar('Amber')],
+				candidateHistory: [makeChar('Furina'), makeChar('Amber'), makeChar('Diluc')],
 				candidateHistoryIndex: 1
 			};
 			const { container } = await render(InteractiveFlow, {
