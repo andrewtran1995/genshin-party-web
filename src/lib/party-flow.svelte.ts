@@ -17,44 +17,73 @@ export interface PartyFlowState {
 	readonly playerOrder: readonly number[];
 	readonly currentPlayerNumber: number | undefined;
 	readonly candidate: Char | undefined;
+	readonly candidateHistory: readonly Char[];
+	readonly candidateHistoryIndex: number;
 	readonly error: string;
 }
 
 /**
  * Owns the interactive party-selection flow: whose turn it is, what
  * candidate they're offered, and the rarity/exclusion/re-offer rules that
- * govern rolling. `main -> next candidate is 4-star` and `go back re-offers
- * the same character` live here because they constrain this stack directly.
+ * govern rolling. `main -> next candidate is 4-star`, `go back re-offers
+ * the same character`, and per-turn roll history live here because they
+ * constrain this stack directly.
  */
 export function createPartyFlow() {
 	let status = $state<PartyFlowState['status']>('idle');
 	let playerChoices = $state<PlayerChoice[]>([]);
 	let playerOrder = $state<number[]>([]);
-	let candidate = $state<Char | undefined>();
+	let candidateHistory = $state<Char[]>([]);
+	let candidateHistoryIndex = $state(-1);
 	let error = $state('');
+
+	const candidate = $derived(
+		candidateHistoryIndex >= 0 ? candidateHistory[candidateHistoryIndex] : undefined
+	);
 
 	const currentPlayerNumber = $derived(
 		status === 'active' ? playerOrder[playerChoices.length] : undefined
 	);
 
-	function rollNext(alsoExclude: string[] = []) {
+	function rollNext() {
+		if (status !== 'active' || currentPlayerNumber === undefined) return;
 		const rarity = playerChoices.at(-1)?.isMain ? '4' : '5';
-		const exclude = [...playerChoices.map((choice) => choice.char.name), ...alsoExclude];
-		candidate = getRandomChar({ rarity, exclude, includeTraveler: false });
-		error = candidate ? '' : 'No eligible character.';
+		const exclude = [
+			...playerChoices.map((choice) => choice.char.name),
+			...candidateHistory.map((char) => char.name)
+		];
+		const rolled = getRandomChar({ rarity, exclude, includeTraveler: false });
+		if (rolled) {
+			candidateHistory = [...candidateHistory.slice(0, candidateHistoryIndex + 1), rolled];
+			candidateHistoryIndex = candidateHistory.length - 1;
+			error = '';
+		} else {
+			error = 'No eligible character.';
+		}
 	}
 
 	function roll() {
-		if (status !== 'active') return;
-		const excludeCurrent = candidate?.name;
-		candidate = undefined;
-		rollNext(excludeCurrent ? [excludeCurrent] : []);
+		if (status !== 'active' || candidateHistoryIndex < 0) return;
+		rollNext();
+	}
+
+	function previousRoll() {
+		if (candidateHistoryIndex > 0) {
+			candidateHistoryIndex -= 1;
+		}
+	}
+
+	function nextRoll() {
+		if (candidateHistoryIndex < candidateHistory.length - 1) {
+			candidateHistoryIndex += 1;
+		}
 	}
 
 	function accept(isMain: boolean) {
-		if (status !== 'active' || !candidate || currentPlayerNumber === undefined) return;
+		if (status !== 'active' || candidate === undefined || currentPlayerNumber === undefined) return;
 		playerChoices = [...playerChoices, { char: candidate, isMain, number: currentPlayerNumber }];
-		candidate = undefined;
+		candidateHistory = [];
+		candidateHistoryIndex = -1;
 		if (playerChoices.length === PARTY_SIZE) {
 			status = 'done';
 		} else {
@@ -68,14 +97,17 @@ export function createPartyFlow() {
 		playerChoices = playerChoices.slice(0, -1);
 		status = 'active';
 		error = '';
-		candidate = previous.char;
+		candidateHistory = [previous.char];
+		candidateHistoryIndex = 0;
 	}
 
 	function start() {
 		status = 'active';
 		playerChoices = [];
 		playerOrder = shuffle([1, 2, 3, 4]);
-		candidate = undefined;
+		candidateHistory = [];
+		candidateHistoryIndex = -1;
+		error = '';
 		rollNext();
 	}
 
@@ -83,15 +115,27 @@ export function createPartyFlow() {
 		status = 'idle';
 		playerChoices = [];
 		playerOrder = [];
-		candidate = undefined;
+		candidateHistory = [];
+		candidateHistoryIndex = -1;
 		error = '';
 	}
 
 	return {
 		get state(): PartyFlowState {
-			return { status, playerChoices, playerOrder, currentPlayerNumber, candidate, error };
+			return {
+				status,
+				playerChoices,
+				playerOrder,
+				currentPlayerNumber,
+				candidate,
+				candidateHistory,
+				candidateHistoryIndex,
+				error
+			};
 		},
 		roll,
+		previousRoll,
+		nextRoll,
 		accept,
 		goBack,
 		start,

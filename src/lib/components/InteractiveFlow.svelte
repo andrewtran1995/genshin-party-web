@@ -19,6 +19,8 @@
 		onstart: (playerNames: string[]) => void;
 		onaccept: (isMain: boolean) => void;
 		onreroll: () => void;
+		onpreviousroll: () => void;
+		onnextroll: () => void;
 		ongoback: () => void;
 		onreset: () => void;
 	}
@@ -31,6 +33,8 @@
 		onstart,
 		onaccept,
 		onreroll,
+		onpreviousroll,
+		onnextroll,
 		ongoback,
 		onreset
 	}: Props = $props();
@@ -60,6 +64,15 @@
 	let startOverButtonRef = $state<HTMLButtonElement | undefined>();
 
 	const canGoBack = $derived(flowState.playerChoices.length > 0);
+	const canGoToPreviousRoll = $derived(flowState.candidateHistoryIndex > 0);
+	const canGoToNextRoll = $derived(
+		flowState.candidateHistoryIndex < flowState.candidateHistory.length - 1
+	);
+	const rollIndicator = $derived(
+		flowState.candidateHistory.length > 0
+			? `Roll ${flowState.candidateHistoryIndex + 1} of ${flowState.candidateHistory.length}`
+			: ''
+	);
 	const isFinalPick = $derived(flowState.playerChoices.length === PARTY_SIZE - 1);
 	const finalChoices = $derived(
 		flowState.status === 'done' ? sortBy(flowState.playerChoices, prop('number')) : []
@@ -96,6 +109,18 @@
 
 	function reroll() {
 		onreroll();
+	}
+
+	async function previousRoll() {
+		onpreviousroll();
+		await tick();
+		acceptButtonRef?.focus();
+	}
+
+	async function nextRoll() {
+		onnextroll();
+		await tick();
+		acceptButtonRef?.focus();
 	}
 
 	async function goBack() {
@@ -174,9 +199,12 @@
 				<CharCard char={flowState.candidate} reveal />
 			</div>
 		{/key}
+		{#if rollIndicator}
+			<p class="roll-indicator">{rollIndicator}</p>
+		{/if}
 	{/if}
 
-	<div class="controls">
+	<div class="primary-controls">
 		<button
 			bind:this={acceptButtonRef}
 			class="btn preset-filled-primary-500"
@@ -192,7 +220,27 @@
 		>
 			Accept as main
 		</button>
+	</div>
+
+	<div class="history-controls" role="group" aria-label="Roll history">
+		<button
+			class="btn preset-tonal-surface"
+			disabled={!canGoToPreviousRoll}
+			onclick={previousRoll}
+			type="button"
+			aria-label="Previous roll">←</button
+		>
 		<button class="btn preset-tonal-surface" onclick={reroll} type="button">Reroll</button>
+		<button
+			class="btn preset-tonal-surface"
+			disabled={!canGoToNextRoll}
+			onclick={nextRoll}
+			type="button"
+			aria-label="Next roll">→</button
+		>
+	</div>
+
+	<div class="secondary-controls">
 		<button class="btn preset-tonal-surface" disabled={!canGoBack} onclick={goBack} type="button">
 			{#if lastChoice}
 				Go back to {formatPlayer(lastChoice.number, expandedNames)}
@@ -228,9 +276,54 @@
 		margin-block: 1rem;
 	}
 
-	.controls {
+	.roll-indicator {
+		margin-block: 0 1rem;
+		font-size: 0.875rem;
+		color: var(--color-surface-700);
+	}
+
+	.primary-controls,
+	.history-controls,
+	.secondary-controls {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
+	}
+
+	.primary-controls {
+		margin-block: 0 0.75rem;
+	}
+
+	.history-controls {
+		gap: 0;
+		margin-block: 0 0.5rem;
+	}
+
+	.history-controls button {
+		border-radius: 0;
+	}
+
+	.history-controls button:first-child,
+	.history-controls button:last-child {
+		min-inline-size: 2.5rem;
+		justify-content: center;
+	}
+
+	.history-controls button:first-child {
+		border-start-start-radius: var(--radius-base);
+		border-end-start-radius: var(--radius-base);
+	}
+
+	.history-controls button:last-child {
+		border-start-end-radius: var(--radius-base);
+		border-end-end-radius: var(--radius-base);
+	}
+
+	.history-controls button:not(:first-child) {
+		margin-inline-start: -1px;
+	}
+
+	.secondary-controls {
+		margin-block-start: 0.25rem;
 	}
 </style>
