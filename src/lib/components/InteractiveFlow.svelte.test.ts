@@ -234,7 +234,7 @@ describe('InteractiveFlow', () => {
 
 		it('disables Previous roll at the first history item', async () => {
 			const { container } = await render(InteractiveFlow, { props: choosing() });
-			expect(button(container, 'Previous roll').disabled).toBe(true);
+			expect(buttonByLabel(container, 'Previous roll').disabled).toBe(true);
 		});
 
 		it('enables Previous roll when there is an earlier candidate', async () => {
@@ -246,12 +246,12 @@ describe('InteractiveFlow', () => {
 			const { container } = await render(InteractiveFlow, {
 				props: choosing({ flowState })
 			});
-			expect(button(container, 'Previous roll').disabled).toBe(false);
+			expect(buttonByLabel(container, 'Previous roll').disabled).toBe(false);
 		});
 
 		it('disables Next roll at the last history item', async () => {
 			const { container } = await render(InteractiveFlow, { props: choosing() });
-			expect(button(container, 'Next roll').disabled).toBe(true);
+			expect(buttonByLabel(container, 'Next roll').disabled).toBe(true);
 		});
 
 		it('enables Next roll when there is a later candidate', async () => {
@@ -263,7 +263,7 @@ describe('InteractiveFlow', () => {
 			const { container } = await render(InteractiveFlow, {
 				props: choosing({ flowState })
 			});
-			expect(button(container, 'Next roll').disabled).toBe(false);
+			expect(buttonByLabel(container, 'Next roll').disabled).toBe(false);
 		});
 
 		it('forwards Previous roll and Next roll to the parent', async () => {
@@ -277,9 +277,9 @@ describe('InteractiveFlow', () => {
 			const { container } = await render(InteractiveFlow, {
 				props: choosing({ flowState, onpreviousroll, onnextroll })
 			});
-			button(container, 'Previous roll').click();
+			buttonByLabel(container, 'Previous roll').click();
 			await expect.poll(() => onpreviousroll).toHaveBeenCalledOnce();
-			button(container, 'Next roll').click();
+			buttonByLabel(container, 'Next roll').click();
 			await expect.poll(() => onnextroll).toHaveBeenCalledOnce();
 		});
 	});

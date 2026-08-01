@@ -204,7 +204,7 @@
 		{/if}
 	{/if}
 
-	<div class="controls">
+	<div class="primary-controls">
 		<button
 			bind:this={acceptButtonRef}
 			class="btn preset-filled-primary-500"
@@ -220,21 +220,27 @@
 		>
 			Accept as main
 		</button>
-		<button class="btn preset-tonal-surface" onclick={reroll} type="button">Reroll</button>
 	</div>
-	<div class="controls">
+
+	<div class="history-controls" role="group" aria-label="Roll history">
 		<button
 			class="btn preset-tonal-surface"
 			disabled={!canGoToPreviousRoll}
 			onclick={previousRoll}
-			type="button">Previous roll</button
+			type="button"
+			aria-label="Previous roll">←</button
 		>
+		<button class="btn preset-tonal-surface" onclick={reroll} type="button">Reroll</button>
 		<button
 			class="btn preset-tonal-surface"
 			disabled={!canGoToNextRoll}
 			onclick={nextRoll}
-			type="button">Next roll</button
+			type="button"
+			aria-label="Next roll">→</button
 		>
+	</div>
+
+	<div class="secondary-controls">
 		<button class="btn preset-tonal-surface" disabled={!canGoBack} onclick={goBack} type="button">
 			{#if lastChoice}
 				Go back to {formatPlayer(lastChoice.number, expandedNames)}
@@ -276,9 +282,48 @@
 		color: var(--color-surface-700);
 	}
 
-	.controls {
+	.primary-controls,
+	.history-controls,
+	.secondary-controls {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
+	}
+
+	.primary-controls {
+		margin-block: 0 0.75rem;
+	}
+
+	.history-controls {
+		gap: 0;
+		margin-block: 0 0.5rem;
+	}
+
+	.history-controls button {
+		border-radius: 0;
+	}
+
+	.history-controls button:first-child,
+	.history-controls button:last-child {
+		min-inline-size: 2.5rem;
+		justify-content: center;
+	}
+
+	.history-controls button:first-child {
+		border-start-start-radius: var(--radius-base);
+		border-end-start-radius: var(--radius-base);
+	}
+
+	.history-controls button:last-child {
+		border-start-end-radius: var(--radius-base);
+		border-end-end-radius: var(--radius-base);
+	}
+
+	.history-controls button:not(:first-child) {
+		margin-inline-start: -1px;
+	}
+
+	.secondary-controls {
+		margin-block-start: 0.25rem;
 	}
 </style>
