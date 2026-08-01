@@ -178,7 +178,6 @@ describe('createPartyFlow', () => {
 		expect(flow.state.candidateHistory).toEqual([first, second, third]);
 
 		flow.previousRoll();
-		flow.previousRoll();
 		expect(flow.state.candidate).toEqual(second);
 
 		flow.roll();

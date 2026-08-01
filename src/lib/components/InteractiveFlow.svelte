@@ -69,7 +69,7 @@
 		flowState.candidateHistoryIndex < flowState.candidateHistory.length - 1
 	);
 	const rollIndicator = $derived(
-		flowState.candidateHistory.length > 0
+		flowState.candidateHistory.length > 1
 			? `Roll ${flowState.candidateHistoryIndex + 1} of ${flowState.candidateHistory.length}`
 			: ''
 	);
