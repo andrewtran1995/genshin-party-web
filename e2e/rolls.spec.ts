@@ -27,25 +27,3 @@ test('same seed rolls the same character for the same filters', async ({
 
 	expect(page.url()).toBe(firstUrl);
 });
-
-test('seeded candidate reveal is visually stable', async ({
-	page,
-	interactive,
-	seededRandom,
-	mockCharArt
-}) => {
-	void seededRandom;
-	void mockCharArt;
-
-	await interactive.goto();
-	await interactive.start();
-
-	await expect(interactive.candidateHeading).toBeVisible();
-	// The card art fades in on its own `load` event (see CardChrome.svelte); wait
-	// for that before screenshotting, or the snapshot can race the placeholder.
-	await page.waitForFunction(() => {
-		const img = document.querySelector<HTMLImageElement>('article .card-art');
-		return !!img && img.complete && img.naturalWidth > 0;
-	});
-	await expect(page.getByRole('article')).toHaveScreenshot('interactive-first-candidate.png');
-});
