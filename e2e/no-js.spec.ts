@@ -10,8 +10,16 @@ test('char roll falls back to a real form POST without JS', async ({ page }) => 
 	await page.goto('/char');
 	await page.getByRole('button', { name: /^roll$/i }).click();
 
-	await expect(page).toHaveURL(/\/char\/[^/?]+$/);
+	await expect(page).toHaveURL(/\/char\/[^/?]+(\?.*)?$/);
 	await expect(page.getByRole('heading', { name: /random character/i })).toBeVisible();
+});
+
+test('char debug form falls back to a real POST with the allVariants flag', async ({ page }) => {
+	await page.goto('/char');
+	await page.getByLabel('Character:').selectOption('Amber');
+	await page.getByRole('button', { name: /^show all variants$/i }).click();
+
+	await expect(page).toHaveURL(/\/char\/Amber\?allVariants=1/);
 });
 
 test('boss roll falls back to a real form POST without JS', async ({ page }) => {
