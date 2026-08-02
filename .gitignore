@@ -51,6 +51,7 @@ coverage
 .opencode/settings.local.json
 .opencode/scheduled_tasks.lock
 .opencode/worktrees/
+opencode.json
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
 .claude/worktrees/
