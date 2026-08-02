@@ -311,7 +311,7 @@
 				transparent 60%
 			),
 			conic-gradient(
-				from calc(var(--mx, 50%) * 3.6deg) at var(--mx, 50%) var(--my, 50%),
+				from var(--mx-angle, 180deg) at var(--mx, 50%) var(--my, 50%),
 				oklch(85% 0.16 20deg),
 				oklch(85% 0.16 130deg),
 				oklch(85% 0.16 240deg),
@@ -338,18 +338,19 @@
 		transition: opacity 220ms ease;
 	}
 
-	/* Reverse holographic — the rainbow band sits *behind* the art window in
-	   paint order, so the window's own opaque background hides it there; it
-	   only shows through the border, header, typeline and footer areas. */
+	/* Reverse holographic — a prismatic sheen that stays behind the art window
+	   so the frame, header, typeline and footer read as the chase finish while
+	   the illustration stays clean. Resting opacity is just high enough to
+	   catch the light without tinting the whole card. */
 	.card[data-variant='reverse-holo'] .card-variant-under {
 		mix-blend-mode: screen;
-		opacity: calc(0.18 + var(--active, 0) * 0.55);
+		opacity: calc(0.25 + var(--active, 0) * 0.55);
 		background: conic-gradient(
-			from calc(var(--mx, 50%) * 3.6deg) at var(--mx, 50%) var(--my, 50%),
-			oklch(82% 0.15 30deg),
-			oklch(82% 0.15 150deg),
-			oklch(82% 0.15 270deg),
-			oklch(82% 0.15 30deg)
+			from var(--mx-angle, 180deg) at var(--mx, 50%) var(--my, 50%),
+			oklch(86% 0.18 30deg),
+			oklch(86% 0.18 150deg),
+			oklch(86% 0.18 270deg),
+			oklch(86% 0.18 30deg)
 		);
 	}
 
@@ -357,34 +358,45 @@
 	   on the topmost layer, so it crosses the art as well as the frame. */
 	.card[data-variant='holo'] .card-variant-over {
 		mix-blend-mode: screen;
-		opacity: calc(0.2 + var(--active, 0) * 0.7);
+		opacity: calc(0.22 + var(--active, 0) * 0.48);
 		background: conic-gradient(
-			from calc(var(--mx, 50%) * 3.6deg) at var(--mx, 50%) var(--my, 50%),
-			oklch(88% 0.19 10deg),
-			oklch(88% 0.19 100deg),
-			oklch(88% 0.19 190deg),
-			oklch(88% 0.19 280deg),
-			oklch(88% 0.19 10deg)
+			from var(--mx-angle, 180deg) at var(--mx, 50%) var(--my, 50%),
+			oklch(88% 0.22 10deg),
+			oklch(88% 0.22 80deg),
+			oklch(88% 0.22 160deg),
+			oklch(88% 0.22 240deg),
+			oklch(88% 0.22 320deg),
+			oklch(88% 0.22 10deg)
 		);
 	}
 
-	/* Foil — a scattered glitter texture instead of a color sweep: three
-	   differently-sized, offset dot grids read as sparkle rather than a band. */
+	/* Foil — a scattered glitter texture with a tracked specular highlight, so
+	   the dots feel like metallic flakes catching the light rather than a static
+	   overlay. */
 	.card[data-variant='foil'] .card-variant-over {
 		mix-blend-mode: screen;
-		opacity: calc(0.15 + var(--active, 0) * 0.45);
+		opacity: calc(0.2 + var(--active, 0) * 0.5);
 		background-image:
+			radial-gradient(
+				50% 50% at var(--mx, 50%) var(--my, 50%),
+				rgb(255 255 255 / 72%),
+				transparent 70%
+			),
 			radial-gradient(circle, rgb(255 255 255 / 95%) 0.5px, transparent 1.2px),
 			radial-gradient(circle, rgb(255 255 255 / 85%) 0.5px, transparent 1.2px),
 			radial-gradient(circle, rgb(255 255 255 / 75%) 0.5px, transparent 1.2px);
 		background-size:
+			100% 100%,
 			9px 9px,
 			15px 15px,
 			21px 21px;
 		background-position:
 			0 0,
+			0 0,
 			5px 8px,
 			11px 3px;
+		background-repeat: no-repeat, repeat, repeat, repeat;
+		background-blend-mode: screen;
 	}
 
 	/* One-shot wish-splash entrance, scoped to the candidate reveal. */
