@@ -31,18 +31,16 @@ describe('rollCardVariant', () => {
 	});
 
 	it('rolls each variant roughly at its configured weight', () => {
-		const counts: Record<CardVariant, number> = { normal: 0, holo: 0, 'reverse-holo': 0, foil: 0 };
+		const counts: Record<CardVariant, number> = { normal: 0, holo: 0, 'reverse-holo': 0 };
 		const samples = 20000;
 		for (let i = 0; i < samples; i++) counts[rollCardVariant()]++;
 
-		// Configured weights: normal 80%, foil 12%, reverse-holo 6%, holo 2%.
-		expect(counts.normal / samples).toBeGreaterThan(0.75);
-		expect(counts.normal / samples).toBeLessThan(0.85);
-		expect(counts.foil / samples).toBeGreaterThan(0.08);
-		expect(counts.foil / samples).toBeLessThan(0.16);
-		expect(counts['reverse-holo'] / samples).toBeGreaterThan(0.03);
-		expect(counts['reverse-holo'] / samples).toBeLessThan(0.09);
-		expect(counts.holo / samples).toBeGreaterThan(0.005);
+		// Configured weights: normal 80, reverse-holo 6, holo 2 (total 88).
+		expect(counts.normal / samples).toBeGreaterThan(0.85);
+		expect(counts.normal / samples).toBeLessThan(0.95);
+		expect(counts['reverse-holo'] / samples).toBeGreaterThan(0.04);
+		expect(counts['reverse-holo'] / samples).toBeLessThan(0.1);
+		expect(counts.holo / samples).toBeGreaterThan(0.01);
 		expect(counts.holo / samples).toBeLessThan(0.04);
 	});
 });
@@ -80,7 +78,11 @@ describe('parseVariantOverride', () => {
 
 describe('parseCardVariantList', () => {
 	it('parses each comma-separated entry', () => {
-		expect(parseCardVariantList('holo,foil,normal', 3)).toEqual(['holo', 'foil', 'normal']);
+		expect(parseCardVariantList('holo,reverse-holo,normal', 3)).toEqual([
+			'holo',
+			'reverse-holo',
+			'normal'
+		]);
 	});
 
 	it('pads missing entries with normal', () => {
@@ -88,7 +90,11 @@ describe('parseCardVariantList', () => {
 	});
 
 	it('falls back invalid entries to normal without breaking the list', () => {
-		expect(parseCardVariantList('holo,bogus,foil', 3)).toEqual(['holo', 'normal', 'foil']);
+		expect(parseCardVariantList('holo,bogus,reverse-holo', 3)).toEqual([
+			'holo',
+			'normal',
+			'reverse-holo'
+		]);
 	});
 
 	it('returns an all-normal list for a missing value', () => {
@@ -98,7 +104,7 @@ describe('parseCardVariantList', () => {
 
 describe('serializeCardVariantList', () => {
 	it('round-trips with parseCardVariantList', () => {
-		const variants = ['holo', 'foil', 'normal'] as const;
+		const variants = ['holo', 'reverse-holo', 'normal'] as const;
 		const serialized = serializeCardVariantList(variants);
 		expect(parseCardVariantList(serialized, 3)).toEqual(variants);
 	});

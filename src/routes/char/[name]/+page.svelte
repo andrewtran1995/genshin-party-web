@@ -23,8 +23,8 @@
 	);
 	const allVariants = $derived(browser ? page.url.searchParams.has('allVariants') : false);
 	// Only re-forced on reroll when the roll that produced this page was itself
-	// forced — an unforced roll that happened to land on `foil` must not lock
-	// every future reroll to `foil`.
+	// forced — an unforced roll that happened to land on a chase variant must not
+	// lock every future reroll to that same variant.
 	const forcedVariant = $derived(
 		browser && page.url.searchParams.get(FORCE_VARIANT_PARAM) ? variant : undefined
 	);

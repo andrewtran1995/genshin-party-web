@@ -5,7 +5,7 @@ import { isIncludedIn } from 'remeda';
  * can pull any finish. `normal` is the common case; the rest are cosmetic
  * chase pulls, mirroring a TCG pack.
  */
-export const cardVariants = ['normal', 'holo', 'reverse-holo', 'foil'] as const;
+export const cardVariants = ['normal', 'holo', 'reverse-holo'] as const;
 export type CardVariant = (typeof cardVariants)[number];
 
 export const isCardVariant = (value: string): value is CardVariant =>
@@ -14,7 +14,6 @@ export const isCardVariant = (value: string): value is CardVariant =>
 /** Pull weights (out of the total below). Order is irrelevant to the roll. */
 const CARD_VARIANT_WEIGHTS: Record<CardVariant, number> = {
 	normal: 80,
-	foil: 12,
 	'reverse-holo': 6,
 	holo: 2
 };
@@ -25,8 +24,7 @@ const TOTAL_WEIGHT = Object.values(CARD_VARIANT_WEIGHTS).reduce((sum, weight) =>
 export const CARD_VARIANT_LABELS: Record<CardVariant, string> = {
 	normal: '',
 	holo: 'Holo',
-	'reverse-holo': 'Reverse Holo',
-	foil: 'Foil'
+	'reverse-holo': 'Reverse Holo'
 };
 
 /**
@@ -36,8 +34,7 @@ export const CARD_VARIANT_LABELS: Record<CardVariant, string> = {
 export const CARD_VARIANT_FILTER_LABELS: Record<CardVariant, string> = {
 	normal: 'Normal',
 	holo: 'Holo',
-	'reverse-holo': 'Reverse Holo',
-	foil: 'Foil'
+	'reverse-holo': 'Reverse Holo'
 };
 
 /** Roll a random card finish, weighted by `CARD_VARIANT_WEIGHTS`. */

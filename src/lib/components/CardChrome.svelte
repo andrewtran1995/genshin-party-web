@@ -116,6 +116,7 @@
 				onload: () => (imgLoaded = true),
 				onerror: () => (imgError = true)
 			})}
+			<div class="card-window-holo" aria-hidden="true"></div>
 			{#if variantLabel}
 				<span class="card-variant-badge">{variantLabel}</span>
 			{/if}
@@ -128,7 +129,6 @@
 		{@render footer()}
 
 		<div class="card-foil" aria-hidden="true"></div>
-		<div class="card-variant-over" aria-hidden="true"></div>
 	</div>
 </article>
 
@@ -321,21 +321,25 @@
 	}
 
 	/*
-	 * Variant finishes — holo / reverse-holo / foil. Each effect is scoped to
-	 * its own `[data-variant='…']` selector and its own layer element, so any
-	 * one of the three can be restyled or removed without touching the others
-	 * or the rarity-based `.card-foil` above. `--variant-active` carries the
-	 * shared resting-vs-interactive ramp (baseline visible at rest, fuller on
-	 * hover/tilt); it is not shared with `--foil-max`, which stays rarity-only.
+	 * Variant finishes — holo / reverse-holo. Each effect is scoped to its own
+	 * `[data-variant='…']` selector and its own layer element, so either one can
+	 * be restyled or removed without touching the other or the rarity-based
+	 * `.card-foil` above. `--active` carries the shared resting-vs-interactive
+	 * ramp (baseline visible at rest, fuller on hover/tilt); it is not shared
+	 * with `--foil-max`, which stays rarity-only.
 	 */
 	.card-variant-under,
-	.card-variant-over {
+	.card-window-holo {
 		position: absolute;
 		inset: 0;
 		border-radius: 14px;
 		pointer-events: none;
 		opacity: 0;
 		transition: opacity 220ms ease;
+	}
+
+	.card-window-holo {
+		border-radius: 9px;
 	}
 
 	/* Reverse holographic — a prismatic sheen that stays behind the art window
@@ -355,8 +359,9 @@
 	}
 
 	/* Holographic — the boldest finish: a wide, saturated rainbow sweep drawn
-	   on the topmost layer, so it crosses the art as well as the frame. */
-	.card[data-variant='holo'] .card-variant-over {
+	   over the art window only, so the portrait/illustration carries the chase
+	   shimmer while the frame, header, typeline and footer stay clean. */
+	.card[data-variant='holo'] .card-window-holo {
 		mix-blend-mode: screen;
 		opacity: calc(0.22 + var(--active, 0) * 0.48);
 		background: conic-gradient(
@@ -368,35 +373,6 @@
 			oklch(88% 0.22 320deg),
 			oklch(88% 0.22 10deg)
 		);
-	}
-
-	/* Foil — a scattered glitter texture with a tracked specular highlight, so
-	   the dots feel like metallic flakes catching the light rather than a static
-	   overlay. */
-	.card[data-variant='foil'] .card-variant-over {
-		mix-blend-mode: screen;
-		opacity: calc(0.2 + var(--active, 0) * 0.5);
-		background-image:
-			radial-gradient(
-				50% 50% at var(--mx, 50%) var(--my, 50%),
-				rgb(255 255 255 / 72%),
-				transparent 70%
-			),
-			radial-gradient(circle, rgb(255 255 255 / 95%) 0.5px, transparent 1.2px),
-			radial-gradient(circle, rgb(255 255 255 / 85%) 0.5px, transparent 1.2px),
-			radial-gradient(circle, rgb(255 255 255 / 75%) 0.5px, transparent 1.2px);
-		background-size:
-			100% 100%,
-			9px 9px,
-			15px 15px,
-			21px 21px;
-		background-position:
-			0 0,
-			0 0,
-			5px 8px,
-			11px 3px;
-		background-repeat: no-repeat, repeat, repeat, repeat;
-		background-blend-mode: screen;
 	}
 
 	/* One-shot wish-splash entrance, scoped to the candidate reveal. */

@@ -35,11 +35,11 @@ test('debug form renders all card variants for a chosen character', async ({ pag
 
 	await expect(page).toHaveURL(/\/char\/Amber\?allVariants=1/);
 	await expect(page.getByRole('heading', { name: /all card variants/i })).toBeVisible();
-	await expect(page.getByRole('article')).toHaveCount(4);
-	for (const variant of ['normal', 'holo', 'reverse-holo', 'foil']) {
+	await expect(page.getByRole('article')).toHaveCount(3);
+	for (const variant of ['normal', 'holo', 'reverse-holo']) {
 		await expect(page.locator(`article[data-variant="${variant}"]`)).toBeVisible();
 	}
-	for (const label of ['Normal', 'Holo', 'Reverse Holo', 'Foil']) {
+	for (const label of ['Normal', 'Holo', 'Reverse Holo']) {
 		await expect(
 			page.locator('.variant-label', { hasText: new RegExp(`^${label}$`) })
 		).toBeVisible();
