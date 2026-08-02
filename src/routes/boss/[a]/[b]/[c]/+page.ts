@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { Enemy } from '$lib/types';
 import type { PageLoad } from './$types';
 import { getBossByName } from '$lib/genshin';
+import { parseCardVariantList } from '$lib/card-variant';
 
 export const prerender = false;
 
@@ -13,5 +14,6 @@ export const load: PageLoad = ({ params, url }) => {
 	}
 	const bosses = maybeBosses.filter((boss): boss is Enemy => boss !== undefined);
 	const weekly = url.searchParams.get('weekly') === '1';
-	return { bosses, weekly };
+	const variants = parseCardVariantList(url.searchParams.get('variant'), bosses.length);
+	return { bosses, weekly, variants };
 };

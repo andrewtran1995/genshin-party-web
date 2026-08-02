@@ -196,7 +196,7 @@
 		<p class="visually-hidden" aria-live="polite">Candidate: {flowState.candidate.name}</p>
 		{#key flowState.candidate.id}
 			<div class="candidate">
-				<CharCard char={flowState.candidate} reveal />
+				<CharCard char={flowState.candidate} variant={flowState.candidateVariant} reveal />
 			</div>
 		{/key}
 		{#if rollIndicator}

@@ -23,6 +23,7 @@ const makeChar = (name: string): Char => ({
 
 const pick = (number: number, name: string, isMain = false): PlayerChoice => ({
 	char: makeChar(name),
+	variant: 'normal',
 	isMain,
 	number
 });
@@ -33,6 +34,7 @@ const idleState: PartyFlowState = {
 	playerOrder: [],
 	currentPlayerNumber: undefined,
 	candidate: undefined,
+	candidateVariant: undefined,
 	candidateHistory: [],
 	candidateHistoryIndex: -1,
 	error: ''
@@ -44,7 +46,8 @@ const activeState: PartyFlowState = {
 	playerOrder: [1, 2, 3, 4],
 	currentPlayerNumber: 1,
 	candidate: makeChar('Furina'),
-	candidateHistory: [makeChar('Furina')],
+	candidateVariant: 'normal',
+	candidateHistory: [{ char: makeChar('Furina'), variant: 'normal' }],
 	candidateHistoryIndex: 0,
 	error: ''
 };
@@ -55,7 +58,8 @@ const finalPickState: PartyFlowState = {
 	playerOrder: [1, 2, 3, 4],
 	currentPlayerNumber: 4,
 	candidate: makeChar('Bennett'),
-	candidateHistory: [makeChar('Bennett')],
+	candidateVariant: 'normal',
+	candidateHistory: [{ char: makeChar('Bennett'), variant: 'normal' }],
 	candidateHistoryIndex: 0,
 	error: ''
 };
@@ -66,6 +70,7 @@ const doneState: PartyFlowState = {
 	playerOrder: [1, 2, 3, 4],
 	currentPlayerNumber: undefined,
 	candidate: undefined,
+	candidateVariant: undefined,
 	candidateHistory: [],
 	candidateHistoryIndex: -1,
 	error: ''
@@ -218,7 +223,10 @@ describe('InteractiveFlow', () => {
 		it('shows the current roll position when there is history', async () => {
 			const flowState: PartyFlowState = {
 				...activeState,
-				candidateHistory: [makeChar('Furina'), makeChar('Amber')],
+				candidateHistory: [
+					{ char: makeChar('Furina'), variant: 'normal' },
+					{ char: makeChar('Amber'), variant: 'normal' }
+				],
 				candidateHistoryIndex: 1
 			};
 			const { container } = await render(InteractiveFlow, {
@@ -240,7 +248,10 @@ describe('InteractiveFlow', () => {
 		it('enables Previous roll when there is an earlier candidate', async () => {
 			const flowState: PartyFlowState = {
 				...activeState,
-				candidateHistory: [makeChar('Furina'), makeChar('Amber')],
+				candidateHistory: [
+					{ char: makeChar('Furina'), variant: 'normal' },
+					{ char: makeChar('Amber'), variant: 'normal' }
+				],
 				candidateHistoryIndex: 1
 			};
 			const { container } = await render(InteractiveFlow, {
@@ -257,7 +268,10 @@ describe('InteractiveFlow', () => {
 		it('enables Next roll when there is a later candidate', async () => {
 			const flowState: PartyFlowState = {
 				...activeState,
-				candidateHistory: [makeChar('Furina'), makeChar('Amber')],
+				candidateHistory: [
+					{ char: makeChar('Furina'), variant: 'normal' },
+					{ char: makeChar('Amber'), variant: 'normal' }
+				],
 				candidateHistoryIndex: 0
 			};
 			const { container } = await render(InteractiveFlow, {
@@ -272,7 +286,11 @@ describe('InteractiveFlow', () => {
 			// A middle index in a 3-entry history so both buttons are enabled at once.
 			const flowState: PartyFlowState = {
 				...activeState,
-				candidateHistory: [makeChar('Furina'), makeChar('Amber'), makeChar('Diluc')],
+				candidateHistory: [
+					{ char: makeChar('Furina'), variant: 'normal' },
+					{ char: makeChar('Amber'), variant: 'normal' },
+					{ char: makeChar('Diluc'), variant: 'normal' }
+				],
 				candidateHistoryIndex: 1
 			};
 			const { container } = await render(InteractiveFlow, {
@@ -383,7 +401,15 @@ describe('InteractiveFlow', () => {
 			const onreroll = vi.fn(async () => {
 				// A real reroll swaps the candidate; focus should stay put regardless.
 				await rerender(
-					choosing({ flowState: { ...activeState, candidate: makeChar('Amber') }, onreroll })
+					choosing({
+						flowState: {
+							...activeState,
+							candidate: makeChar('Amber'),
+							candidateVariant: 'normal',
+							candidateHistory: [{ char: makeChar('Amber'), variant: 'normal' }]
+						},
+						onreroll
+					})
 				);
 			});
 			const { container, rerender } = await render(InteractiveFlow, {
@@ -437,7 +463,7 @@ describe('InteractiveFlow', () => {
 			const onstart = vi.fn();
 			const { container } = await render(InteractiveFlow, { props: baseProps({ onstart }) });
 			button(container, 'Add player').click();
-			await expect.poll(() => inputs(container)).toHaveLength(2);
+			await expect.poll(() => container.querySelectorAll('input')).toHaveLength(2);
 
 			inputs(container)[0]?.focus();
 			await userEvent.keyboard('{Enter}');
@@ -452,7 +478,7 @@ describe('InteractiveFlow', () => {
 			const onstart = vi.fn();
 			const { container } = await render(InteractiveFlow, { props: baseProps({ onstart }) });
 			for (let i = 0; i < 3; i++) button(container, 'Add player').click();
-			await expect.poll(() => inputs(container)).toHaveLength(4);
+			await expect.poll(() => container.querySelectorAll('input')).toHaveLength(4);
 
 			inputs(container).at(-1)?.focus();
 			await userEvent.keyboard('{Enter}');

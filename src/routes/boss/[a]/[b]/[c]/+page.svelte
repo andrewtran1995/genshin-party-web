@@ -37,8 +37,8 @@
 	{/if}
 
 	<ul class="bosses">
-		{#each data.bosses as boss (boss.name)}
-			<li><BossCard {boss} /></li>
+		{#each data.bosses as boss, i (boss.name)}
+			<li><BossCard {boss} variant={data.variants[i]} /></li>
 		{/each}
 	</ul>
 

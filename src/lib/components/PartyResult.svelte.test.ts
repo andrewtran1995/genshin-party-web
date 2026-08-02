@@ -20,6 +20,7 @@ const makeChar = (name: string): Char => ({
 
 const choice = (number: number, name: string, isMain = false): PlayerChoice => ({
 	char: makeChar(name),
+	variant: 'normal',
 	isMain,
 	number
 });

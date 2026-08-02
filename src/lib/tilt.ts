@@ -174,6 +174,9 @@ export function tilt(node: HTMLElement) {
 			node.style.setProperty('--ry', `${values.ry}deg`);
 			node.style.setProperty('--mx', `${values.mx}%`);
 			node.style.setProperty('--my', `${values.my}%`);
+			// The conic-gradient angle has to be a bare <angle>, not a calc()
+			// from a percentage, so compute it in JS and expose it directly.
+			node.style.setProperty('--mx-angle', `${values.mx * 3.6}deg`);
 			node.style.setProperty('--active', `${active}`);
 		});
 	}

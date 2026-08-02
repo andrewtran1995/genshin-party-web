@@ -5,8 +5,10 @@
 	import { page } from '$app/state';
 	import type { Pathname } from '$app/types';
 	import CharCard from '$lib/components/CharCard.svelte';
+	import Link from '$lib/components/Link.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
-	import { CHAR_ERROR, rollCharUrl, parseCharFilters } from '$lib/genshin';
+	import { CHAR_ERROR, rollCharUrl, parseCharFilters, FORCE_VARIANT_PARAM } from '$lib/genshin';
+	import { CARD_VARIANT_FILTER_LABELS, cardVariants, parseCardVariant } from '$lib/card-variant';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -16,6 +18,16 @@
 	// `page.url.searchParams` throws during prerendering (this route is prerendered);
 	// the browser guard defers reading it until client-side hydration.
 	const filters = $derived(browser ? parseCharFilters(page.url.searchParams) : {});
+	const variant = $derived(
+		browser ? parseCardVariant(page.url.searchParams.get('variant')) : 'normal'
+	);
+	const allVariants = $derived(browser ? page.url.searchParams.has('allVariants') : false);
+	// Only re-forced on reroll when the roll that produced this page was itself
+	// forced — an unforced roll that happened to land on a chase variant must not
+	// lock every future reroll to that same variant.
+	const forcedVariant = $derived(
+		browser && page.url.searchParams.get(FORCE_VARIANT_PARAM) ? variant : undefined
+	);
 	const element = $derived(filters.element);
 	const rarity = $derived(filters.rarity);
 	const appliedFilters = $derived(
@@ -23,6 +35,7 @@
 			const labels: string[] = [];
 			if (element) labels.push(element.charAt(0).toUpperCase() + element.slice(1));
 			if (rarity) labels.push(`${rarity}★`);
+			if (forcedVariant) labels.push(CARD_VARIANT_FILTER_LABELS[forcedVariant]);
 			return labels;
 		})()
 	);
@@ -36,7 +49,7 @@
 
 	function handleReroll() {
 		rerollError = '';
-		const url = rollCharUrl({ ...filters, exclude: [data.char.name] });
+		const url = rollCharUrl({ ...filters, exclude: [data.char.name] }, forcedVariant);
 		if (!url) {
 			rerollError = CHAR_ERROR;
 			return;
@@ -60,18 +73,35 @@
 		<p class="error" role="alert">This character does not match the requested filters.</p>
 	{/if}
 
-	<div class="card-stage">
-		<CharCard char={data.char} loading="eager" />
-	</div>
+	{#if allVariants}
+		<h2>All card variants: {data.char.name}</h2>
+		<div class="variant-grid">
+			{#each cardVariants as cardVariant (cardVariant)}
+				<div class="variant-item">
+					<span class="variant-label">{CARD_VARIANT_FILTER_LABELS[cardVariant]}</span>
+					<div class="card-stage">
+						<CharCard char={data.char} loading="eager" variant={cardVariant} />
+					</div>
+				</div>
+			{/each}
+		</div>
+		<p>
+			<Link href={resolve('/char')}>Back to random character</Link>
+		</p>
+	{:else}
+		<div class="card-stage">
+			<CharCard char={data.char} loading="eager" {variant} />
+		</div>
 
-	<RerollControls
-		entry="/char"
-		criteria={{ element: element ?? '', rarity: rarity ?? '' }}
-		onreroll={handleReroll}
-	/>
+		<RerollControls
+			entry="/char"
+			criteria={{ element: element ?? '', rarity: rarity ?? '', variant: forcedVariant ?? '' }}
+			onreroll={handleReroll}
+		/>
 
-	{#if rerollError}
-		<p class="error" role="alert">{rerollError}</p>
+		{#if rerollError}
+			<p class="error" role="alert">{rerollError}</p>
+		{/if}
 	{/if}
 </div>
 
@@ -80,5 +110,30 @@
 	.card-stage {
 		display: flex;
 		justify-content: center;
+	}
+
+	.variant-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+		gap: 1.5rem;
+		justify-items: center;
+	}
+
+	.variant-item {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 0.5rem;
+		width: 100%;
+		max-width: 22rem;
+	}
+
+	.variant-label {
+		font-weight: 600;
+		font-size: 0.95rem;
+		text-align: center;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-primary-600);
 	}
 </style>

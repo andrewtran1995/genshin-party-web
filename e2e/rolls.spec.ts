@@ -27,3 +27,21 @@ test('same seed rolls the same character for the same filters', async ({
 
 	expect(page.url()).toBe(firstUrl);
 });
+
+test('debug form renders all card variants for a chosen character', async ({ page }) => {
+	await page.goto('/char');
+	await page.getByLabel('Character:').selectOption('Amber');
+	await page.getByRole('button', { name: /^show all variants$/i }).click();
+
+	await expect(page).toHaveURL(/\/char\/Amber\?allVariants=1/);
+	await expect(page.getByRole('heading', { name: /all card variants/i })).toBeVisible();
+	await expect(page.getByRole('article')).toHaveCount(3);
+	for (const variant of ['normal', 'holo', 'reverse-holo']) {
+		await expect(page.locator(`article[data-variant="${variant}"]`)).toBeVisible();
+	}
+	for (const label of ['Normal', 'Holo', 'Reverse Holo']) {
+		await expect(
+			page.locator('.variant-label', { hasText: new RegExp(`^${label}$`) })
+		).toBeVisible();
+	}
+});

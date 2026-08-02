@@ -10,7 +10,7 @@
 	{#each choices as choice (choice.number)}
 		<li>
 			<h3>{formatPlayer(choice.number, names)}</h3>
-			<CharCard char={choice.char} />
+			<CharCard char={choice.char} variant={choice.variant} />
 			{#if choice.isMain}
 				<p class="main-tag">Main</p>
 			{/if}

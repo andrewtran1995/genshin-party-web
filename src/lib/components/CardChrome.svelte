@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { tilt } from '$lib/tilt';
+	import { CARD_VARIANT_LABELS, type CardVariant } from '$lib/card-variant';
 
 	export interface CardPalette {
 		'--stock': string;
@@ -33,6 +34,8 @@
 	interface Props {
 		element?: string;
 		rarity?: number;
+		/** Rolled card finish. Defaults to `normal` (no special effect). */
+		variant?: CardVariant | undefined;
 		reveal?: boolean;
 		palette: CardPalette;
 		imageUrl: string | undefined;
@@ -46,6 +49,7 @@
 	let {
 		element,
 		rarity,
+		variant = 'normal',
 		reveal = false,
 		palette,
 		imageUrl,
@@ -55,6 +59,8 @@
 		typeline,
 		footer
 	}: Props = $props();
+
+	const variantLabel = $derived(CARD_VARIANT_LABELS[variant]);
 
 	// Loaded / error state, reset whenever the source image changes.
 	let imgLoaded = $state(false);
@@ -76,6 +82,7 @@
 	class:card-reveal={reveal}
 	data-element={element}
 	data-rarity={rarity}
+	data-variant={variant}
 	style:--stock={palette['--stock']}
 	style:--stock-2={palette['--stock-2']}
 	style:--el={palette['--el']}
@@ -90,6 +97,7 @@
 >
 	<div class="card-inner" class:card-inner-fill={layout.variant === 'fill'}>
 		<div class="card-glow" aria-hidden="true"></div>
+		<div class="card-variant-under" aria-hidden="true"></div>
 
 		<header class="card-header">
 			{@render header()}
@@ -108,6 +116,10 @@
 				onload: () => (imgLoaded = true),
 				onerror: () => (imgError = true)
 			})}
+			<div class="card-window-holo" aria-hidden="true"></div>
+			{#if variantLabel}
+				<span class="card-variant-badge">{variantLabel}</span>
+			{/if}
 		</div>
 
 		<p class="card-typeline">
@@ -177,6 +189,28 @@
 		align-items: baseline;
 		justify-content: space-between;
 		gap: 2cqi;
+	}
+
+	/* Variant badge — a corner chip naming the rolled finish, so the outcome
+	   reads clearly regardless of motion or color perception. Anchored to the
+	   art window (not the header), so it never competes with the name/stars
+	   flex row for space. */
+	.card-variant-badge {
+		position: absolute;
+		top: 2.4cqi;
+		right: 2.4cqi;
+		z-index: 2;
+		font-size: 3cqi;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		white-space: nowrap;
+		padding: 0.8cqi 2cqi;
+		border-radius: 999px;
+		color: var(--ink);
+		background: color-mix(in oklch, var(--frame) 70%, black);
+		border: 1px solid color-mix(in oklch, var(--frame) 75%, transparent);
+		box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
 	}
 
 	.card-window {
@@ -277,13 +311,68 @@
 				transparent 60%
 			),
 			conic-gradient(
-				from calc(var(--mx, 50%) * 3.6deg) at var(--mx, 50%) var(--my, 50%),
+				from var(--mx-angle, 180deg) at var(--mx, 50%) var(--my, 50%),
 				oklch(85% 0.16 20deg),
 				oklch(85% 0.16 130deg),
 				oklch(85% 0.16 240deg),
 				oklch(85% 0.16 330deg),
 				oklch(85% 0.16 20deg)
 			);
+	}
+
+	/*
+	 * Variant finishes — holo / reverse-holo. Each effect is scoped to its own
+	 * `[data-variant='…']` selector and its own layer element, so either one can
+	 * be restyled or removed without touching the other or the rarity-based
+	 * `.card-foil` above. `--active` carries the shared resting-vs-interactive
+	 * ramp (baseline visible at rest, fuller on hover/tilt); it is not shared
+	 * with `--foil-max`, which stays rarity-only.
+	 */
+	.card-variant-under,
+	.card-window-holo {
+		position: absolute;
+		inset: 0;
+		border-radius: 14px;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 220ms ease;
+	}
+
+	.card-window-holo {
+		border-radius: 9px;
+	}
+
+	/* Reverse holographic — a prismatic sheen that stays behind the art window
+	   so the frame, header, typeline and footer read as the chase finish while
+	   the illustration stays clean. Resting opacity is just high enough to
+	   catch the light without tinting the whole card. */
+	.card[data-variant='reverse-holo'] .card-variant-under {
+		mix-blend-mode: screen;
+		opacity: calc(0.25 + var(--active, 0) * 0.55);
+		background: conic-gradient(
+			from var(--mx-angle, 180deg) at var(--mx, 50%) var(--my, 50%),
+			oklch(86% 0.18 30deg),
+			oklch(86% 0.18 150deg),
+			oklch(86% 0.18 270deg),
+			oklch(86% 0.18 30deg)
+		);
+	}
+
+	/* Holographic — the boldest finish: a wide, saturated rainbow sweep drawn
+	   over the art window only, so the portrait/illustration carries the chase
+	   shimmer while the frame, header, typeline and footer stay clean. */
+	.card[data-variant='holo'] .card-window-holo {
+		mix-blend-mode: screen;
+		opacity: calc(0.22 + var(--active, 0) * 0.48);
+		background: conic-gradient(
+			from var(--mx-angle, 180deg) at var(--mx, 50%) var(--my, 50%),
+			oklch(88% 0.22 10deg),
+			oklch(88% 0.22 80deg),
+			oklch(88% 0.22 160deg),
+			oklch(88% 0.22 240deg),
+			oklch(88% 0.22 320deg),
+			oklch(88% 0.22 10deg)
+		);
 	}
 
 	/* One-shot wish-splash entrance, scoped to the candidate reveal. */

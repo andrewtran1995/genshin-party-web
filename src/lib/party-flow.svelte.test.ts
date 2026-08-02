@@ -11,6 +11,7 @@ describe('createPartyFlow', () => {
 			playerOrder: [],
 			currentPlayerNumber: undefined,
 			candidate: undefined,
+			candidateVariant: undefined,
 			candidateHistory: [],
 			candidateHistoryIndex: -1,
 			error: ''
@@ -26,20 +27,25 @@ describe('createPartyFlow', () => {
 		expect(new Set(flow.state.playerOrder)).toEqual(new Set([1, 2, 3, 4]));
 		expect(flow.state.currentPlayerNumber).toBe(flow.state.playerOrder[0]);
 		expect(flow.state.candidate).toBeDefined();
+		expect(flow.state.candidateVariant).toBeDefined();
 	});
 
 	it('accept pushes the choice and advances to the next slot', () => {
 		const flow = createPartyFlow();
 		flow.start();
 		const candidate = flow.state.candidate;
+		const candidateVariant = flow.state.candidateVariant;
 		const player = flow.state.currentPlayerNumber;
 
 		flow.accept(false);
 
-		expect(flow.state.playerChoices).toEqual([{ char: candidate, isMain: false, number: player }]);
+		expect(flow.state.playerChoices).toEqual([
+			{ char: candidate, variant: candidateVariant, isMain: false, number: player }
+		]);
 		expect(flow.state.status).toBe('active');
 		expect(flow.state.currentPlayerNumber).toBe(flow.state.playerOrder[1]);
 		expect(flow.state.candidate).toBeDefined();
+		expect(flow.state.candidateVariant).toBeDefined();
 	});
 
 	it('enters done after four accepts', () => {
@@ -107,6 +113,7 @@ describe('createPartyFlow', () => {
 		const flow = createPartyFlow();
 		flow.start();
 		const offered = flow.state.candidate;
+		const offeredVariant = flow.state.candidateVariant;
 
 		flow.accept(false);
 		expect(flow.state.playerChoices).toHaveLength(1);
@@ -116,7 +123,8 @@ describe('createPartyFlow', () => {
 		expect(flow.state.playerChoices).toHaveLength(0);
 		expect(flow.state.status).toBe('active');
 		expect(flow.state.candidate).toEqual(offered);
-		expect(flow.state.candidateHistory).toEqual([offered]);
+		expect(flow.state.candidateVariant).toEqual(offeredVariant);
+		expect(flow.state.candidateHistory).toEqual([{ char: offered, variant: offeredVariant }]);
 		expect(flow.state.candidateHistoryIndex).toBe(0);
 		expect(flow.state.currentPlayerNumber).toBe(flow.state.playerOrder[0]);
 	});
@@ -129,7 +137,9 @@ describe('createPartyFlow', () => {
 
 		flow.accept(false);
 
-		expect(flow.state.candidateHistory).toEqual([flow.state.candidate]);
+		expect(flow.state.candidateHistory).toEqual([
+			{ char: flow.state.candidate, variant: flow.state.candidateVariant }
+		]);
 		expect(flow.state.candidateHistoryIndex).toBe(0);
 	});
 
@@ -137,33 +147,45 @@ describe('createPartyFlow', () => {
 		const flow = createPartyFlow();
 		flow.start();
 		const first = flow.state.candidate;
+		const firstVariant = flow.state.candidateVariant;
 		flow.roll();
 		const second = flow.state.candidate;
+		const secondVariant = flow.state.candidateVariant;
 		flow.roll();
 		const third = flow.state.candidate;
+		const thirdVariant = flow.state.candidateVariant;
 
-		expect(flow.state.candidateHistory).toEqual([first, second, third]);
+		expect(flow.state.candidateHistory).toEqual([
+			{ char: first, variant: firstVariant },
+			{ char: second, variant: secondVariant },
+			{ char: third, variant: thirdVariant }
+		]);
 		expect(flow.state.candidateHistoryIndex).toBe(2);
 
 		flow.previousRoll();
 		expect(flow.state.candidate).toEqual(second);
+		expect(flow.state.candidateVariant).toEqual(secondVariant);
 		expect(flow.state.candidateHistoryIndex).toBe(1);
 
 		flow.previousRoll();
 		expect(flow.state.candidate).toEqual(first);
+		expect(flow.state.candidateVariant).toEqual(firstVariant);
 		expect(flow.state.candidateHistoryIndex).toBe(0);
 
 		flow.previousRoll();
 		expect(flow.state.candidate).toEqual(first);
+		expect(flow.state.candidateVariant).toEqual(firstVariant);
 		expect(flow.state.candidateHistoryIndex).toBe(0);
 
 		flow.nextRoll();
 		expect(flow.state.candidate).toEqual(second);
+		expect(flow.state.candidateVariant).toEqual(secondVariant);
 		expect(flow.state.candidateHistoryIndex).toBe(1);
 
 		flow.nextRoll();
 		flow.nextRoll();
 		expect(flow.state.candidate).toEqual(third);
+		expect(flow.state.candidateVariant).toEqual(thirdVariant);
 		expect(flow.state.candidateHistoryIndex).toBe(2);
 	});
 
@@ -171,19 +193,32 @@ describe('createPartyFlow', () => {
 		const flow = createPartyFlow();
 		flow.start();
 		const first = flow.state.candidate;
+		const firstVariant = flow.state.candidateVariant;
 		flow.roll();
 		const second = flow.state.candidate;
+		const secondVariant = flow.state.candidateVariant;
 		flow.roll();
 		const third = flow.state.candidate;
-		expect(flow.state.candidateHistory).toEqual([first, second, third]);
+		const thirdVariant = flow.state.candidateVariant;
+		expect(flow.state.candidateHistory).toEqual([
+			{ char: first, variant: firstVariant },
+			{ char: second, variant: secondVariant },
+			{ char: third, variant: thirdVariant }
+		]);
 
 		flow.previousRoll();
 		expect(flow.state.candidate).toEqual(second);
+		expect(flow.state.candidateVariant).toEqual(secondVariant);
 
 		flow.roll();
 		const replacement = flow.state.candidate;
+		const replacementVariant = flow.state.candidateVariant;
 
-		expect(flow.state.candidateHistory).toEqual([first, second, replacement]);
+		expect(flow.state.candidateHistory).toEqual([
+			{ char: first, variant: firstVariant },
+			{ char: second, variant: secondVariant },
+			{ char: replacement, variant: replacementVariant }
+		]);
 		expect(flow.state.candidateHistoryIndex).toBe(2);
 	});
 
@@ -208,10 +243,12 @@ describe('createPartyFlow', () => {
 		flow.roll();
 		flow.roll();
 
-		const reoffered = flow.state.playerChoices.at(-1)?.char;
+		const reoffered = flow.state.playerChoices.at(-1);
 		flow.goBack();
 
-		expect(flow.state.candidateHistory).toEqual([reoffered]);
+		expect(flow.state.candidateHistory).toEqual([
+			{ char: reoffered?.char, variant: reoffered?.variant }
+		]);
 		expect(flow.state.candidateHistoryIndex).toBe(0);
 	});
 
@@ -219,12 +256,14 @@ describe('createPartyFlow', () => {
 		const flow = createPartyFlow();
 		flow.start();
 		const candidate = flow.state.candidate;
+		const candidateVariant = flow.state.candidateVariant;
 		const history = flow.state.candidateHistory;
 		const historyIndex = flow.state.candidateHistoryIndex;
 
 		flow.goBack();
 
 		expect(flow.state.candidate).toEqual(candidate);
+		expect(flow.state.candidateVariant).toEqual(candidateVariant);
 		expect(flow.state.candidateHistory).toEqual(history);
 		expect(flow.state.candidateHistoryIndex).toBe(historyIndex);
 		expect(flow.state.playerChoices).toEqual([]);
@@ -243,6 +282,7 @@ describe('createPartyFlow', () => {
 			playerOrder: [],
 			currentPlayerNumber: undefined,
 			candidate: undefined,
+			candidateVariant: undefined,
 			candidateHistory: [],
 			candidateHistoryIndex: -1,
 			error: ''

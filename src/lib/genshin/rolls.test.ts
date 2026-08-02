@@ -13,6 +13,7 @@ import {
 	allPermutations
 } from './rolls';
 import { getAllBossNames, getAllCharNames, getBosses, getChars } from './core';
+import { cardVariants } from '$lib/card-variant';
 
 describe('parseCharFilters', () => {
 	itProp.prop([
@@ -115,6 +116,32 @@ describe('rollCharUrl', () => {
 			expect(url).not.toContain(encodeURIComponent(excluded));
 		}
 	});
+
+	it('includes a valid variant query param', () => {
+		const url = rollCharUrl({});
+		expect(url).toBeDefined();
+		if (!url) throw new Error('expected a url');
+		const variant = new URLSearchParams(url.split('?')[1]).get('variant');
+		expect(cardVariants).toContain(variant);
+	});
+
+	it('does not mark the variant as forced when none is requested', () => {
+		const url = rollCharUrl({});
+		expect(url).toBeDefined();
+		if (!url) throw new Error('expected a url');
+		expect(new URLSearchParams(url.split('?')[1]).get('forceVariant')).toBeNull();
+	});
+
+	it('uses the requested variant instead of rolling one, and marks it forced', () => {
+		for (const variant of cardVariants) {
+			const url = rollCharUrl({}, variant);
+			expect(url).toBeDefined();
+			if (!url) throw new Error('expected a url');
+			const params = new URLSearchParams(url.split('?')[1]);
+			expect(params.get('variant')).toBe(variant);
+			expect(params.get('forceVariant')).toBe('1');
+		}
+	});
 });
 
 describe('rollBossUrl', () => {
@@ -139,6 +166,24 @@ describe('rollBossUrl', () => {
 		expect(names).toHaveLength(3);
 		expect(new Set(names).size).toBe(3);
 		expect(names.every((name) => getAllBossNames().includes(name))).toBe(true);
+	});
+
+	it('includes a valid variant query param', () => {
+		const url = rollBossUrl({});
+		expect(url).toBeDefined();
+		if (!url) throw new Error('expected a url');
+		const variant = new URLSearchParams(url.split('?')[1]).get('variant');
+		expect(cardVariants).toContain(variant);
+	});
+
+	it('includes one variant per boss for a gauntlet roll', () => {
+		const url = rollBossUrl({ gauntlet: true });
+		expect(url).toBeDefined();
+		if (!url) throw new Error('expected a url');
+		const variant = new URLSearchParams(url.split('?')[1]).get('variant');
+		const variants = variant?.split(',') ?? [];
+		expect(variants).toHaveLength(3);
+		expect(variants.every((v) => (cardVariants as readonly string[]).includes(v))).toBe(true);
 	});
 
 	it('excludes bosses when rerolling', () => {

@@ -7,6 +7,7 @@
 	import BossCard from '$lib/components/BossCard.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
 	import { BOSS_ERROR, isWeeklyBoss, rollBossUrl, parseBossFilters } from '$lib/genshin';
+	import { parseCardVariant } from '$lib/card-variant';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -17,6 +18,9 @@
 	// the browser guard defers reading it until client-side hydration.
 	const { weekly } = $derived(
 		browser ? parseBossFilters(page.url.searchParams) : { weekly: false }
+	);
+	const variant = $derived(
+		browser ? parseCardVariant(page.url.searchParams.get('variant')) : 'normal'
 	);
 	const mismatch = $derived(weekly && !isWeeklyBoss(data.boss));
 
@@ -47,7 +51,7 @@
 	{/if}
 
 	<div class="card-stage">
-		<BossCard boss={data.boss} />
+		<BossCard boss={data.boss} {variant} />
 	</div>
 
 	<RerollControls entry="/boss" criteria={{ weekly: weekly ? '1' : '' }} onreroll={handleReroll} />
