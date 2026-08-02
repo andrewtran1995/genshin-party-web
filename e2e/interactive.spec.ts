@@ -1,94 +1,71 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
-test('interactive flow completes four selections', async ({ page }) => {
-	await page.goto('/interactive');
-	await expect(page.getByRole('heading', { name: /interactive party selection/i })).toBeVisible();
+test('interactive flow completes four selections', async ({ page, interactive }) => {
+	await interactive.goto();
 
-	await page.getByRole('textbox', { name: /player 1/i }).fill('A');
-	await page.getByRole('button', { name: /^add player$/i }).click();
-	await page.getByRole('textbox', { name: /player 2/i }).fill('B');
-	await page.getByRole('button', { name: /^add player$/i }).click();
-	await page.getByRole('textbox', { name: /player 3/i }).fill('C');
-	await page.getByRole('button', { name: /^add player$/i }).click();
-	await page.getByRole('textbox', { name: /player 4/i }).fill('D');
-	await page.getByRole('button', { name: /^start$/i }).click();
+	await test.step('fill in four players and start', async () => {
+		await interactive.start(['A', 'B', 'C', 'D']);
+	});
 
-	for (let i = 0; i < 4; i++) {
-		await expect(page.getByText(/now choosing for/i)).toBeVisible();
-		await page.getByRole('button', { name: /^accept$/i }).click();
-	}
+	await test.step('accept all four candidates', async () => {
+		await interactive.accept(4);
+	});
 
-	await expect(page.getByRole('heading', { name: /chosen characters/i })).toBeVisible();
+	await expect(interactive.chosenCharactersHeading).toBeVisible();
 	await expect(page.getByText(/Player 1 \(A\)/)).toBeVisible();
 	await expect(page.getByText(/Player 2 \(B\)/)).toBeVisible();
 	await expect(page.getByText(/Player 3 \(C\)/)).toBeVisible();
 	await expect(page.getByText(/Player 4 \(D\)/)).toBeVisible();
 });
 
-test('one player controls all four characters', async ({ page }) => {
-	await page.goto('/interactive');
-	await expect(page.getByRole('heading', { name: /interactive party selection/i })).toBeVisible();
+test('one player controls all four characters', async ({ page, interactive }) => {
+	await interactive.goto();
+	await interactive.start(['Solo']);
+	await interactive.accept(4);
 
-	await page.getByRole('textbox', { name: /player 1/i }).fill('Solo');
-	await page.getByRole('button', { name: /^start$/i }).click();
-
-	for (let i = 0; i < 4; i++) {
-		await expect(page.getByText(/now choosing for/i)).toBeVisible();
-		await page.getByRole('button', { name: /^accept$/i }).click();
-	}
-
-	await expect(page.getByRole('heading', { name: /chosen characters/i })).toBeVisible();
+	await expect(interactive.chosenCharactersHeading).toBeVisible();
 	await expect(page.getByText(/Player 1 \(Solo\)/)).toBeVisible();
 	await expect(page.getByText(/Player 2 \(Solo\)/)).toBeVisible();
 	await expect(page.getByText(/Player 3 \(Solo\)/)).toBeVisible();
 	await expect(page.getByText(/Player 4 \(Solo\)/)).toBeVisible();
 });
 
-test('accepting a main forces the next roll to be 4-star', async ({ page }) => {
-	await page.goto('/interactive');
-	await page.getByRole('button', { name: /^start$/i }).click();
+test('accepting a main forces the next roll to be 4-star', async ({ interactive }) => {
+	await interactive.goto();
+	await interactive.start();
 
-	await expect(page.getByRole('article').getByLabel('5-star')).toBeVisible();
-	await page.getByRole('button', { name: /accept as main/i }).click();
+	await expect(interactive.candidateRarityLabel('5-star')).toBeVisible();
+	await interactive.acceptAsMain();
 
-	await expect(page.getByRole('article').getByLabel('4-star')).toBeVisible();
+	await expect(interactive.candidateRarityLabel('4-star')).toBeVisible();
 });
 
-test('reroll shows a different candidate', async ({ page }) => {
-	await page.goto('/interactive');
-	await page.getByRole('button', { name: /^start$/i }).click();
+test('reroll shows a different candidate', async ({ interactive }) => {
+	await interactive.goto();
+	await interactive.start();
 
-	const first = await page.getByRole('article').getByRole('heading', { level: 3 }).textContent();
-	await page.getByRole('button', { name: /^reroll$/i }).click();
+	const first = await interactive.candidateName();
+	await interactive.reroll();
 
-	await expect
-		.poll(
-			async () => await page.getByRole('article').getByRole('heading', { level: 3 }).textContent()
-		)
-		.not.toBe(first);
+	await expect.poll(async () => await interactive.candidateName()).not.toBe(first);
 });
 
-test('going back re-offers the previous character', async ({ page }) => {
-	await page.goto('/interactive');
-	await page.getByRole('button', { name: /^start$/i }).click();
+test('going back re-offers the previous character', async ({ interactive }) => {
+	await interactive.goto();
+	await interactive.start();
 
-	await page.getByRole('button', { name: /^accept$/i }).click();
-	const second = await page.getByRole('article').getByRole('heading', { level: 3 }).textContent();
-	await page.getByRole('button', { name: /^accept$/i }).click();
+	await interactive.accept();
+	const second = await interactive.candidateName();
+	await interactive.accept();
 
-	await page.getByRole('button', { name: /^go back/i }).click();
-	await expect(page.getByRole('article').getByRole('heading', { level: 3 })).toHaveText(
-		second ?? ''
-	);
+	await interactive.goBack();
+	await expect(interactive.candidateHeading).toHaveText(second ?? '');
 });
 
-test('accept as main is disabled on the final pick', async ({ page }) => {
-	await page.goto('/interactive');
-	await page.getByRole('button', { name: /^start$/i }).click();
+test('accept as main is disabled on the final pick', async ({ interactive }) => {
+	await interactive.goto();
+	await interactive.start();
+	await interactive.accept(3);
 
-	for (let i = 0; i < 3; i++) {
-		await page.getByRole('button', { name: /^accept$/i }).click();
-	}
-
-	await expect(page.getByRole('button', { name: /accept as main/i })).toBeDisabled();
+	await expect(interactive.acceptAsMainButton).toBeDisabled();
 });

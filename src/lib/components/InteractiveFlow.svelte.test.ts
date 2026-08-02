@@ -35,6 +35,8 @@ const idleState: PartyFlowState = {
 	currentPlayerNumber: undefined,
 	candidate: undefined,
 	candidateVariant: undefined,
+	candidateHistory: [],
+	candidateHistoryIndex: -1,
 	error: ''
 };
 
@@ -45,6 +47,8 @@ const activeState: PartyFlowState = {
 	currentPlayerNumber: 1,
 	candidate: makeChar('Furina'),
 	candidateVariant: 'normal',
+	candidateHistory: [{ char: makeChar('Furina'), variant: 'normal' }],
+	candidateHistoryIndex: 0,
 	error: ''
 };
 
@@ -55,6 +59,8 @@ const finalPickState: PartyFlowState = {
 	currentPlayerNumber: 4,
 	candidate: makeChar('Bennett'),
 	candidateVariant: 'normal',
+	candidateHistory: [{ char: makeChar('Bennett'), variant: 'normal' }],
+	candidateHistoryIndex: 0,
 	error: ''
 };
 
@@ -65,6 +71,8 @@ const doneState: PartyFlowState = {
 	currentPlayerNumber: undefined,
 	candidate: undefined,
 	candidateVariant: undefined,
+	candidateHistory: [],
+	candidateHistoryIndex: -1,
 	error: ''
 };
 
@@ -76,6 +84,8 @@ const baseProps = (overrides: Partial<Props> = {}): Props => ({
 	onstart: vi.fn(),
 	onaccept: vi.fn(),
 	onreroll: vi.fn(),
+	onpreviousroll: vi.fn(),
+	onnextroll: vi.fn(),
 	ongoback: vi.fn(),
 	onreset: vi.fn(),
 	...overrides
@@ -209,6 +219,90 @@ describe('InteractiveFlow', () => {
 		});
 	});
 
+	describe('roll history', () => {
+		it('shows the current roll position when there is history', async () => {
+			const flowState: PartyFlowState = {
+				...activeState,
+				candidateHistory: [
+					{ char: makeChar('Furina'), variant: 'normal' },
+					{ char: makeChar('Amber'), variant: 'normal' }
+				],
+				candidateHistoryIndex: 1
+			};
+			const { container } = await render(InteractiveFlow, {
+				props: choosing({ flowState })
+			});
+			expect(container.textContent).toContain('Roll 2 of 2');
+		});
+
+		it('does not show a roll indicator when history is empty', async () => {
+			const { container } = await render(InteractiveFlow, { props: choosing() });
+			expect(container.textContent).not.toContain('Roll');
+		});
+
+		it('disables Previous roll at the first history item', async () => {
+			const { container } = await render(InteractiveFlow, { props: choosing() });
+			expect(buttonByLabel(container, 'Previous roll').disabled).toBe(true);
+		});
+
+		it('enables Previous roll when there is an earlier candidate', async () => {
+			const flowState: PartyFlowState = {
+				...activeState,
+				candidateHistory: [
+					{ char: makeChar('Furina'), variant: 'normal' },
+					{ char: makeChar('Amber'), variant: 'normal' }
+				],
+				candidateHistoryIndex: 1
+			};
+			const { container } = await render(InteractiveFlow, {
+				props: choosing({ flowState })
+			});
+			expect(buttonByLabel(container, 'Previous roll').disabled).toBe(false);
+		});
+
+		it('disables Next roll at the last history item', async () => {
+			const { container } = await render(InteractiveFlow, { props: choosing() });
+			expect(buttonByLabel(container, 'Next roll').disabled).toBe(true);
+		});
+
+		it('enables Next roll when there is a later candidate', async () => {
+			const flowState: PartyFlowState = {
+				...activeState,
+				candidateHistory: [
+					{ char: makeChar('Furina'), variant: 'normal' },
+					{ char: makeChar('Amber'), variant: 'normal' }
+				],
+				candidateHistoryIndex: 0
+			};
+			const { container } = await render(InteractiveFlow, {
+				props: choosing({ flowState })
+			});
+			expect(buttonByLabel(container, 'Next roll').disabled).toBe(false);
+		});
+
+		it('forwards Previous roll and Next roll to the parent', async () => {
+			const onpreviousroll = vi.fn();
+			const onnextroll = vi.fn();
+			// A middle index in a 3-entry history so both buttons are enabled at once.
+			const flowState: PartyFlowState = {
+				...activeState,
+				candidateHistory: [
+					{ char: makeChar('Furina'), variant: 'normal' },
+					{ char: makeChar('Amber'), variant: 'normal' },
+					{ char: makeChar('Diluc'), variant: 'normal' }
+				],
+				candidateHistoryIndex: 1
+			};
+			const { container } = await render(InteractiveFlow, {
+				props: choosing({ flowState, onpreviousroll, onnextroll })
+			});
+			buttonByLabel(container, 'Previous roll').click();
+			await expect.poll(() => onpreviousroll).toHaveBeenCalledOnce();
+			buttonByLabel(container, 'Next roll').click();
+			await expect.poll(() => onnextroll).toHaveBeenCalledOnce();
+		});
+	});
+
 	describe('player list editing', () => {
 		it('adds an input and moves focus onto it', async () => {
 			const { container } = await render(InteractiveFlow, { props: baseProps() });
@@ -307,7 +401,15 @@ describe('InteractiveFlow', () => {
 			const onreroll = vi.fn(async () => {
 				// A real reroll swaps the candidate; focus should stay put regardless.
 				await rerender(
-					choosing({ flowState: { ...activeState, candidate: makeChar('Amber') }, onreroll })
+					choosing({
+						flowState: {
+							...activeState,
+							candidate: makeChar('Amber'),
+							candidateVariant: 'normal',
+							candidateHistory: [{ char: makeChar('Amber'), variant: 'normal' }]
+						},
+						onreroll
+					})
 				);
 			});
 			const { container, rerender } = await render(InteractiveFlow, {
@@ -361,7 +463,7 @@ describe('InteractiveFlow', () => {
 			const onstart = vi.fn();
 			const { container } = await render(InteractiveFlow, { props: baseProps({ onstart }) });
 			button(container, 'Add player').click();
-			await expect.poll(() => inputs(container)).toHaveLength(2);
+			await expect.poll(() => container.querySelectorAll('input')).toHaveLength(2);
 
 			inputs(container)[0]?.focus();
 			await userEvent.keyboard('{Enter}');
@@ -376,7 +478,7 @@ describe('InteractiveFlow', () => {
 			const onstart = vi.fn();
 			const { container } = await render(InteractiveFlow, { props: baseProps({ onstart }) });
 			for (let i = 0; i < 3; i++) button(container, 'Add player').click();
-			await expect.poll(() => inputs(container)).toHaveLength(4);
+			await expect.poll(() => container.querySelectorAll('input')).toHaveLength(4);
 
 			inputs(container).at(-1)?.focus();
 			await userEvent.keyboard('{Enter}');

@@ -13,6 +13,11 @@ export interface PlayerChoice {
 	readonly number: number;
 }
 
+export interface CandidateRoll {
+	readonly char: Char;
+	readonly variant: CardVariant;
+}
+
 export interface PartyFlowState {
 	readonly status: 'idle' | 'active' | 'done';
 	readonly playerChoices: readonly PlayerChoice[];
@@ -20,45 +25,75 @@ export interface PartyFlowState {
 	readonly currentPlayerNumber: number | undefined;
 	readonly candidate: Char | undefined;
 	readonly candidateVariant: CardVariant | undefined;
+	readonly candidateHistory: readonly CandidateRoll[];
+	readonly candidateHistoryIndex: number;
 	readonly error: string;
 }
 
 /**
  * Owns the interactive party-selection flow: whose turn it is, what
  * candidate they're offered, and the rarity/exclusion/re-offer rules that
- * govern rolling. `main -> next candidate is 4-star` and `go back re-offers
- * the same character` live here because they constrain this stack directly.
+ * govern rolling. `main -> next candidate is 4-star`, `go back re-offers
+ * the same character`, per-turn roll history, and rolled card variants live
+ * here because they constrain this stack directly.
  */
 export function createPartyFlow() {
 	let status = $state<PartyFlowState['status']>('idle');
 	let playerChoices = $state<PlayerChoice[]>([]);
 	let playerOrder = $state<number[]>([]);
-	let candidate = $state<Char | undefined>();
-	let candidateVariant = $state<CardVariant | undefined>();
+	let candidateHistory = $state<CandidateRoll[]>([]);
+	let candidateHistoryIndex = $state(-1);
 	let error = $state('');
+
+	function currentRoll(history: CandidateRoll[], index: number): CandidateRoll | undefined {
+		return index >= 0 && index < history.length ? history[index] : undefined;
+	}
+
+	const candidate = $derived(currentRoll(candidateHistory, candidateHistoryIndex)?.char);
+
+	const candidateVariant = $derived(currentRoll(candidateHistory, candidateHistoryIndex)?.variant);
 
 	const currentPlayerNumber = $derived(
 		status === 'active' ? playerOrder[playerChoices.length] : undefined
 	);
 
-	function rollNext(alsoExclude: string[] = []) {
+	function rollNext() {
+		if (status !== 'active' || currentPlayerNumber === undefined) return;
 		const rarity = playerChoices.at(-1)?.isMain ? '4' : '5';
-		const exclude = [...playerChoices.map((choice) => choice.char.name), ...alsoExclude];
-		candidate = getRandomChar({ rarity, exclude, includeTraveler: false });
-		candidateVariant = candidate ? rollCardVariant() : undefined;
-		error = candidate ? '' : 'No eligible character.';
+		const exclude = [
+			...playerChoices.map((choice) => choice.char.name),
+			...candidateHistory.map((roll) => roll.char.name)
+		];
+		const rolledChar = getRandomChar({ rarity, exclude, includeTraveler: false });
+		if (rolledChar) {
+			const rolled: CandidateRoll = { char: rolledChar, variant: rollCardVariant() };
+			candidateHistory = [...candidateHistory.slice(0, candidateHistoryIndex + 1), rolled];
+			candidateHistoryIndex = candidateHistory.length - 1;
+			error = '';
+		} else {
+			error = 'No eligible character.';
+		}
 	}
 
 	function roll() {
-		if (status !== 'active') return;
-		const excludeCurrent = candidate?.name;
-		candidate = undefined;
-		candidateVariant = undefined;
-		rollNext(excludeCurrent ? [excludeCurrent] : []);
+		if (status !== 'active' || candidateHistoryIndex < 0) return;
+		rollNext();
+	}
+
+	function previousRoll() {
+		if (candidateHistoryIndex > 0) {
+			candidateHistoryIndex -= 1;
+		}
+	}
+
+	function nextRoll() {
+		if (candidateHistoryIndex < candidateHistory.length - 1) {
+			candidateHistoryIndex += 1;
+		}
 	}
 
 	function accept(isMain: boolean) {
-		if (status !== 'active' || !candidate || currentPlayerNumber === undefined) return;
+		if (status !== 'active' || candidate === undefined || currentPlayerNumber === undefined) return;
 		playerChoices = [
 			...playerChoices,
 			{
@@ -68,8 +103,8 @@ export function createPartyFlow() {
 				number: currentPlayerNumber
 			}
 		];
-		candidate = undefined;
-		candidateVariant = undefined;
+		candidateHistory = [];
+		candidateHistoryIndex = -1;
 		if (playerChoices.length === PARTY_SIZE) {
 			status = 'done';
 		} else {
@@ -83,16 +118,17 @@ export function createPartyFlow() {
 		playerChoices = playerChoices.slice(0, -1);
 		status = 'active';
 		error = '';
-		candidate = previous.char;
-		candidateVariant = previous.variant;
+		candidateHistory = [{ char: previous.char, variant: previous.variant }];
+		candidateHistoryIndex = 0;
 	}
 
 	function start() {
 		status = 'active';
 		playerChoices = [];
 		playerOrder = shuffle([1, 2, 3, 4]);
-		candidate = undefined;
-		candidateVariant = undefined;
+		candidateHistory = [];
+		candidateHistoryIndex = -1;
+		error = '';
 		rollNext();
 	}
 
@@ -100,8 +136,8 @@ export function createPartyFlow() {
 		status = 'idle';
 		playerChoices = [];
 		playerOrder = [];
-		candidate = undefined;
-		candidateVariant = undefined;
+		candidateHistory = [];
+		candidateHistoryIndex = -1;
 		error = '';
 	}
 
@@ -114,10 +150,14 @@ export function createPartyFlow() {
 				currentPlayerNumber,
 				candidate,
 				candidateVariant,
+				candidateHistory,
+				candidateHistoryIndex,
 				error
 			};
 		},
 		roll,
+		previousRoll,
+		nextRoll,
 		accept,
 		goBack,
 		start,
