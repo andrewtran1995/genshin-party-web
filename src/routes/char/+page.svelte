@@ -132,6 +132,7 @@
 
 <style>
 	.debug-section {
+		margin-top: var(--stack-gap, 1.5rem);
 		padding-top: var(--stack-gap, 1.5rem);
 		border-top: 1px solid var(--color-surface-200);
 	}
