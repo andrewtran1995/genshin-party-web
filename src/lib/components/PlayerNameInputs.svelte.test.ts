@@ -20,24 +20,6 @@ const handle = (container: HTMLElement, playerNumber: number) =>
 		)
 	);
 
-// Simulate a pointer drag of one row onto another using the component's own
-// pointer handlers (no native HTML5 drag-and-drop, which doesn't fire in
-// jsdom-less real-browser tests without a lot of extra plumbing).
-function dragRowOnto(container: HTMLElement, fromPlayerNumber: number, ontoRowIndex: number) {
-	const rows = [...container.querySelectorAll<HTMLElement>('.player-input-row')];
-	const targetRow = req(rows[ontoRowIndex]);
-	const clientY = targetRow.getBoundingClientRect().top + 1;
-	const dragHandle = handle(container, fromPlayerNumber);
-
-	dragHandle.dispatchEvent(
-		new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientY: 0 })
-	);
-	dragHandle.dispatchEvent(
-		new PointerEvent('pointermove', { bubbles: true, pointerId: 1, clientY })
-	);
-	dragHandle.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 }));
-}
-
 describe('PlayerNameInputs', () => {
 	it('hides the drag handle when there is only one player', async () => {
 		const { container } = await render(PlayerNameInputs, { props: { players: ['Ann'] } });
@@ -91,7 +73,7 @@ describe('PlayerNameInputs', () => {
 		expect(values(container)).toEqual(['Ann', 'Bob']);
 	});
 
-	it('keeps focus on the same row after it moves', async () => {
+	it('keeps focus on the row after it moves', async () => {
 		const { container } = await render(PlayerNameInputs, {
 			props: { players: ['Ann', 'Bob', 'Cara'] }
 		});
@@ -103,15 +85,21 @@ describe('PlayerNameInputs', () => {
 		);
 
 		await expect.poll(() => values(container)).toEqual(['Bob', 'Ann', 'Cara']);
-		expect(document.activeElement).toBe(moved);
+		// Ann is now player 2; focus follows to whichever handle occupies that
+		// slot (dnd-kit re-registers its own ref for the activator each move).
+		await expect.poll(() => document.activeElement).toBe(handle(container, 2));
 	});
 
-	it('reorders rows by dragging one past another', async () => {
-		const { container } = await render(PlayerNameInputs, {
+	// dnd-kit's PointerSensor drives this: a real (Playwright-backed) pointer
+	// drag of one handle onto another reorders the underlying arrays.
+	it('reorders rows by dragging the handle with a pointer', async () => {
+		const { container, getByRole } = await render(PlayerNameInputs, {
 			props: { players: ['Ann', 'Bob', 'Cara'] }
 		});
 
-		dragRowOnto(container, 2, 2);
+		await getByRole('button', { name: 'Reorder player 2' }).dropTo(
+			getByRole('button', { name: 'Reorder player 3' })
+		);
 
 		await expect.poll(() => values(container)).toEqual(['Ann', 'Cara', 'Bob']);
 	});
