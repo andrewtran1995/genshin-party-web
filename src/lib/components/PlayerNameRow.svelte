@@ -121,6 +121,10 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		padding: 0.75rem;
+		background-color: var(--color-surface-100-900);
+		border: 1px solid var(--color-surface-300-700);
+		border-radius: var(--radius-base);
 	}
 
 	.player-input-row.dragging {
@@ -137,6 +141,7 @@
 
 	.drag-handle {
 		flex-shrink: 0;
+		padding: 0.625rem;
 		cursor: grab;
 		touch-action: none;
 	}
