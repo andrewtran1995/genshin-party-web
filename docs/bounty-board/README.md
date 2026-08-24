@@ -74,6 +74,10 @@ The pre-commit hook runs these too, so a commit that fails them will not land in
 Title it `[bounty] <bounty title>`. In the body, name the bounty file, state the slice you took, and
 list which exit criteria this PR satisfies and which remain.
 
+**If the run has no GitHub tooling** — scheduled runs may fire without MCP or CLI access to GitHub —
+push the branch anyway, then say in your final message that the branch is pushed and needs a PR
+opened by hand. Step 7 is unreachable without that tooling; step 8 is not, and still runs.
+
 ### 7. Drive CI to green
 
 Subscribe to the PR's activity (`subscribe_pr_activity`) rather than polling, then act on every check
@@ -82,6 +86,10 @@ failure: diagnose it, fix it, push again. The run is not finished while its own 
 **Stop condition:** if the same check fails twice on fixes you pushed, stop pushing. Comment on the
 PR with the failing check, the log excerpt, and what you tried, and leave it for a human. Two failed
 fixes means the diagnosis is wrong, and a third guess costs more than it recovers.
+
+Local verification in step 5 is what makes this cheap: CI should mostly be confirming what you
+already know. A check that fails here but passed there is worth a findings-log line either way — it
+means the local gate has a hole in it.
 
 ### 8. Update the board — required
 
