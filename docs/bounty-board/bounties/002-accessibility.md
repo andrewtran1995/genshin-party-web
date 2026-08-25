@@ -1,10 +1,10 @@
 ---
 id: 002
 title: Accessibility gaps in interactive components
-status: in-progress
+status: open
 size: S
 last-run: 2026-08-25
-runs: 1
+runs: 2
 ---
 
 # Accessibility gaps in interactive components
@@ -14,12 +14,11 @@ runs: 1
 18 files carry an `aria-*` attribute or a `role`, which means accessibility here is ad hoc rather
 than systematic — applied where someone thought of it. The app is keyboard- and screen-reader-
 hostile in exactly the places that matter most: `InteractiveFlow.svelte` moves focus between steps,
-`NavDrawer.svelte` is a dismissible overlay, and rerolling a result on `/char`, `/boss`, or `/order`
-(via `RerollControls.svelte`) client-side-navigates to a new result page without announcing that
-anything changed. Most of this went unchecked in CI until the first run below wired browser-mode
-component tests (`pnpm test:unit:browser`) into the workflow — that step only runs the one component
-test that exists so far, so this is a gap that stays open until more of the exit criteria below have
-tests.
+and `NavDrawer.svelte` is a dismissible overlay. Most of this went unchecked in CI until the first
+run below wired browser-mode component tests (`pnpm test:unit:browser`) into the workflow — that
+step runs every `*.svelte.test.ts` browser-mode component test, which is still a small slice of the
+components in `src/lib/components/`, so this is a gap that stays open until more of the exit
+criteria below have tests.
 
 ## Scope
 
@@ -36,10 +35,12 @@ decision that needs a human's eye, not an unattended run's.
       browser-mode test that drives it with keys rather than clicks.
 - [x] Every overlay (`NavDrawer` and any successor) traps focus while open, restores it on close, and
       closes on `Escape`.
-- [ ] Rolling a new result announces it to assistive technology. `InteractiveFlow.svelte` already has
-      an `aria-live="polite"` region for the candidate reveal (untested, but present); the reroll
-      flows on `/char`, `/boss`, and `/order` (via `RerollControls.svelte`) do not — a reroll there is
-      a client-side navigation to a new result page with nothing announcing that the page changed.
+- [x] Rolling a new result announces it to assistive technology. `InteractiveFlow.svelte` has an
+      `aria-live="polite"` region for the candidate reveal (still untested — the in-flow reveal is a
+      separate gap from the reroll one this run closed, see findings log). The reroll flows on
+      `/char`, `/boss`, `/order`, and the `/boss/[a]/[b]/[c]` gauntlet (all via `RerollControls.svelte`)
+      now announce the new result through a `resultLabel` prop rendered into a visually-hidden
+      `aria-live="polite"` region, tested in `RerollControls.svelte.test.ts`.
 - [ ] `src/lib/tilt.ts` and the card-variant effects are inert when reduced motion is preferred,
       with a test asserting it. Both already check `prefers-reduced-motion` in the actual
       implementation — `tilt.ts`'s pointer/motion handlers bail on `reduce.matches`, and
@@ -73,3 +74,20 @@ queryable through the existing `vitest-browser-svelte` and Playwright locators.
     criterion is already implemented in both `tilt.ts` and `CardChrome.svelte` — it just has no test,
     and the CSS half may need a browser-provider capability (reduced-motion emulation) this project
     doesn't currently reach for in a per-test way.
+- 2026-08-25: Checked off the reroll-announcement criterion. Added a `resultLabel` prop to
+  `RerollControls.svelte` that renders into a visually-hidden `aria-live="polite"` region (the same
+  pattern `InteractiveFlow.svelte` already uses for its candidate reveal), wired it from all four call
+  sites (`/char`, `/boss`, `/order`, and the `/boss/[a]/[b]/[c]` gauntlet — the last one wasn't named
+  in the original criterion text but uses the same component and needed the same fix to keep
+  `resultLabel` non-optional), and added browser-mode assertions to `RerollControls.svelte.test.ts`
+  covering both the initial label and the update on reroll.
+  - Considered relying on SvelteKit's built-in post-navigation title announcement instead of adding an
+    explicit live region, since `goto()` already changes `<svelte:head><title>`. Went with an explicit
+    region because it is directly testable in a component test without a full e2e navigation, and
+    because it can carry a more descriptive label (e.g. the full gauntlet boss list) than a page title
+    would.
+  - `InteractiveFlow.svelte`'s own `aria-live` region (candidate reveal, party-complete) is still
+    untested — left open, since it's a distinct component from `RerollControls` and covering it is its
+    own slice.
+  - No-change note: did not touch the keyboard-operability or reduced-motion criteria this run; both
+    are unchanged from the prior findings above.
