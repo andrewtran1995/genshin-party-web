@@ -66,6 +66,12 @@ The generated JSON files are **not committed** — they are build artifacts list
 - Composition over abstraction. Keep component hierarchies flat
 - Behavioural tests, not implementation-mirroring tests
 
+## Bounty board
+
+`docs/bounty-board/` holds standing classes of improvement to this repo — one file per class, each with its own scope, exit criteria, and findings log. A scheduled agent run works one bounty per morning and updates the board as its closing step.
+
+Read [`docs/bounty-board/README.md`](docs/bounty-board/README.md) before working, adding, or editing a bounty. `scripts/bounty-board.test.ts` enforces the file format on every `pnpm test:unit` run.
+
 ## Agent skills
 
 Agent skills are managed with the [Skills CLI](https://skills.sh/) (`npx skills`) and are **vendored**: `.agents/skills/` is committed to the repository, so a checkout has working skills without a network fetch.
