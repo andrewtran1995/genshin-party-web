@@ -11,6 +11,10 @@
 	function handleReroll() {
 		void goto(resolve(rollOrderUrl({ exclude: data.order.join(',') }) as Pathname));
 	}
+
+	const resultLabel = $derived(
+		`New order: ${data.order.map((player, index) => `${index + 1}. Player ${player}`).join(', ')}`
+	);
 </script>
 
 <svelte:head>
@@ -29,7 +33,7 @@
 		{/each}
 	</ol>
 
-	<RerollControls entry="/order" criteria={{}} onreroll={handleReroll} />
+	<RerollControls entry="/order" criteria={{}} {resultLabel} onreroll={handleReroll} />
 </div>
 
 <style>

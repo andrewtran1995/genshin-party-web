@@ -54,7 +54,12 @@
 		<BossCard boss={data.boss} {variant} />
 	</div>
 
-	<RerollControls entry="/boss" criteria={{ weekly: weekly ? '1' : '' }} onreroll={handleReroll} />
+	<RerollControls
+		entry="/boss"
+		criteria={{ weekly: weekly ? '1' : '' }}
+		resultLabel="Rolled {data.boss.name}"
+		onreroll={handleReroll}
+	/>
 
 	{#if rerollError}
 		<p class="error" role="alert">{rerollError}</p>
