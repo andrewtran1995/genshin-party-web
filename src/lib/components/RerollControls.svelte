@@ -8,10 +8,12 @@
 		entry: Pathname;
 		/** Filters that produced the current result. Empty values are omitted. */
 		criteria: Record<string, string>;
+		/** Screen-reader description of the currently displayed result, announced on change. */
+		resultLabel: string;
 		onreroll: () => void;
 	}
 
-	let { entry, criteria, onreroll }: Props = $props();
+	let { entry, criteria, resultLabel, onreroll }: Props = $props();
 
 	const action = $derived(resolve(entry));
 
@@ -20,6 +22,8 @@
 		onreroll();
 	}
 </script>
+
+<p class="visually-hidden" aria-live="polite">{resultLabel}</p>
 
 <form class="reroll-controls" method="POST" {action} onsubmit={handleSubmit}>
 	{#each Object.entries(criteria) as [name, value] (name)}

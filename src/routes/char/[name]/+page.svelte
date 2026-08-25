@@ -96,6 +96,7 @@
 		<RerollControls
 			entry="/char"
 			criteria={{ element: element ?? '', rarity: rarity ?? '', variant: forcedVariant ?? '' }}
+			resultLabel="Rolled {data.char.name}"
 			onreroll={handleReroll}
 		/>
 

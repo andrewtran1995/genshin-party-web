@@ -45,6 +45,7 @@
 	<RerollControls
 		entry="/boss"
 		criteria={{ weekly: data.weekly ? '1' : '', gauntlet: 'on' }}
+		resultLabel="Rolled {data.bosses.map((boss) => boss.name).join(', ')}"
 		onreroll={handleReroll}
 	/>
 

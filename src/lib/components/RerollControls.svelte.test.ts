@@ -8,6 +8,7 @@ type Props = ComponentProps<typeof RerollControls>;
 const baseProps = (overrides: Partial<Props> = {}): Props => ({
 	entry: '/char',
 	criteria: {},
+	resultLabel: 'Rolled Hu Tao',
 	onreroll: vi.fn(),
 	...overrides
 });
@@ -78,5 +79,21 @@ describe('RerollControls', () => {
 
 		const link = container.querySelector('.change-criteria');
 		expect(link?.getAttribute('href')).toBe('/char');
+	});
+
+	it('exposes the current result to assistive technology via a live region', async () => {
+		const { container } = await renderControls({ resultLabel: 'Rolled Hu Tao' });
+
+		const liveRegion = container.querySelector('[aria-live="polite"]');
+		expect(liveRegion?.textContent).toBe('Rolled Hu Tao');
+	});
+
+	it('announces a reroll by updating the live region for the new result', async () => {
+		const { container, rerender } = await renderControls({ resultLabel: 'Rolled Hu Tao' });
+
+		await rerender({ resultLabel: 'Rolled Xiao' });
+
+		const liveRegion = container.querySelector('[aria-live="polite"]');
+		expect(liveRegion?.textContent).toBe('Rolled Xiao');
 	});
 });
