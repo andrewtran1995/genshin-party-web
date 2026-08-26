@@ -1,10 +1,10 @@
 ---
 id: 002
 title: Accessibility gaps in interactive components
-status: in-progress
+status: open
 size: S
-last-run: 2026-08-25
-runs: 2
+last-run: 2026-08-26
+runs: 3
 ---
 
 # Accessibility gaps in interactive components
@@ -18,7 +18,9 @@ and `NavDrawer.svelte` is a dismissible overlay. Most of this went unchecked in 
 run below wired browser-mode component tests (`pnpm test:unit:browser`) into the workflow — that
 step runs every `*.svelte.test.ts` browser-mode component test, which is still a small slice of the
 components in `src/lib/components/`, so this is a gap that stays open until more of the exit
-criteria below have tests.
+criteria below have tests. Keyboard operability — the one remaining exit criterion — is the widest:
+it covers every interactive element across `src/lib/components/` and `src/routes/`, not a single
+component, so closing it will take more than one slice.
 
 ## Scope
 
@@ -41,15 +43,14 @@ decision that needs a human's eye, not an unattended run's.
       `/char`, `/boss`, `/order`, and the `/boss/[a]/[b]/[c]` gauntlet (all via `RerollControls.svelte`)
       now announce the new result through a `resultLabel` prop rendered into a visually-hidden
       `aria-live="polite"` region, tested in `RerollControls.svelte.test.ts`.
-- [ ] `src/lib/tilt.ts` and the card-variant effects are inert when reduced motion is preferred,
-      with a test asserting it. Both already check `prefers-reduced-motion` in the actual
-      implementation — `tilt.ts`'s pointer/motion handlers bail on `reduce.matches`, and
-      `CardChrome.svelte` has a `@media (prefers-reduced-motion: reduce)` block neutralising the
-      tilt transform and the reveal/shimmer animations — so this is untested, not unimplemented.
-      `tilt.ts`'s behaviour is a plain-function/DOM-action test (stub `window.matchMedia`); the CSS
-      side needs a real browser test with reduced motion emulated, which `vitest-browser-playwright`
-      does not currently expose a per-test way to set (worth checking again — an option here would
-      unblock this criterion).
+- [x] `src/lib/tilt.ts` and the card-variant effects are inert when reduced motion is preferred,
+      with a test asserting it. `CardChrome.svelte.test.ts` (browser-mode) emulates
+      `prefers-reduced-motion` for real via a custom `setReducedMotion` Vitest browser command
+      (`vitest.browser.config.ts`, backed by Playwright's `page.emulateMedia`) and asserts, in an
+      actual browser: a pointer-driven tilt never rotates the card under reduced motion but does
+      otherwise, and the wish-splash entrance swaps for the CSS fade. One test exercises both
+      `tilt.ts`'s JS-side bail and `CardChrome.svelte`'s `@media (prefers-reduced-motion: reduce)`
+      block at once, since both gate the same visible behaviour.
 
 ## Guardrails
 
@@ -91,3 +92,20 @@ queryable through the existing `vitest-browser-svelte` and Playwright locators.
     own slice.
   - No-change note: did not touch the keyboard-operability or reduced-motion criteria this run; both
     are unchanged from the prior findings above.
+- 2026-08-26: Checked off the reduced-motion criterion — the last one blocked on tooling. The prior
+  run's "worth checking again" note was right: `@vitest/browser-playwright`'s provider passes
+  `{ page, context, frame, iframe }` into custom browser commands via `getCommandsContext`
+  (confirmed by reading `node_modules/@vitest/browser-playwright/dist/index.js`, since the public
+  `.d.ts` only types the generic `BrowserCommandContext` and doesn't advertise this). Added a
+  `setReducedMotion` command in `vitest.browser.config.ts` that calls the real
+  `page.emulateMedia({ reducedMotion })`, typed via a `declare module 'vitest/browser'` augmentation
+  in `src/vitest-browser.d.ts`. `CardChrome.svelte.test.ts` uses it to drive a real pointermove at
+  `tilt.ts` and read real computed styles off `CardChrome`'s `@media (prefers-reduced-motion: reduce)`
+  block, under both motion states.
+  - Skipped the originally-suggested split (a jsdom-stubbed unit test for `tilt.ts`, separate from the
+    CSS browser test) — this project has no jsdom/happy-dom dependency at all, so a `window`-touching
+    plain-function test isn't reachable outside browser mode anyway. Testing both through one real
+    pointer interaction is more direct than stubbing `matchMedia` in two places for the same
+    behaviour.
+  - Did not touch the keyboard-operability criterion this run — see the widened note in "Why this
+    matters" above on why it's a multi-slice criterion rather than a one-file fix.
