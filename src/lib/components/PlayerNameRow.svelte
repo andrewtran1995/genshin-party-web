@@ -48,7 +48,12 @@
 		};
 	}
 
-	const { attributes, listeners, node, activatorNode, transform, transition, isDragging } =
+	// `transition` is deliberately not taken from useSortable: in this release it
+	// swaps to a 0ms "disabled" transition on paths that misfire under Svelte
+	// (a FLIP setup frame cleared in the same effect flush, and a staleness bug
+	// where a `$derived` reads a plain non-reactive object), so displaced rows
+	// animate or snap at random. The transition is driven from CSS below instead.
+	const { attributes, listeners, node, activatorNode, transform, isDragging, isSorting } =
 		useSortable({
 			get id() {
 				return id;
@@ -58,13 +63,18 @@
 	const style = $derived(
 		styleObjectToString({
 			transform: CSS.Transform.toString(transform.current),
-			transition: transition.current,
 			zIndex: isDragging.current ? 1 : undefined
 		})
 	);
 </script>
 
-<div class="player-input-row" class:dragging={isDragging.current} bind:this={node.current} {style}>
+<div
+	class="player-input-row"
+	class:dragging={isDragging.current}
+	class:displacing={isSorting.current && !isDragging.current}
+	bind:this={node.current}
+	{style}
+>
 	{#if showRemove}
 		<button
 			type="button"
@@ -127,8 +137,24 @@
 		border-radius: var(--radius-base);
 	}
 
+	/*
+	 * Only rows displaced by an in-flight drag animate. The dragged row itself
+	 * must track the pointer 1:1 (no DragOverlay is rendered), and once the drag
+	 * ends nothing transitions — otherwise the drop's DOM reorder and the
+	 * transform reset race and the row visibly jumps before sliding back.
+	 */
+	.player-input-row.displacing {
+		transition: transform 200ms ease;
+	}
+
 	.player-input-row.dragging {
 		opacity: 0.5;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.player-input-row.displacing {
+			transition: none;
+		}
 	}
 
 	.player-input-row label {
