@@ -108,6 +108,13 @@ interface Fixtures {
 	 * so it doesn't depend on those third parties being reachable.
 	 */
 	mockCharArt: undefined;
+	/**
+	 * Patterns the `consoleErrors` fixture should ignore — e.g. the browser's own
+	 * "Failed to load resource" log for a form action's expected non-2xx `fail()`
+	 * response. Set via `test.use({ expectedConsoleErrors: [...] })`; unmatched
+	 * errors still fail the test.
+	 */
+	expectedConsoleErrors: RegExp[];
 	/** Auto fixture: fails the test if the page logs a console or page error. */
 	consoleErrors: undefined;
 }
@@ -155,17 +162,22 @@ export const test = base.extend<Fixtures>({
 		await use(undefined);
 	},
 
+	expectedConsoleErrors: [[], { option: true }],
+
 	// Fails any test that logs a page/console error, so hydration mismatches
 	// and unhandled exceptions surface even when the DOM still looks correct.
 	consoleErrors: [
-		async ({ page }, use) => {
+		async ({ page, expectedConsoleErrors }, use) => {
 			const errors: string[] = [];
 			page.on('pageerror', (err) => errors.push(String(err)));
 			page.on('console', (msg) => {
 				if (msg.type() === 'error') errors.push(msg.text());
 			});
 			await use(undefined);
-			expect(errors, `Unexpected console/page errors:\n${errors.join('\n')}`).toEqual([]);
+			const unexpected = errors.filter(
+				(error) => !expectedConsoleErrors.some((pattern) => pattern.test(error))
+			);
+			expect(unexpected, `Unexpected console/page errors:\n${unexpected.join('\n')}`).toEqual([]);
 		},
 		{ auto: true }
 	]
