@@ -71,6 +71,9 @@
 		"vitest-browser-svelte": "^2.1.1"
 	},
 	"dependencies": {
+		"@dnd-kit-svelte/core": "^0.0.11",
+		"@dnd-kit-svelte/sortable": "^0.0.11",
+		"@dnd-kit-svelte/utilities": "^0.0.11",
 		"@vercel/analytics": "^2.0.1",
 		"@vercel/speed-insights": "^2.0.0",
 		"remeda": "^2.39.0",
