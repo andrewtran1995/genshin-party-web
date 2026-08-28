@@ -3,7 +3,13 @@
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
 	import type { ActionData, PageData } from './$types';
-	import { CHAR_ERROR, getCharByName, parseCharFilters, rollCharUrl } from '$lib/genshin';
+	import {
+		CHAR_ERROR,
+		encodePathSegment,
+		getCharByName,
+		parseCharFilters,
+		rollCharUrl
+	} from '$lib/genshin';
 	import { isElement } from '$lib/types';
 	import { CARD_VARIANT_FILTER_LABELS, parseVariantOverride } from '$lib/card-variant';
 	import ElementIcon from '$lib/components/ElementIcon.svelte';
@@ -43,7 +49,7 @@
 			return;
 		}
 
-		void goto(resolve(`/char/${encodeURIComponent(name)}?allVariants=1` as Pathname));
+		void goto(resolve(`/char/${encodePathSegment(name)}?allVariants=1` as Pathname));
 	}
 </script>
 

@@ -1,7 +1,14 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { elements, rarities } from '$lib/types';
-import { CHAR_ERROR, getCharByName, getChars, parseCharFilters, rollCharUrl } from '$lib/genshin';
+import {
+	CHAR_ERROR,
+	encodePathSegment,
+	getCharByName,
+	getChars,
+	parseCharFilters,
+	rollCharUrl
+} from '$lib/genshin';
 import { cardVariants, parseVariantOverride } from '$lib/card-variant';
 
 export const load: PageServerLoad = () => {
@@ -26,6 +33,6 @@ export const actions = {
 		if (typeof name !== 'string' || !getCharByName(name)) {
 			return fail(400, { debugError: 'Select a valid character.' });
 		}
-		redirect(303, `/char/${encodeURIComponent(name)}?allVariants=1`);
+		redirect(303, `/char/${encodePathSegment(name)}?allVariants=1`);
 	}
 } satisfies Actions;
