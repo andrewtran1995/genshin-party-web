@@ -14,8 +14,7 @@ const makeChar = (name: string): Char => ({
 	weaponText: 'Sword',
 	region: '',
 	portrait: undefined,
-	icon: undefined,
-	fandomUrl: undefined
+	icon: undefined
 });
 
 const choice = (number: number, name: string, isMain = false): PlayerChoice => ({
