@@ -14,7 +14,6 @@ export interface RawChar {
 		filename_icon?: string | null;
 		mihoyo_icon?: string | null;
 	};
-	url?: { fandom?: string | null } | null;
 }
 
 export interface RawEnemy {
@@ -54,8 +53,7 @@ export const trimCharacters = (rawChars: readonly RawChar[]): Char[] =>
 			weaponText: char.weaponText,
 			region: char.region,
 			portrait: derivePortrait(char.images),
-			icon: char.images.mihoyo_icon ?? undefined,
-			fandomUrl: char.url?.fandom ?? undefined
+			icon: char.images.mihoyo_icon ?? undefined
 		}));
 
 export const isBoss = (enemy: RawEnemy): boolean =>

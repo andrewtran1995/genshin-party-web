@@ -32,7 +32,7 @@
 - **`scripts/gen-data.ts`** (run via `pnpm gen:data`) imports `genshin-db`, trims it, and writes `src/lib/genshin/data/{characters,bosses}.json` (build artifacts, ~44 KB each). `Aether` and `Stormterror` are excluded here, at extraction time.
 - **`genshin-db` is a `devDependency`** — imported only by that script, never by runtime code, so it never reaches the Vercel bundle. Re-run `pnpm gen:data` when the `genshin-db` version is bumped.
 - **`src/lib/genshin/index.ts`** loads the JSON once as a module and exposes pure functions: `getChars({ element, rarity, includeTraveler, exclude })`, `getBosses({ weekly })`, `sample(items, count)`, `getRandomChar(...)`, `getRandomBoss(...)`, `getRandomBosses(...)`, and `randomChars(filters)` (mirrors the CLI's generator). This module is client-safe, so all randomization runs in the browser.
-- The trim differs from the CLI: it **keeps** each character's `region` and full-URL `portrait`/`icon`/`fandomUrl` for the UI (the CLI drops `images`/`url`). Bosses are text-only — `genshin-db` exposes no usable image URL for enemies, only a bare icon filename.
+- The trim differs from the CLI: it **keeps** each character's `region` and full-URL `portrait`/`icon` for the UI (the CLI drops `images`/`url`). Bosses are text-only — `genshin-db` exposes no usable image URL for enemies, only a bare icon filename.
 - `Aloy`/`Lumine` exclusion (`includeTraveler: false`) stays at the call site (`/interactive`), same as the CLI's `interactive` command. They remain in the character data because `/char` may return them.
 
 Surfaces:

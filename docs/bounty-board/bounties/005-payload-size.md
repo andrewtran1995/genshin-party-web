@@ -3,8 +3,8 @@ id: 005
 title: Shipped payload and generated data size
 status: open
 size: M
-last-run: never
-runs: 0
+last-run: 2026-08-29
+runs: 1
 ---
 
 # Shipped payload and generated data size
@@ -30,9 +30,16 @@ adapter. Both are `AGENTS.md` commitments a run does not get to revisit.
 
 - [ ] The size of each generated file under `src/lib/genshin/data/` is recorded somewhere a diff can
       show it moving.
-- [ ] No field is extracted into the shipped JSON that no runtime code reads — verified against
-      actual usage, not assumed.
-- [ ] Data a route does not need is not in that route's initial load.
+- [x] No field is extracted into the shipped JSON that no runtime code reads — verified against
+      actual usage, not assumed. Swept once (`Char.fandomUrl`, see findings log); re-check on the
+      next pass since `genshin-db` fields aren't audited automatically.
+- [ ] Data a route does not need is not in that route's initial load. `src/lib/genshin/core.ts`
+      statically imports both `characters.json` and `bosses.json` at module scope, and
+      `src/lib/genshin/index.ts` re-exports everything from `core.ts` in one barrel — so `/char`,
+      which only calls `getChars`, still bundles all of `bosses.json`, and vice versa for `/boss`.
+      Splitting `core.ts` into char- and boss-specific modules (dropping the barrel or making it
+      export type-only) would let each route's chunk carry only the dataset it reads. Not attempted
+      this run — it touches every route's imports, bigger than one slice.
 
 ## Guardrails
 
@@ -42,4 +49,12 @@ whose only effect is visible after a manual `pnpm gen:data` that CI does not run
 
 ## Findings log
 
-- _(no runs yet)_
+- 2026-08-29: Audited every field on `Char` and `Enemy` against actual reads across
+  `src/routes/`, `src/lib/components/`, and `src/lib/genshin/`. Every field is read except
+  `Char.fandomUrl` (extracted in `scripts/lib/trim.ts` from `genshin-db`'s `url.fandom`, typed on
+  `Char`, never rendered or linked anywhere — only set in test fixtures). Removed it from
+  `RawChar`/`Char`/`trimCharacters` and the four test fixtures that stubbed it, and updated the
+  `docs/architecture.md` line that named it. Confirmed by running `pnpm gen:data` from scratch: the
+  regenerated `characters.json` has zero `fandomUrl` occurrences. One field off every one of the 118
+  characters in the shipped JSON. Second exit criterion (route-scoped data loading) is a real gap
+  too — see that criterion's note — but is a bigger slice than this run took.
