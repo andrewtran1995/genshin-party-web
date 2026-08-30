@@ -1,10 +1,10 @@
 ---
 id: 005
 title: Shipped payload and generated data size
-status: in-progress
+status: open
 size: M
-last-run: 2026-08-29
-runs: 1
+last-run: 2026-08-30
+runs: 2
 ---
 
 # Shipped payload and generated data size
@@ -28,8 +28,9 @@ adapter. Both are `AGENTS.md` commitments a run does not get to revisit.
 
 ## Exit criteria
 
-- [ ] The size of each generated file under `src/lib/genshin/data/` is recorded somewhere a diff can
-      show it moving.
+- [x] The size of each generated file under `src/lib/genshin/data/` is recorded somewhere a diff can
+      show it moving. `gen-data.ts` now writes `src/lib/genshin/data-size.json` (raw and gzip byte
+      counts per file) on every run; see findings log.
 - [x] No field is extracted into the shipped JSON that no runtime code reads — verified against
       actual usage, not assumed. Swept once (`Char.fandomUrl`, see findings log); re-check on the
       next pass since `genshin-db` fields aren't audited automatically.
@@ -43,9 +44,13 @@ adapter. Both are `AGENTS.md` commitments a run does not get to revisit.
 
 ## Guardrails
 
-The generated data files are gitignored build artifacts. Never commit them, and never make a change
-whose only effect is visible after a manual `pnpm gen:data` that CI does not run — `build` and
-`prepare` regenerate this data, so any measurement must survive regeneration from scratch.
+The generated data files (`src/lib/genshin/data/*.json`, `static/icons/**`) are gitignored build
+artifacts. Never commit them, and never make a change whose only effect is visible after a manual
+`pnpm gen:data` that CI does not run — `build` and `prepare` regenerate this data, so any measurement
+must survive regeneration from scratch. `src/lib/genshin/data-size.json` (added 2026-08-30) is the one
+deliberate exception: it is a small, hand-sized report _about_ the generated files, not the generated
+data itself, and is tracked in git on purpose so its diff is the measurement. Don't extend that
+exception to anything bigger than a size/shape summary.
 
 ## Findings log
 
@@ -58,3 +63,22 @@ whose only effect is visible after a manual `pnpm gen:data` that CI does not run
   regenerated `characters.json` has zero `fandomUrl` occurrences. One field off every one of the 118
   characters in the shipped JSON. Second exit criterion (route-scoped data loading) is a real gap
   too — see that criterion's note — but is a bigger slice than this run took.
+- 2026-08-30: Closed the size-recording exit criterion. Added `scripts/lib/size-report.ts`
+  (`measureDataFile`/`buildSizeReport`, unit-tested in `size-report.test.ts`) and wired it into
+  `gen-data.ts`: after writing `characters.json`/`bosses.json`, it now also writes
+  `src/lib/genshin/data-size.json` with each file's raw and gzip byte length. That report file is
+  tracked in git — unlike the data files it describes — so it moves in the diff of any PR that
+  regenerates the dataset with a shape change, and is deterministic run-to-run (confirmed by running
+  `pnpm gen:data` twice and diffing the result: byte-for-byte identical both times). Current baseline,
+  for reference: `characters.json` 43291 bytes / 4718 gzipped, `bosses.json` 45386 bytes / 15791
+  gzipped.
+  - Scoped to just the two JSON files named in the criterion, not `static/icons/**` — icon weight is a
+    different kind of payload (binary assets, not JSON shape) and probably wants its own measurement
+    (e.g. a directory byte count) rather than reusing this per-file JSON report; left as a follow-up
+    rather than folded in here.
+  - Considered enforcing a size budget (failing CI past some threshold) instead of just recording. Went
+    with recording only — the exit criterion asks for visibility, not a gate, and a budget number
+    would be a guess with no data behind it yet. A future run can add a budget once a few PRs' worth of
+    `data-size.json` diffs give a real baseline to set one against.
+  - Did not touch the third exit criterion (route-scoped data loading via splitting `core.ts`) this
+    run — still the correctly-scoped bigger slice noted in 2026-08-29's entry; unchanged.
