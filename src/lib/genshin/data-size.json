@@ -1,0 +1,12 @@
+[
+	{
+		"file": "characters.json",
+		"bytes": 43291,
+		"gzipBytes": 4718
+	},
+	{
+		"file": "bosses.json",
+		"bytes": 45386,
+		"gzipBytes": 15791
+	}
+]
