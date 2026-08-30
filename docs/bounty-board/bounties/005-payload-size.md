@@ -1,7 +1,7 @@
 ---
 id: 005
 title: Shipped payload and generated data size
-status: open
+status: in-progress
 size: M
 last-run: 2026-08-29
 runs: 1
