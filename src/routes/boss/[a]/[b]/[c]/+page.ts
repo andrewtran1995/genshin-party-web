@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { Enemy } from '$lib/types';
 import type { PageLoad } from './$types';
-import { getBossByName } from '$lib/genshin';
+import { getBossByName } from '$lib/genshin/bosses';
 import { parseCardVariantList } from '$lib/card-variant';
 
 export const prerender = false;

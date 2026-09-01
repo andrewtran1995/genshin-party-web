@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { BOSS_ERROR, rollBossUrl, parseBossFilters } from '$lib/genshin';
+import { BOSS_ERROR, rollBossUrl, parseBossFilters } from '$lib/genshin/bosses';
 
 export const actions = {
 	default: async ({ request }) => {

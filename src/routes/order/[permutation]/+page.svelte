@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
 	import RerollControls from '$lib/components/RerollControls.svelte';
-	import { rollOrderUrl } from '$lib/genshin';
+	import { rollOrderUrl } from '$lib/genshin/order';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

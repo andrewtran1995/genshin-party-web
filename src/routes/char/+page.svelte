@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
 	import type { ActionData, PageData } from './$types';
-	import { CHAR_ERROR, parseCharFilters, rollCharUrl } from '$lib/genshin';
+	import { CHAR_ERROR, parseCharFilters, rollCharUrl } from '$lib/genshin/characters';
 	import { isElement } from '$lib/types';
 	import { CARD_VARIANT_FILTER_LABELS, parseVariantOverride } from '$lib/card-variant';
 	import ElementIcon from '$lib/components/ElementIcon.svelte';

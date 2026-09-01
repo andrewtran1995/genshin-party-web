@@ -1,10 +1,10 @@
 ---
 id: 005
 title: Shipped payload and generated data size
-status: open
+status: done
 size: M
-last-run: 2026-08-30
-runs: 2
+last-run: 2026-09-01
+runs: 3
 ---
 
 # Shipped payload and generated data size
@@ -20,8 +20,8 @@ silently, on the mobile connections this app is mostly opened from.
 ## Scope
 
 **In:** `scripts/gen-data.ts` and the shape of the JSON under `src/lib/genshin/data/`, how that data
-is loaded and code-split by `src/lib/genshin/index.ts`, asset handling under `static/icons/`, and any
-measurement or budget added to guard the result.
+is loaded and code-split by `src/lib/genshin/*.ts` (there is no barrel anymore — see findings log),
+asset handling under `static/icons/`, and any measurement or budget added to guard the result.
 
 **Out:** upgrading, replacing, or removing the `genshin-db` dependency, and changing the Vercel
 adapter. Both are `AGENTS.md` commitments a run does not get to revisit.
@@ -34,13 +34,9 @@ adapter. Both are `AGENTS.md` commitments a run does not get to revisit.
 - [x] No field is extracted into the shipped JSON that no runtime code reads — verified against
       actual usage, not assumed. Swept once (`Char.fandomUrl`, see findings log); re-check on the
       next pass since `genshin-db` fields aren't audited automatically.
-- [ ] Data a route does not need is not in that route's initial load. `src/lib/genshin/core.ts`
-      statically imports both `characters.json` and `bosses.json` at module scope, and
-      `src/lib/genshin/index.ts` re-exports everything from `core.ts` in one barrel — so `/char`,
-      which only calls `getChars`, still bundles all of `bosses.json`, and vice versa for `/boss`.
-      Splitting `core.ts` into char- and boss-specific modules (dropping the barrel or making it
-      export type-only) would let each route's chunk carry only the dataset it reads. Not attempted
-      this run — it touches every route's imports, bigger than one slice.
+- [x] Data a route does not need is not in that route's initial load. Split `core.ts`/`rolls.ts` into
+      `characters.ts`, `bosses.ts`, `order.ts`, and `sample.ts`, removed the `index.ts` barrel, and
+      pointed every route at its specific module; see findings log for the measured before/after.
 
 ## Guardrails
 
@@ -82,3 +78,26 @@ exception to anything bigger than a size/shape summary.
     `data-size.json` diffs give a real baseline to set one against.
   - Did not touch the third exit criterion (route-scoped data loading via splitting `core.ts`) this
     run — still the correctly-scoped bigger slice noted in 2026-08-29's entry; unchanged.
+- 2026-09-01: Closed the third exit criterion. Splitting `core.ts` alone would not have worked:
+  `rolls.ts` mixed char-, boss-, and order-URL logic in one file, and every route imported both
+  through the shared `$lib/genshin` barrel — Rollup treats a barrel's transitive graph as one unit for
+  chunking, so even with `core.ts` split, importing anything from the barrel pulled the whole thing
+  into a shared chunk regardless of which named export a given route actually used. Split both files
+  along domain lines into `src/lib/genshin/{characters,bosses,order,sample}.ts` (`sample` factored out
+  since char, boss, and order code all use it) and updated all sixteen importers to import their
+  specific module directly instead of `$lib/genshin`; deleted `index.ts` and `core.ts`/`rolls.ts`
+  outright rather than keeping a type-only re-export, since nothing outside `$lib/genshin` needed the
+  option types. Verified with a from-scratch `pnpm build`: the client used to emit one 85.9 KB chunk
+  containing both `characters.json` and `bosses.json` (`grep`-confirmed both datasets present, shared
+  by every route's node); after the split, `/boss`'s nodes import a 45.3 KB boss-only chunk, `/char`'s
+  nodes import a 39.2 KB char-only chunk, and `/order`'s nodes import neither (checked via the client
+  manifest's `imports` graph) — matching the criterion's actual wording, not just the shape of the fix
+  the criterion guessed at. Same check on the server manifest: one 97 KB combined `genshin.js` chunk
+  became separate `characters.js` (45.4 KB) and `bosses.js` (48.0 KB) chunks.
+  - All three exit criteria are now met; moving this bounty to `done`. A future run auditing the
+    codebase for other barrel-file re-export patterns (`$lib/genshin` was the only one with a real
+    payload behind it, but the pattern itself could recur) would be a reasonable next class to open,
+    if one is found — not opened here since this run didn't find another instance.
+  - Untouched follow-up from 2026-08-30 still stands: `static/icons/**` weight has no measurement.
+    That's a distinct kind of payload (binary assets vs. JSON shape) and would want its own bounty if
+    someone wants to open one; not folded in here.

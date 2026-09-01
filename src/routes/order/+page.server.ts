@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { rollOrderUrl } from '$lib/genshin';
+import { rollOrderUrl } from '$lib/genshin/order';
 
 export const actions = {
 	default: () => {

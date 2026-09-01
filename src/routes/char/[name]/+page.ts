@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { getAllCharNames, getCharByName } from '$lib/genshin';
+import { getAllCharNames, getCharByName } from '$lib/genshin/characters';
 
 export const prerender = true;
 

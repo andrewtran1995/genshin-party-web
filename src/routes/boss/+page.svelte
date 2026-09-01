@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
 	import type { ActionData } from './$types';
-	import { BOSS_ERROR, rollBossUrl, parseBossFilters } from '$lib/genshin';
+	import { BOSS_ERROR, rollBossUrl, parseBossFilters } from '$lib/genshin/bosses';
 
 	let { form }: { form: ActionData } = $props();
 	let clientError = $state('');

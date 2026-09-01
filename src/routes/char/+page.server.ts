@@ -1,7 +1,13 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { elements, rarities } from '$lib/types';
-import { CHAR_ERROR, getCharByName, getChars, parseCharFilters, rollCharUrl } from '$lib/genshin';
+import {
+	CHAR_ERROR,
+	getCharByName,
+	getChars,
+	parseCharFilters,
+	rollCharUrl
+} from '$lib/genshin/characters';
 import { cardVariants, parseVariantOverride } from '$lib/card-variant';
 
 export const load: PageServerLoad = () => {

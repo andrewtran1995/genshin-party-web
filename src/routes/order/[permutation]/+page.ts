@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { allPermutations, isValidPermutation } from '$lib/genshin';
+import { allPermutations, isValidPermutation } from '$lib/genshin/order';
 
 export const prerender = true;
 
