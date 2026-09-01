@@ -6,7 +6,7 @@
 	import type { Pathname } from '$app/types';
 	import BossCard from '$lib/components/BossCard.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
-	import { BOSS_ERROR, isWeeklyBoss, rollBossUrl, parseBossFilters } from '$lib/genshin';
+	import { BOSS_ERROR, isWeeklyBoss, rollBossUrl, parseBossFilters } from '$lib/genshin/bosses';
 	import { parseCardVariant } from '$lib/card-variant';
 	import type { PageData } from './$types';
 

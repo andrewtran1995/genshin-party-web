@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { getAllBossNames, getBossByName } from '$lib/genshin';
+import { getAllBossNames, getBossByName } from '$lib/genshin/bosses';
 
 export const prerender = true;
 

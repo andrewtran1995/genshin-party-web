@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
-	import { getCharByName } from '$lib/genshin';
+	import { getCharByName } from '$lib/genshin/characters';
 
 	let { characters, error }: { characters: { name: string }[]; error?: string | undefined } =
 		$props();

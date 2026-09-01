@@ -4,7 +4,7 @@
 	import type { Pathname } from '$app/types';
 	import BossCard from '$lib/components/BossCard.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
-	import { BOSS_ERROR, rollBossUrl } from '$lib/genshin';
+	import { BOSS_ERROR, rollBossUrl } from '$lib/genshin/bosses';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

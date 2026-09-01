@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
-	import { rollOrderUrl } from '$lib/genshin';
+	import { rollOrderUrl } from '$lib/genshin/order';
 
 	let clientError = $state('');
 
