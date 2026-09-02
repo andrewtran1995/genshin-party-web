@@ -18,7 +18,6 @@ const makeChar = (overrides: Partial<Char> = {}): Char => ({
 	region: 'Fontaine',
 	portrait: PIXEL,
 	icon: PIXEL,
-	fandomUrl: undefined,
 	...overrides
 });
 

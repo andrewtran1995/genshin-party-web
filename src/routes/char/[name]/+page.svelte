@@ -7,7 +7,12 @@
 	import CharCard from '$lib/components/CharCard.svelte';
 	import Link from '$lib/components/Link.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
-	import { CHAR_ERROR, rollCharUrl, parseCharFilters, FORCE_VARIANT_PARAM } from '$lib/genshin';
+	import {
+		CHAR_ERROR,
+		rollCharUrl,
+		parseCharFilters,
+		FORCE_VARIANT_PARAM
+	} from '$lib/genshin/characters';
 	import { CARD_VARIANT_FILTER_LABELS, cardVariants, parseCardVariant } from '$lib/card-variant';
 	import type { PageData } from './$types';
 

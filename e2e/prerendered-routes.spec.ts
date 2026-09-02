@@ -17,8 +17,8 @@ const readNames = (file: string): string[] => {
 	return entries.map((entry) => entry.name);
 };
 
-// Duplicated from `encodePathSegment` in `src/lib/genshin/rolls.ts` for the
-// same import-boundary reason as the data above — keep in sync with it.
+// Duplicated from `encodePathSegment` in `src/lib/genshin/path-segment.ts`
+// for the same import-boundary reason as the data above — keep in sync with it.
 const encodePathSegment = (value: string): string =>
 	encodeURIComponent(value).replace(/%(2C|3B|3A|40|26|3D|2B|24)/gi, (_match, hex: string) =>
 		String.fromCharCode(parseInt(hex, 16))
@@ -29,7 +29,7 @@ const encodePathSegment = (value: string): string =>
 // prerenderer writes one static file per name via `entries()`. Every name in
 // the dataset — not just the two known comma-bearing offenders — must
 // resolve, since the static file server SvelteKit's `vite preview` uses
-// (`decodeURI`, see rolls.ts) can't undo the percent-escapes a plain
+// (`decodeURI`, see path-segment.ts) can't undo the percent-escapes a plain
 // `encodeURIComponent` would have produced for other reserved characters.
 test('every boss name resolves to a 200 at its rolled URL', async ({ request }) => {
 	for (const name of readNames('bosses.json')) {

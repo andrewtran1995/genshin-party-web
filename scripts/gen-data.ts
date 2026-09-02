@@ -23,10 +23,12 @@ import {
 	toBossIconSources,
 	toIconSource
 } from './lib/icon-plan.js';
+import { buildSizeReport, measureDataFile } from './lib/size-report.js';
 import { filterBossEnemies, trimBoss, trimCharacters } from './lib/trim.js';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(scriptDir, '../src/lib/genshin/data');
+const sizeReportPath = join(scriptDir, '../src/lib/genshin/data-size.json');
 const staticBossIconsDir = join(scriptDir, '../static/icons/bosses');
 const staticElementIconsDir = join(scriptDir, '../static/icons/elements');
 const staticWeaponIconsDir = join(scriptDir, '../static/icons/weapons');
@@ -102,8 +104,20 @@ await downloadAll(plannedTasks(bossPlan), downloadDeps);
 const bosses: Enemy[] = bossPlan.map(({ source, publicPath }) => trimBoss(source.boss, publicPath));
 
 mkdirSync(dataDir, { recursive: true });
-writeFileSync(join(dataDir, 'characters.json'), `${JSON.stringify(characters, undefined, '\t')}\n`);
-writeFileSync(join(dataDir, 'bosses.json'), `${JSON.stringify(bosses, undefined, '\t')}\n`);
+const charactersJson = `${JSON.stringify(characters, undefined, '\t')}\n`;
+const bossesJson = `${JSON.stringify(bosses, undefined, '\t')}\n`;
+writeFileSync(join(dataDir, 'characters.json'), charactersJson);
+writeFileSync(join(dataDir, 'bosses.json'), bossesJson);
+
+// Tracked in git (unlike the data files above) so a PR that changes the shipped
+// dataset shows the size delta in its diff instead of it moving silently.
+writeFileSync(
+	sizeReportPath,
+	buildSizeReport([
+		measureDataFile('characters.json', charactersJson),
+		measureDataFile('bosses.json', bossesJson)
+	])
+);
 
 const elementIcons = genshinDb.elements('names', queryOptions) as {
 	name: string;

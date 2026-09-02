@@ -3,12 +3,12 @@ import type { Actions, PageServerLoad } from './$types';
 import { elements, rarities } from '$lib/types';
 import {
 	CHAR_ERROR,
-	encodePathSegment,
 	getCharByName,
 	getChars,
 	parseCharFilters,
 	rollCharUrl
-} from '$lib/genshin';
+} from '$lib/genshin/characters';
+import { encodePathSegment } from '$lib/genshin/path-segment';
 import { cardVariants, parseVariantOverride } from '$lib/card-variant';
 
 export const load: PageServerLoad = () => {

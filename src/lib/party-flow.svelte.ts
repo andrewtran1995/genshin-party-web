@@ -1,5 +1,5 @@
 import { shuffle } from 'remeda';
-import { getRandomChar } from '$lib/genshin';
+import { getRandomChar } from '$lib/genshin/characters';
 import { rollCardVariant, type CardVariant } from '$lib/card-variant';
 import type { Char } from '$lib/types';
 
