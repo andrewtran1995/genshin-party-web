@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
 	import { getCharByName } from '$lib/genshin/characters';
+	import { encodePathSegment } from '$lib/genshin/path-segment';
 
 	let { characters, error }: { characters: { name: string }[]; error?: string | undefined } =
 		$props();
@@ -21,7 +22,7 @@
 			return;
 		}
 
-		void goto(resolve(`/char/${encodeURIComponent(name)}?allVariants=1` as Pathname));
+		void goto(resolve(`/char/${encodePathSegment(name)}?allVariants=1` as Pathname));
 	}
 </script>
 

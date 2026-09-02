@@ -54,6 +54,7 @@ test('boss roll falls back to a real form POST without JS', async ({ page }) => 
 	await page.getByRole('button', { name: /^roll$/i }).click();
 
 	await expect(page).toHaveURL(/\/boss\/[^/?]+(\?.*)?$/);
+	await expect(page.getByRole('heading', { name: /random boss/i })).toBeVisible();
 });
 
 test('order shuffle falls back to a real form POST without JS', async ({ page }) => {

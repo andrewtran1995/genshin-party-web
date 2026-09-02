@@ -3,6 +3,7 @@ import { isElement, isRarity } from '$lib/types';
 import { rollCardVariant, type CardVariant } from '$lib/card-variant';
 import charactersJson from './data/characters.json';
 import { sample } from './sample';
+import { encodePathSegment } from './path-segment';
 
 // Build-time-extracted, trimmed dataset (see scripts/gen-data.ts). Static per
 // `genshin-db` version, so it's loaded once as a module rather than queried.
@@ -93,6 +94,6 @@ export const rollCharUrl = (
 	const params = new URLSearchParams(serializeCharFilters(filters));
 	params.set('variant', variantOverride ?? rollCardVariant());
 	if (variantOverride) params.set(FORCE_VARIANT_PARAM, '1');
-	const path = `/char/${encodeURIComponent(char.name)}`;
+	const path = `/char/${encodePathSegment(char.name)}`;
 	return `${path}?${params.toString()}`;
 };

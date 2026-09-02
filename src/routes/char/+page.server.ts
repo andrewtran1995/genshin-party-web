@@ -8,6 +8,7 @@ import {
 	parseCharFilters,
 	rollCharUrl
 } from '$lib/genshin/characters';
+import { encodePathSegment } from '$lib/genshin/path-segment';
 import { cardVariants, parseVariantOverride } from '$lib/card-variant';
 
 export const load: PageServerLoad = () => {
@@ -32,6 +33,6 @@ export const actions = {
 		if (typeof name !== 'string' || !getCharByName(name)) {
 			return fail(400, { debugError: 'Select a valid character.' });
 		}
-		redirect(303, `/char/${encodeURIComponent(name)}?allVariants=1`);
+		redirect(303, `/char/${encodePathSegment(name)}?allVariants=1`);
 	}
 } satisfies Actions;
