@@ -42,7 +42,7 @@ Surfaces:
 - `src/routes/boss/+page.svelte` — browser form intercept; `+page.server.ts` provides the no-JS fallback.
 - `src/routes/boss/[name]/+page.svelte` — pre-rendered single-boss result.
 - `src/routes/boss/[a]/[b]/[c]/+page.svelte` — dynamic gauntlet result.
-- `src/routes/order/+page.svelte` — browser form intercept; `+page.server.ts` provides the no-JS fallback.
+- `src/routes/order/+page.svelte` — browser form intercept via `order.remote.ts`'s `rollOrder` remote `form()`, whose `.enhance()` runs the client-side roll; the same `form()` declaration is the no-JS fallback.
 - `src/routes/order/[permutation]/+page.svelte` — pre-rendered result page.
 - `src/routes/interactive/+page.svelte` — client-side flow using `$lib/genshin` for rolls.
 

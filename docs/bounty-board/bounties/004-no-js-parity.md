@@ -3,8 +3,8 @@ id: 004
 title: No-JS fallback parity with the client-side flows
 status: open
 size: S
-last-run: 2026-08-27
-runs: 1
+last-run: 2026-09-02
+runs: 2
 ---
 
 # No-JS fallback parity with the client-side flows
@@ -76,3 +76,24 @@ Convergence here means sharing a pure helper, never sharing a round trip.
     to a comma-in-boss-name routing bug unrelated to this bounty — filed as bounty 007
     (`007-punctuated-name-routing.md`) rather than fixed here, since it's out of scope for no-JS parity
     and deserved its own exit criteria.
+- 2026-09-02: Worked via issue #75 (filed from the SvelteKit 2.66 feature sweep, issue #88), which
+  proposed collapsing the duplicated no-JS/client roll pair with a `form()` remote function whose
+  `.enhance()` runs the existing client-side roll, leaving `form()` itself as the no-JS-only path —
+  the shape the issue itself flagged as the one that would preserve the client-side-randomizer
+  architecture (`docs/adr/0001-client-side-randomization-and-url-state.md`).
+  - Migrated `/order` — the smallest of the three (no `fail()` path; `rollOrderUrl()` can't fail) —
+    from `+page.server.ts` + a hand-written `handleSubmit` to `src/routes/order/order.remote.ts`'s
+    `rollOrder = form(...)` plus `rollOrder.enhance(...)` in `+page.svelte`. Confirmed it comes out
+    cleaner: one declaration instead of two files, and the dead `clientError` state (rollOrderUrl
+    never actually fails) fell out naturally. Confirmed with a full local `pnpm test:e2e` run
+    (all 22 specs green, `e2e/no-js.spec.ts`'s order case included) that the no-JS path still does a
+    real POST → `redirect(303, ...)`, and that with JS enabled the roll still never leaves the
+    browser — `.enhance()`'s callback never calls the form's own `submit()`, so no fetch happens.
+  - `/char` and `/boss` are **not migrated this run** — both have real `fail()` paths and, for
+    `/char`, an extra `debug` action; `form()` supports multiple named exports so it's still
+    possible, but each is a bigger slice than one issue run should take blind. Left as the obvious
+    next slice for this bounty or a follow-up issue.
+  - Required flipping `kit.experimental.remoteFunctions` on in `svelte.config.js` — now a house
+    pattern documented in `AGENTS.md`'s SvelteKit-conventions section. It's an experimental API
+    (`$app/server`'s `form`/`query`/`command`), so a future SvelteKit bump could change its shape;
+    revisit if `pnpm check` or `pnpm build` starts failing after a `@sveltejs/kit` upgrade.

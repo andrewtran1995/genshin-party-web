@@ -52,7 +52,12 @@ E2E tests (`pnpm test:e2e`) run in CI; they are too slow for pre-commit.
 
 - Server data + secrets → `+page.server.ts`. Universal load → `+page.ts`
 - Form actions live in `+page.server.ts`. Use `fail()` for validation
-- Domain helpers live in `src/lib/genshin/` so they are available to both client pages and the no-JS fallback server actions
+- `kit.experimental.remoteFunctions` is enabled (`svelte.config.js`). `/order` uses a `form()` remote
+  function (`src/routes/order/order.remote.ts`) instead of a `+page.server.ts` action — a single
+  declaration serves as both the no-JS fallback and, via `.enhance()`, the hook the client-side roll
+  runs from. `/char` and `/boss` still use `+page.server.ts` actions; migrate them the same way only
+  if it comes out cleaner than what's there, per `docs/bounty-board/bounties/004-no-js-parity.md`
+- Domain helpers live in `src/lib/genshin/` so they are available to both client pages and the no-JS fallback (server actions or remote `form()` functions)
 - Keep route files thin — move logic to `$lib`
 
 ## Genshin data
