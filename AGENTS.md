@@ -68,7 +68,9 @@ The generated JSON files are **not committed** — they are build artifacts list
 
 ## Bounty board
 
-`docs/bounty-board/` holds standing classes of improvement to this repo — one file per class, each with its own scope, exit criteria, and findings log. A scheduled agent run works one bounty per morning and updates the board as its closing step.
+`docs/bounty-board/` holds standing classes of improvement to this repo — one file per class, each with its own scope, exit criteria, and findings log. A scheduled agent run works one item per morning and updates the board as its closing step.
+
+That run draws from two pools: the bounties on the board **and** the repo's open GitHub issues. A bounty is a standing class of work; an issue is one specific instance. File new work accordingly — a recurring class becomes a bounty file, a one-off defect becomes an issue.
 
 Read [`docs/bounty-board/README.md`](docs/bounty-board/README.md) before working, adding, or editing a bounty. `scripts/bounty-board.test.ts` enforces the file format on every `pnpm test:unit` run.
 
