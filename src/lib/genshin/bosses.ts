@@ -2,6 +2,7 @@ import type { Enemy } from '$lib/types';
 import { rollCardVariant, serializeCardVariantList } from '$lib/card-variant';
 import bossesJson from './data/bosses.json';
 import { sample } from './sample';
+import { encodePathSegment } from './path-segment';
 
 // Build-time-extracted, trimmed dataset (see scripts/gen-data.ts). Static per
 // `genshin-db` version, so it's loaded once as a module rather than queried.
@@ -80,12 +81,12 @@ export const rollBossUrl = ({
 		const bosses = getRandomBosses({ weekly, exclude }, GAUNTLET_SIZE);
 		if (bosses.length === 0) return undefined;
 		params.set('variant', serializeCardVariantList(bosses.map(() => rollCardVariant())));
-		const path = `/boss/${bosses.map((boss) => encodeURIComponent(boss.name)).join('/')}`;
+		const path = `/boss/${bosses.map((boss) => encodePathSegment(boss.name)).join('/')}`;
 		return `${path}?${params.toString()}`;
 	}
 	const boss = getRandomBoss({ weekly, exclude });
 	if (!boss) return undefined;
 	params.set('variant', rollCardVariant());
-	const path = `/boss/${encodeURIComponent(boss.name)}`;
+	const path = `/boss/${encodePathSegment(boss.name)}`;
 	return `${path}?${params.toString()}`;
 };
