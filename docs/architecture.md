@@ -46,10 +46,23 @@ Surfaces:
 - `src/routes/order/[permutation]/+page.svelte` — pre-rendered result page.
 - `src/routes/interactive/+page.svelte` — client-side flow using `$lib/genshin` for rolls.
 
+## Rejected directions
+
+- **Effect for the backend** — explored and declined; see
+  [`docs/adr/0002-effect-ts-for-backend-code.md`](adr/0002-effect-ts-for-backend-code.md). The route
+  servers are ~55 lines of synchronous redirect logic, and `$lib/genshin` is shared with the browser,
+  so Effect in the domain layer would add 36.8 KB gzipped to the client and take the Vercel function
+  from 1.13 MB to 9.58 MB. The build-time gaps that prompted the question are being fixed in plain
+  TypeScript instead; the measured comparison is kept at `scripts/spike/download-pipeline/`.
+
 ## Deferred work
 
 - **Shareable results with a seed** — currently results use URL-based state but are not reproducible. A `?seed=…` query param could make rolls deterministic.
 - **Visual polish** — intentional. Foundation only.
+- **Hardening the icon download pipeline** — `scripts/lib/download.ts` has no retry, no concurrency
+  cap, no per-attempt timeout, and reports only the first failure of a batch; `gen-data.ts` casts the
+  Yatta API response rather than checking it. Working plain-TypeScript implementations and the
+  behavioural suite for all of it are in `scripts/spike/download-pipeline/` (see ADR 0002).
 - **Staleness guard** — `pnpm gen:data` is run automatically on `build`/`dev`/`check`/`test`. A CI check that regenerates and fails on a dirty diff would prevent the generated JSON drifting from the pinned `genshin-db` version.
 
 ## Open questions for the next session
