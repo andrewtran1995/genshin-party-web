@@ -71,7 +71,7 @@
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "skillPath": ".agents/skills/impeccable/SKILL.md",
-      "computedHash": "8b5e429023dd53ee59f454cfed51e7908c3508b96b066fd51076b4814b3414a5"
+      "computedHash": "bb529f103869c4e9b19ebaa1486d551affe0500f0af7d5dea0ef172bfba8196d"
     },
     "implement": {
       "source": "mattpocock/skills",
