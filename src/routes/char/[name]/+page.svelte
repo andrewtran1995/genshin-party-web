@@ -5,15 +5,17 @@
 	import { page } from '$app/state';
 	import type { Pathname } from '$app/types';
 	import CharCard from '$lib/components/CharCard.svelte';
-	import Link from '$lib/components/Link.svelte';
+	import CharVariantGallery from '$lib/components/CharVariantGallery.svelte';
 	import RerollControls from '$lib/components/RerollControls.svelte';
 	import {
 		CHAR_ERROR,
+		charFilterLabels,
+		charMismatchesFilters,
 		rollCharUrl,
 		parseCharFilters,
 		FORCE_VARIANT_PARAM
 	} from '$lib/genshin/characters';
-	import { CARD_VARIANT_FILTER_LABELS, cardVariants, parseCardVariant } from '$lib/card-variant';
+	import { parseCardVariant } from '$lib/card-variant';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -35,22 +37,8 @@
 	);
 	const element = $derived(filters.element);
 	const rarity = $derived(filters.rarity);
-	const appliedFilters = $derived(
-		(() => {
-			const labels: string[] = [];
-			if (element) labels.push(element.charAt(0).toUpperCase() + element.slice(1));
-			if (rarity) labels.push(`${rarity}★`);
-			if (forcedVariant) labels.push(CARD_VARIANT_FILTER_LABELS[forcedVariant]);
-			return labels;
-		})()
-	);
-	const mismatch = $derived(
-		(() => {
-			if (element && data.char.element !== element) return true;
-			if (rarity && String(data.char.rarity) !== rarity) return true;
-			return false;
-		})()
-	);
+	const appliedFilters = $derived(charFilterLabels({ element, rarity, forcedVariant }));
+	const mismatch = $derived(charMismatchesFilters(data.char, { element, rarity }));
 
 	function handleReroll() {
 		rerollError = '';
@@ -79,20 +67,7 @@
 	{/if}
 
 	{#if allVariants}
-		<h2>All card variants: {data.char.name}</h2>
-		<div class="variant-grid">
-			{#each cardVariants as cardVariant (cardVariant)}
-				<div class="variant-item">
-					<span class="variant-label">{CARD_VARIANT_FILTER_LABELS[cardVariant]}</span>
-					<div class="card-stage">
-						<CharCard char={data.char} loading="eager" variant={cardVariant} />
-					</div>
-				</div>
-			{/each}
-		</div>
-		<p>
-			<Link href={resolve('/char')}>Back to random character</Link>
-		</p>
+		<CharVariantGallery char={data.char} />
 	{:else}
 		<div class="card-stage">
 			<CharCard char={data.char} loading="eager" {variant} />
@@ -116,30 +91,5 @@
 	.card-stage {
 		display: flex;
 		justify-content: center;
-	}
-
-	.variant-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-		gap: 1.5rem;
-		justify-items: center;
-	}
-
-	.variant-item {
-		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		gap: 0.5rem;
-		width: 100%;
-		max-width: 22rem;
-	}
-
-	.variant-label {
-		font-weight: 600;
-		font-size: 0.95rem;
-		text-align: center;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		color: var(--color-primary-600);
 	}
 </style>
