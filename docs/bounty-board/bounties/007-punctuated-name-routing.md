@@ -3,8 +3,8 @@ id: 007
 title: Prerendered routes 404 for dataset names with reserved punctuation
 status: open
 size: S
-last-run: 2026-08-28
-runs: 1
+last-run: 2026-09-04
+runs: 2
 ---
 
 # Prerendered routes 404 for dataset names with reserved punctuation
@@ -88,3 +88,11 @@ workaround; a player should be able to roll any boss in the game.
   sandboxed run; left a hypothesis in the exit-criteria note above for whoever can check it. Did not
   rename the file (`007-punctuated-name-routing.md`) since the id is stable, but broadened the title
   since "comma" undersold what was actually broken (colon too).
+- 2026-09-04: Issue #87 (filed from the SvelteKit feature sweep) considered `src/hooks.ts`'s universal
+  `reroute` hook as a possible fix path for this bounty and ruled it out: on Vercel, a hard request for
+  a prerendered path is served as a static file from the CDN before any function runs, so `reroute`
+  never executes for exactly the requests that 404 today — it would only paper over client-side
+  navigations. This bounty's exit-criteria-1 question (real Vercel deploy behaviour) is unaffected;
+  the fix already shipped here (`encodePathSegment`) still stands as the only real one. The run that
+  worked #87 shipped `handleError` in `src/hooks.server.ts`/`src/hooks.client.ts` instead, which is
+  useful but orthogonal to this bounty's routing fix.
