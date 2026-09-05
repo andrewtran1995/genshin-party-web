@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, preloadCode } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
 	import type { ActionData, PageData } from './$types';
 	import { CHAR_ERROR, parseCharFilters, rollCharUrl } from '$lib/genshin/characters';
+	import { encodePathSegment } from '$lib/genshin/path-segment';
 	import { isElement } from '$lib/types';
 	import { CARD_VARIANT_FILTER_LABELS, parseVariantOverride } from '$lib/card-variant';
 	import ElementIcon from '$lib/components/ElementIcon.svelte';
@@ -29,6 +30,13 @@
 		}
 
 		void goto(resolve(url as Pathname));
+	}
+
+	// All /char/[name] results share one chunk, so any known name warms it.
+	function warmResultRoute() {
+		const name = data.characters[0]?.name;
+		if (!name) return;
+		void preloadCode(`/char/${encodePathSegment(name)}`).catch(() => undefined);
 	}
 </script>
 
@@ -83,7 +91,14 @@
 		</label>
 	</div>
 
-	<button class="btn preset-filled-primary-500 w-full sm:w-auto" type="submit">Roll</button>
+	<button
+		class="btn preset-filled-primary-500 w-full sm:w-auto"
+		type="submit"
+		onmouseenter={warmResultRoute}
+		onfocus={warmResultRoute}
+	>
+		Roll
+	</button>
 </form>
 
 {#if clientError || form?.error}
