@@ -1,25 +1,52 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, preloadCode } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
 	import type { ActionData } from './$types';
-	import { BOSS_ERROR, rollBossUrl, parseBossFilters } from '$lib/genshin/bosses';
+	import {
+		BOSS_ERROR,
+		GAUNTLET_SIZE,
+		getAllBossNames,
+		rollBossUrl,
+		parseBossFilters
+	} from '$lib/genshin/bosses';
+	import { encodePathSegment } from '$lib/genshin/path-segment';
 
 	let { form }: { form: ActionData } = $props();
 	let clientError = $state('');
+	let gauntlet = $state(false);
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
 		clientError = '';
 
 		const data = new FormData(event.currentTarget as HTMLFormElement);
-		const { gauntlet, weekly } = parseBossFilters(data);
-		const url = rollBossUrl({ gauntlet, weekly });
+		const { gauntlet: isGauntlet, weekly } = parseBossFilters(data);
+		const url = rollBossUrl({ gauntlet: isGauntlet, weekly });
 		if (!url) {
 			clientError = BOSS_ERROR;
 			return;
 		}
 		void goto(resolve(url as Pathname));
+	}
+
+	// A gauntlet roll lands on /boss/[a]/[b]/[c]; a single roll lands on
+	// /boss/[name]. Those are different route chunks, so warm the one the
+	// current toggle state will actually navigate to.
+	function warmResultRoute() {
+		const names = getAllBossNames();
+		if (!gauntlet) {
+			const name = names[0];
+			if (!name) return;
+			void preloadCode(`/boss/${encodePathSegment(name)}`).catch(() => undefined);
+			return;
+		}
+		if (names.length < GAUNTLET_SIZE) return;
+		const path = names
+			.slice(0, GAUNTLET_SIZE)
+			.map((name) => encodePathSegment(name))
+			.join('/');
+		void preloadCode(`/boss/${path}`).catch(() => undefined);
 	}
 </script>
 
@@ -32,7 +59,7 @@
 <form class="stacked" method="POST" onsubmit={handleSubmit}>
 	<div class="toggle-group">
 		<label class="toggle-row">
-			<input class="checkbox" type="checkbox" name="gauntlet" />
+			<input class="checkbox" type="checkbox" name="gauntlet" bind:checked={gauntlet} />
 			<span>Gauntlet (3 bosses)</span>
 		</label>
 
@@ -42,7 +69,14 @@
 		</label>
 	</div>
 
-	<button class="btn preset-filled-primary-500 w-full sm:w-auto" type="submit">Roll</button>
+	<button
+		class="btn preset-filled-primary-500 w-full sm:w-auto"
+		type="submit"
+		onmouseenter={warmResultRoute}
+		onfocus={warmResultRoute}
+	>
+		Roll
+	</button>
 </form>
 
 {#if clientError || form?.error}
