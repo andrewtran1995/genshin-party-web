@@ -1,6 +1,6 @@
 import type { Char, Element, Rarity } from '$lib/types';
 import { isElement, isRarity } from '$lib/types';
-import { rollCardVariant, type CardVariant } from '$lib/card-variant';
+import { CARD_VARIANT_FILTER_LABELS, rollCardVariant, type CardVariant } from '$lib/card-variant';
 import charactersJson from './data/characters.json';
 import { sample } from './sample';
 import { encodePathSegment } from './path-segment';
@@ -96,4 +96,35 @@ export const rollCharUrl = (
 	if (variantOverride) params.set(FORCE_VARIANT_PARAM, '1');
 	const path = `/char/${encodePathSegment(char.name)}`;
 	return `${path}?${params.toString()}`;
+};
+
+interface CharAppliedFilters {
+	element?: Element | undefined;
+	rarity?: Rarity | undefined;
+	forcedVariant?: CardVariant | undefined;
+}
+
+/** Human-readable labels for the filters that produced a roll, for display on
+ * the character result page. */
+export const charFilterLabels = ({
+	element,
+	rarity,
+	forcedVariant
+}: CharAppliedFilters): string[] => {
+	const labels: string[] = [];
+	if (element) labels.push(element.charAt(0).toUpperCase() + element.slice(1));
+	if (rarity) labels.push(`${rarity}★`);
+	if (forcedVariant) labels.push(CARD_VARIANT_FILTER_LABELS[forcedVariant]);
+	return labels;
+};
+
+/** Whether a rolled character fails to satisfy the requested filters — can
+ * happen when a result page is reached via a stale or hand-edited URL. */
+export const charMismatchesFilters = (
+	char: Pick<Char, 'element' | 'rarity'>,
+	{ element, rarity }: Pick<GetCharsOptions, 'element' | 'rarity'>
+): boolean => {
+	if (element && char.element !== element) return true;
+	if (rarity && String(char.rarity) !== rarity) return true;
+	return false;
 };

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import * as fc from 'fast-check';
 import { it as itProp } from '@fast-check/vitest';
 import {
+	charFilterLabels,
+	charMismatchesFilters,
 	getAllCharNames,
 	getCharByName,
 	getChars,
@@ -172,6 +174,50 @@ describe('rollCharUrl', () => {
 			expect(params.get('variant')).toBe(variant);
 			expect(params.get('forceVariant')).toBe('1');
 		}
+	});
+});
+
+describe('charFilterLabels', () => {
+	it('returns no labels when nothing was filtered', () => {
+		expect(charFilterLabels({})).toEqual([]);
+	});
+
+	it('capitalizes the element', () => {
+		expect(charFilterLabels({ element: 'pyro' })).toEqual(['Pyro']);
+	});
+
+	it('stars the rarity', () => {
+		expect(charFilterLabels({ rarity: '5' })).toEqual(['5★']);
+	});
+
+	it('labels a forced variant', () => {
+		expect(charFilterLabels({ forcedVariant: 'holo' })).toEqual(['Holo']);
+	});
+
+	it('combines all three in element, rarity, variant order', () => {
+		expect(
+			charFilterLabels({ element: 'hydro', rarity: '4', forcedVariant: 'reverse-holo' })
+		).toEqual(['Hydro', '4★', 'Reverse Holo']);
+	});
+});
+
+describe('charMismatchesFilters', () => {
+	const char = { element: 'pyro', rarity: 5 } as const;
+
+	it('matches when no filters are set', () => {
+		expect(charMismatchesFilters(char, {})).toBe(false);
+	});
+
+	it('matches when the char satisfies the filters', () => {
+		expect(charMismatchesFilters(char, { element: 'pyro', rarity: '5' })).toBe(false);
+	});
+
+	it('flags a mismatched element', () => {
+		expect(charMismatchesFilters(char, { element: 'hydro' })).toBe(true);
+	});
+
+	it('flags a mismatched rarity', () => {
+		expect(charMismatchesFilters(char, { rarity: '4' })).toBe(true);
 	});
 });
 
