@@ -65,7 +65,6 @@ const ports: DownloadPorts = {
 	}
 };
 
-/** Runs a batch and, if any icon failed, prints every failure before exiting. */
 const downloadOrExit = (tasks: readonly DownloadTask[]): Promise<void> =>
 	Effect.runPromise(
 		downloadAll(tasks, ports).pipe(

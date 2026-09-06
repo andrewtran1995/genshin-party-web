@@ -1,13 +1,3 @@
-/**
- * The Yatta monster index, which is where boss icon filenames come from when
- * `genshin-db`'s own `filename_icon` is missing or stale.
- *
- * This used to be an inline `as` cast in `gen-data.ts`. The cast was
- * load-bearing and unchecked: if Yatta renamed `icon` or moved `items`, the
- * cast still succeeded, the map came back empty or full of `undefined`, and the
- * build quietly shipped a dataset with the wrong icons. Decoding it instead
- * turns that into a named, loud warning.
- */
 import { Data, Effect, Schema } from 'effect';
 import {
 	defaultRequestOptions,
@@ -31,11 +21,6 @@ const YattaMonsterIndex = Schema.Struct({
 	})
 });
 
-/**
- * Yatta being unreachable is not a build failure — `gen-data.ts` falls back to
- * `genshin-db`'s icon filenames. A response we cannot read is the same kind of
- * problem, so it arrives the same way, with a message saying which it was.
- */
 export class YattaUnavailable extends Data.TaggedError('YattaUnavailable')<{
 	readonly message: string;
 }> {}
@@ -55,7 +40,6 @@ export const decodeMonsterIcons = (
 		)
 	);
 
-/** Boss id → icon filename, or a `YattaUnavailable` the caller can fall back on. */
 export const fetchMonsterIcons = (
 	ports: HttpPorts,
 	options: RequestOptions = defaultRequestOptions

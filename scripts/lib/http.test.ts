@@ -4,7 +4,6 @@ import { fetchAndRead, type HttpPorts, type RequestOptions } from './http.js';
 
 const url = 'https://example.com/thing.png';
 
-// Backoff is scaled down so the retry tests cost milliseconds, not seconds.
 const options: RequestOptions = { retries: 3, attemptTimeoutMs: 200, backoffBaseMs: 1 };
 
 const ok = (body = 'hi') => new Response(body, { status: 200 });
@@ -68,7 +67,7 @@ describe('fetchAndRead', () => {
 	it('gives up once the retry budget is exhausted', async () => {
 		const get = vi.fn(() => Promise.resolve(status(503)));
 		await Effect.runPromise(Effect.ignore(fetchAndRead(url, readText, ports(get), options)));
-		// The first attempt plus the three retries the options allow.
+		// Four attempts: the first, plus the three `retries` allows.
 		expect(get).toHaveBeenCalledTimes(4);
 	});
 
@@ -88,7 +87,7 @@ describe('fetchAndRead', () => {
 		expect(body).toBe('hi');
 	});
 
-	it('retries a body that fails mid-read, since the read is inside the retry', async () => {
+	it('retries a body that fails mid-read', async () => {
 		let calls = 0;
 		const read = (response: Response) => {
 			calls += 1;

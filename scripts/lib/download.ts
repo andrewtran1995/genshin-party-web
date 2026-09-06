@@ -10,10 +10,6 @@ import {
 } from './http.js';
 import type { DownloadTask } from './icon-plan.js';
 
-/**
- * `gi.yatta.moe` serves every boss icon, so the ~58 boss downloads all land on
- * one host. Cap them rather than opening every socket at once.
- */
 export const DEFAULT_CONCURRENCY = 8;
 
 export interface DownloadPorts extends HttpPorts {
@@ -37,10 +33,6 @@ export class WriteFailure extends Data.TaggedError('WriteFailure')<{
 
 export type DownloadFailure = RequestFailure | WriteFailure;
 
-/**
- * Every icon that failed, reported together. A build broken by six icons should
- * name all six, not whichever one lost the race to reject first.
- */
 export class DownloadFailures extends Data.TaggedError('DownloadFailures')<{
 	readonly failures: readonly DownloadFailure[];
 	readonly message: string;
@@ -69,11 +61,6 @@ export const downloadIcon = (
 		})
 	);
 
-/**
- * Downloads every task, at most `concurrency` at a time. Unlike `Promise.all`,
- * this runs the whole batch before failing, so the error names every icon that
- * could not be fetched.
- */
 export const downloadAll = (
 	tasks: readonly DownloadTask[],
 	ports: DownloadPorts,

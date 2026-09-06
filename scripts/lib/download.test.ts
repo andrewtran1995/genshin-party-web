@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { Effect } from 'effect';
 import { downloadAll, downloadIcon, type DownloadOptions, type DownloadPorts } from './download.js';
 
-// Backoff is scaled down so the retry tests cost milliseconds, not seconds.
 const options: DownloadOptions = {
 	concurrency: 8,
 	retries: 3,
@@ -20,7 +19,6 @@ const body = new Uint8Array([1, 2, 3]);
 const ok = () => new Response(body as unknown as BodyInit, { status: 200 });
 const status = (code: number) => new Response(null, { status: code });
 
-/** Records what was written, so tests assert on effects rather than on calls. */
 const recordingPorts = (get: DownloadPorts['get']) => {
 	const written: [string, Uint8Array][] = [];
 	const ports: DownloadPorts = {
@@ -63,7 +61,7 @@ describe('downloadAll', () => {
 		expect(paths(written)).toEqual(['/icons/1.png', '/icons/2.png', '/icons/3.png']);
 	});
 
-	it('holds requests to the concurrency cap instead of firing all at once', async () => {
+	it('holds requests to the concurrency cap', async () => {
 		let inFlight = 0;
 		let peak = 0;
 		const { ports } = recordingPorts(async () => {
