@@ -1,23 +1,77 @@
 import { join } from 'node:path';
-import { constant } from 'remeda';
-import type { DownloadTask } from './icon-plan.ts';
+import { Data, Effect } from 'effect';
+import {
+	defaultRequestOptions,
+	describeCause,
+	fetchAndRead,
+	type HttpPorts,
+	type RequestFailure,
+	type RequestOptions
+} from './http.js';
+import type { DownloadTask } from './icon-plan.js';
 
-export interface DownloadDeps {
-	fetch: (url: string) => Promise<Response>;
-	mkdirSync: (path: string) => void;
-	writeFileSync: (path: string, data: Uint8Array) => void;
+export const DEFAULT_CONCURRENCY = 8;
+
+export interface DownloadPorts extends HttpPorts {
+	/** Writes `bytes` to `path`, creating parent directories as needed. */
+	readonly write: (path: string, bytes: Uint8Array) => void;
 }
 
-export const downloadIcon = async (task: DownloadTask, deps: DownloadDeps): Promise<void> => {
-	const response = await deps.fetch(task.url);
-	if (!response.ok) {
-		throw new Error(`Failed to fetch ${task.url}: ${response.status}`);
-	}
+export interface DownloadOptions extends RequestOptions {
+	readonly concurrency: number;
+}
 
-	const buffer = new Uint8Array(await response.arrayBuffer());
-	deps.mkdirSync(task.dir);
-	deps.writeFileSync(join(task.dir, task.filename), buffer);
+export const defaultDownloadOptions: DownloadOptions = {
+	...defaultRequestOptions,
+	concurrency: DEFAULT_CONCURRENCY
 };
 
-export const downloadAll = (tasks: readonly DownloadTask[], deps: DownloadDeps): Promise<void> =>
-	Promise.all(tasks.map((task) => downloadIcon(task, deps))).then(constant(undefined));
+export class WriteFailure extends Data.TaggedError('WriteFailure')<{
+	readonly path: string;
+	readonly message: string;
+}> {}
+
+export type DownloadFailure = RequestFailure | WriteFailure;
+
+export class DownloadFailures extends Data.TaggedError('DownloadFailures')<{
+	readonly failures: readonly DownloadFailure[];
+	readonly message: string;
+}> {}
+
+export const formatFailures = (failures: readonly DownloadFailure[]): string =>
+	[
+		`${failures.length} icon download${failures.length === 1 ? '' : 's'} failed:`,
+		...failures.map((failure) => `  - ${failure.message}`)
+	].join('\n');
+
+export const downloadIcon = (
+	task: DownloadTask,
+	ports: DownloadPorts,
+	options: DownloadOptions = defaultDownloadOptions
+): Effect.Effect<void, DownloadFailure> =>
+	fetchAndRead(task.url, (response) => response.arrayBuffer(), ports, options).pipe(
+		Effect.flatMap((buffer) => {
+			const path = join(task.dir, task.filename);
+			return Effect.try({
+				try: () => {
+					ports.write(path, new Uint8Array(buffer));
+				},
+				catch: (cause) => new WriteFailure({ path, message: `${path}: ${describeCause(cause)}` })
+			});
+		})
+	);
+
+export const downloadAll = (
+	tasks: readonly DownloadTask[],
+	ports: DownloadPorts,
+	options: DownloadOptions = defaultDownloadOptions
+): Effect.Effect<void, DownloadFailures> =>
+	Effect.partition(tasks, (task) => downloadIcon(task, ports, options), {
+		concurrency: options.concurrency
+	}).pipe(
+		Effect.flatMap(([failures]) =>
+			failures.length === 0
+				? Effect.void
+				: Effect.fail(new DownloadFailures({ failures, message: formatFailures(failures) }))
+		)
+	);

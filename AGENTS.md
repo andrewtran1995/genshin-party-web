@@ -17,6 +17,20 @@ Prefer existing `package.json` scripts over crafting custom commands. Check `pnp
 
 The data layer is client-safe: `/char`, `/boss`, and `/order` roll from the browser using a build-time-extracted dataset loaded by `$lib/genshin`, while `/interactive` uses the same dataset via a Svelte 5 rune reducer in `$lib/player-selection-stack.ts`. `genshin-db` is a `devDependency` used only by the extraction script.
 
+## Effect: build scripts only
+
+Effect is used in `scripts/` and nowhere else — see
+[`docs/adr/0002-effect-ts-for-backend-code.md`](docs/adr/0002-effect-ts-for-backend-code.md).
+
+- **Never import `effect` from `src/`.** The route servers are ~62 lines of synchronous redirect
+  logic, and `$lib/genshin` is shared with the browser, so it would add ~37 KB gzipped to the client
+  and grow the Vercel function 8.5×.
+- `effect` is a `devDependency`, like `genshin-db`, and must stay one.
+- `scripts/lib/http.ts` holds the shared `fetchAndRead` primitive (per-attempt timeout, retry on
+  transient failures only, typed errors). `download.ts` and `yatta.ts` build on it; `gen-data.ts`
+  stays a plain top-level-`await` script that calls `Effect.runPromise` at its I/O boundaries.
+- The pure script helpers (`icon-plan.ts`, `trim.ts`, `size-report.ts`) stay plain TypeScript.
+
 ## Domain logic source of truth (when added)
 
 The CLI at `../genshin-party/` (or [`genshin-party` on npm](https://www.npmjs.com/package/genshin-party)) is the original implementation. When porting a feature, mirror its behaviour rather than re-deriving it. See `docs/architecture.md` for the planned route-by-route mapping and the rules each port should preserve (e.g. `Aether`/`Stormterror` exclusions).

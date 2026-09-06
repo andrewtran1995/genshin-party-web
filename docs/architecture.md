@@ -46,6 +46,19 @@ Surfaces:
 - `src/routes/order/[permutation]/+page.svelte` — pre-rendered result page.
 - `src/routes/interactive/+page.svelte` — client-side flow using `$lib/genshin` for rolls.
 
+## Build-time I/O
+
+`scripts/gen-data.ts` reaches the network twice — the Yatta monster index and ~60 icon downloads —
+and both go through Effect (`scripts/lib/http.ts`'s `fetchAndRead`): a per-attempt timeout, retries
+on 5xx and transport errors but never on a 4xx, a concurrency cap of 8 against `gi.yatta.moe`, and a
+`Schema` over the Yatta response so a shape change warns loudly instead of yielding an empty icon
+map. `downloadAll` runs the whole batch before failing, so a build broken by six icons names all six.
+
+Effect is confined to `scripts/`, where it is a `devDependency` that reaches neither the client
+bundle nor the Vercel function. It must not be imported from `src/` — see
+[`docs/adr/0002-effect-ts-for-backend-code.md`](adr/0002-effect-ts-for-backend-code.md) for the
+measurements behind that boundary.
+
 ## Deferred work
 
 - **Shareable results with a seed** — currently results use URL-based state but are not reproducible. A `?seed=…` query param could make rolls deterministic.
