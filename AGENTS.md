@@ -17,14 +17,19 @@ Prefer existing `package.json` scripts over crafting custom commands. Check `pnp
 
 The data layer is client-safe: `/char`, `/boss`, and `/order` roll from the browser using a build-time-extracted dataset loaded by `$lib/genshin`, while `/interactive` uses the same dataset via a Svelte 5 rune reducer in `$lib/player-selection-stack.ts`. `genshin-db` is a `devDependency` used only by the extraction script.
 
-## Rejected: Effect
+## Effect: build scripts only
 
-Effect was explored for the backend and declined — see
-[`docs/adr/0002-effect-ts-for-backend-code.md`](docs/adr/0002-effect-ts-for-backend-code.md). Do not
-import `effect` from `src/`: the route servers are ~55 lines of synchronous redirect logic, and
-`$lib/genshin` is shared with the browser, so it would add ~37 KB gzipped to the client and grow the
-Vercel function 8.5×. `effect` is a `devDependency` solely so the measured comparison at
-`scripts/spike/download-pipeline/` stays runnable; that spike is not wired into any script or route.
+Effect is used in `scripts/` and nowhere else — see
+[`docs/adr/0002-effect-ts-for-backend-code.md`](docs/adr/0002-effect-ts-for-backend-code.md).
+
+- **Never import `effect` from `src/`.** The route servers are ~62 lines of synchronous redirect
+  logic, and `$lib/genshin` is shared with the browser, so it would add ~37 KB gzipped to the client
+  and grow the Vercel function 8.5×.
+- `effect` is a `devDependency`, like `genshin-db`, and must stay one.
+- `scripts/lib/http.ts` holds the shared `fetchAndRead` primitive (per-attempt timeout, retry on
+  transient failures only, typed errors). `download.ts` and `yatta.ts` build on it; `gen-data.ts`
+  stays a plain top-level-`await` script that calls `Effect.runPromise` at its I/O boundaries.
+- The pure script helpers (`icon-plan.ts`, `trim.ts`, `size-report.ts`) stay plain TypeScript.
 
 ## Domain logic source of truth (when added)
 

@@ -12,19 +12,22 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Effect } from 'effect';
 import genshinDb from 'genshin-db';
-import { map, values } from 'remeda';
 import type { Char, Enemy } from '../src/lib/types.js';
-import { downloadAll } from './lib/download.js';
-import type { IconSource, PlannedIcon } from './lib/icon-plan.js';
+import { downloadAll, type DownloadPorts } from './lib/download.js';
 import {
 	planIconDownloads,
 	plannedTasks,
 	toBossIconSources,
-	toIconSource
+	toIconSource,
+	type DownloadTask,
+	type IconSource,
+	type PlannedIcon
 } from './lib/icon-plan.js';
 import { buildSizeReport, measureDataFile } from './lib/size-report.js';
 import { filterBossEnemies, trimBoss, trimCharacters } from './lib/trim.js';
+import { fetchMonsterIcons } from './lib/yatta.js';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(scriptDir, '../src/lib/genshin/data');
@@ -54,21 +57,26 @@ const characters: Char[] = trimCharacters(genshinDb.characters('names', queryOpt
 const rawEnemies = genshinDb.enemies('names', queryOptions);
 const bossEnemies = filterBossEnemies(rawEnemies);
 
-interface YattaMonster {
-	id: number;
-	name: string;
-	icon: string;
-}
+const ports: DownloadPorts = {
+	get: (url, signal) => fetch(url, { signal }),
+	write: (path, bytes) => {
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, bytes);
+	}
+};
 
-async function fetchYattaMonsterIcons(): Promise<Map<number, string>> {
-	const response = await fetch('https://gi.yatta.moe/api/v2/en/monster');
-	if (!response.ok) throw new Error(`Yatta API failed: ${response.status}`);
-	const json = (await response.json()) as {
-		response: number;
-		data: { items: Record<string, YattaMonster> };
-	};
-	return new Map(map(values(json.data.items), (item): [number, string] => [item.id, item.icon]));
-}
+/** Runs a batch and, if any icon failed, prints every failure before exiting. */
+const downloadOrExit = (tasks: readonly DownloadTask[]): Promise<void> =>
+	Effect.runPromise(
+		downloadAll(tasks, ports).pipe(
+			Effect.catchTag('DownloadFailures', (failure) =>
+				Effect.sync(() => {
+					console.error(failure.message);
+					process.exit(1);
+				})
+			)
+		)
+	);
 
 const needsYattaFetch =
 	!FORCE &&
@@ -78,13 +86,20 @@ const needsYattaFetch =
 			!existsSync(join(staticBossIconsDir, `${enemy.images.filename_icon}.png`))
 	);
 
-let yattaIconById = new Map<number, string>();
+let yattaIconById: ReadonlyMap<number, string> = new Map();
 if (needsYattaFetch) {
-	try {
-		yattaIconById = await fetchYattaMonsterIcons();
-	} catch (err) {
-		console.warn('Yatta API unavailable; falling back to genshin-db icon filenames:', err);
-	}
+	yattaIconById = await Effect.runPromise(
+		fetchMonsterIcons(ports).pipe(
+			Effect.catchTag('YattaUnavailable', (failure) =>
+				Effect.sync(() => {
+					console.warn(
+						`Yatta API unusable, falling back to genshin-db icon filenames — ${failure.message}`
+					);
+					return new Map<number, string>();
+				})
+			)
+		)
+	);
 }
 
 const bossPlan = planIcons(
@@ -93,13 +108,7 @@ const bossPlan = planIcons(
 	'/icons/bosses'
 );
 
-const downloadDeps = {
-	fetch,
-	mkdirSync: (dir: string) => mkdirSync(dir, { recursive: true }),
-	writeFileSync
-};
-
-await downloadAll(plannedTasks(bossPlan), downloadDeps);
+await downloadOrExit(plannedTasks(bossPlan));
 
 const bosses: Enemy[] = bossPlan.map(({ source, publicPath }) => trimBoss(source.boss, publicPath));
 
@@ -129,7 +138,7 @@ const elementIconPlan = planIcons(
 	staticElementIconsDir,
 	'/icons/elements'
 );
-await downloadAll(plannedTasks(elementIconPlan), downloadDeps);
+await downloadOrExit(plannedTasks(elementIconPlan));
 
 const weaponIconUrls: Record<string, string> = {
 	sword: 'https://static.wikia.nocookie.net/gensin-impact/images/8/81/Icon_Sword.png',
@@ -144,6 +153,6 @@ const weaponIconPlan = planIcons(
 	staticWeaponIconsDir,
 	'/icons/weapons'
 );
-await downloadAll(plannedTasks(weaponIconPlan), downloadDeps);
+await downloadOrExit(plannedTasks(weaponIconPlan));
 
 console.log(`Wrote ${characters.length} characters and ${bosses.length} bosses to ${dataDir}`);

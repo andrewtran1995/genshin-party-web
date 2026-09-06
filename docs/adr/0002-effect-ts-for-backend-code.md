@@ -1,18 +1,17 @@
-# Do not adopt Effect; fix the gaps it was being considered for
+# Use Effect in the build scripts, and nowhere else
 
-We will not adopt [Effect](https://effect.website/) in this repo — not in the route servers, not in
-`$lib`, and not in the build scripts. The problems that prompted the question are real, but they are
-in `scripts/`, they are worth about twenty lines of Effect over plain TypeScript, and they do not
-justify the dependency.
+We will use [Effect](https://effect.website/) for the build-time scripts under `scripts/`, where it
+is a `devDependency` that ships nothing, and not in the route servers, `$lib`, or anywhere else
+under `src/`.
 
-The working comparison this decision rests on is kept at
-[`scripts/spike/download-pipeline/`](../../scripts/spike/download-pipeline/), under the repo's own
-lint, typecheck, and test gates. Re-run it before overturning this.
+The split is not a compromise. The two halves of this repo have opposite profiles: `scripts/` is
+where all the real I/O lives — an external API and ~60 icon downloads — and `src/` has none at all,
+because ADR 0001 moved every roll into the browser. Effect earns its keep in the first and would be
+pure cost in the second.
 
 ## What "the backend" actually is here
 
-Worth stating plainly, because it is smaller than the phrase suggests. ADR 0001 moved randomization
-into the browser and put results in the URL, which left the server with almost nothing:
+Worth stating plainly, because it is smaller than the phrase suggests:
 
 | Surface                            | Lines | What it does                                              |
 | ---------------------------------- | ----- | --------------------------------------------------------- |
@@ -21,13 +20,13 @@ into the browser and put results in the URL, which left the server with almost n
 | `src/routes/order/order.remote.ts` | 7     | One remote `form()`: redirect                             |
 
 No database, no runtime external API, no auth, no secrets (`.env.example` says so), no queue, no
-transactions. The only `await` is `request.formData()`. Every one of these is a no-JS fallback whose
-JavaScript path does the same work in the browser.
+transactions. The only `await` is `request.formData()`. Each is a no-JS fallback whose JavaScript
+path does the same work in the browser.
 
-The genuinely I/O-shaped code is at build time, in `scripts/`: `gen-data.ts` calls the Yatta API and
-downloads ~58 boss icons plus element and weapon icons, through `scripts/lib/download.ts`.
+The I/O-shaped code is all at build time, in `scripts/`: `gen-data.ts` calls the Yatta monster API
+and downloads ~58 boss icons plus element and weapon icons.
 
-## Runtime: the cost is disqualifying
+## Why not `src/`: the cost is disqualifying
 
 Measured on this repo, `effect@3.22.1`, `pnpm build` from clean:
 
@@ -41,81 +40,85 @@ Two things fall out of that table.
 
 **Effect in `$lib` ships to the browser.** The domain modules are shared by the server actions and
 the client pages by design — that sharing is the whole point of ADR 0001. Putting Effect behind
-`rollBossUrl` grew the chunk `/boss` loads from 45 KB to 162 KB, or **+36.8 KB gzipped across the
+`rollBossUrl` grew the chunk `/boss` loads from 45 KB to 162 KB: **+36.8 KB gzipped across the
 client, a 28% increase**, on the mobile connections this app is mostly opened from. Bounty 005 spent
-three runs splitting barrel files to save a fraction of that. This would hand it all back for
-control flow over code with no I/O in it.
+three runs splitting barrel files to save a fraction of that.
 
 **Server-only use avoids the browser but not the function.** Vite externalizes `node_modules` for
 SSR, so the adapter traces the package into the deployed function whole: 724 files, 7.56 MB, taking
 the function from 1.13 MB to 9.58 MB — **8.5×**. Nothing shrinks it, because tracing follows
 `effect`'s barrel rather than the handful of names actually imported.
 
-Set against that: the code being wrapped is ~55 lines, synchronous, and its failure modes (`no
-match → fail(404)`, `invalid selection → fail(400)`) are already modelled by `fail`/`redirect`.
-Typed errors, dependency injection, retries, and interruption are all answers to problems these
-files do not have.
+Set against that: the code being wrapped is ~62 lines, synchronous, and its failure modes
+(`no match → fail(404)`, `invalid selection → fail(400)`) are already modelled by `fail`/`redirect`.
+Typed errors, dependency injection, retries, and interruption are answers to problems these files do
+not have.
 
-## Build scripts: no shipping cost, but not worth the dependency either
+## Why `scripts/`: it ships nothing, and the gaps were real
 
-A `devDependency` imported only from `scripts/` never reaches the browser or the function. Confirmed,
-not assumed — building with the spike present and `effect` installed produced a client bundle and a
-Vercel function byte-identical to baseline (369,512 B and 1,131,261 B), with zero `effect` files
-traced. So the bundle argument does not apply here, and this is where the question deserved a real
-answer rather than a reflex.
+A `devDependency` imported only from `scripts/` reaches neither the browser nor the function.
+Confirmed, not assumed — after this change, `pnpm build` produces a client bundle of 369,512 B and a
+Vercel function of 1,131,261 B, both identical to baseline, with zero `effect` files traced and no
+Effect code found in any emitted chunk.
 
-The gaps are real. `scripts/lib/download.ts` is 19 lines with no retry (one flaky 5xx fails the
-build), no concurrency cap (`Promise.all` fires ~58 requests at one host at once), no per-attempt
-timeout (a hung socket hangs the build), and no whole-batch reporting (`Promise.all` rejects on the
-first failure, so a build broken by six icons names one). `gen-data.ts` casts the Yatta response
-instead of checking it, so a shape change there degrades the dataset silently.
+What `scripts/lib/download.ts` was missing, in 19 lines built on `Promise.all`:
 
-So the spike implements all four guarantees twice — once in Effect, once in plain TypeScript — and
-runs one behavioural suite against both. Both pass. Code lines, comments and blanks stripped:
+1. **Retry** — one flaky 5xx from `gi.yatta.moe` failed the whole build.
+2. **A concurrency cap** — every icon request fired at one host simultaneously.
+3. **A per-attempt timeout** — a hung socket hung the build indefinitely.
+4. **Whole-batch reporting** — `Promise.all` rejects on the first failure, so a build broken by six
+   icons named one of them.
 
-| Piece                     | Effect | Plain TS | Today                |
+And `gen-data.ts` cast the Yatta response rather than checking it, so a rename of `icon` or a move of
+`items` would have left the icon map empty, silently degrading the shipped dataset instead of
+failing.
+
+Before choosing, both designs were built to those four guarantees behind one interface and run
+against a single behavioural suite. Both passed, so the decision came down to cost. Code lines,
+comments and blanks stripped:
+
+| Piece                     | Effect | Plain TS | Before               |
 | ------------------------- | ------ | -------- | -------------------- |
 | Download pipeline         | 46     | 67       | 19, no guarantees    |
 | Yatta response validation | 22     | 24       | 0, an unchecked cast |
 
-Effect buys **21 lines** on the pipeline and **two** on the validation. `Schedule.exponential`
-piped through `jittered` and `recurs` is nicer than a backoff loop, and `Effect.partition` with a
-`concurrency` option is much nicer than a hand-rolled worker pool — but "nicer, by twenty lines, in
-one file" does not carry a 34 MB dependency and its concept surface into a repo whose entire runtime
-dependency list is `remeda` and `ts-pattern`.
+Effect is worth about 21 lines on the pipeline and roughly nothing on the validation — plus one
+guarantee the plain version cannot make: its timeout is enforced by the runtime interrupting the
+fiber, whereas an `AbortController` timeout is only as good as the transport's willingness to honour
+a signal. `scripts/lib/http.test.ts` pins both behaviours.
 
-One point genuinely goes to Effect: its timeout is enforced by the runtime interrupting the fiber,
-whereas the plain timeout is an `AbortController` the transport has to honour. A transport that
-ignores its signal hangs the build with no timeout at all. Both tests are in the spike. Real `fetch`
-honours the signal, so this is a robustness margin rather than a live bug.
+## What this looks like in the tree
 
-## What we do instead
+- **`scripts/lib/http.ts`** — `fetchAndRead`, the one primitive both callers use: bounded per
+  attempt, retried on transient failures (5xx and transport errors, never a 4xx), with the body read
+  inside the retry so a connection that drops mid-download is retried rather than reported.
+- **`scripts/lib/download.ts`** — `downloadAll`, capped at 8 concurrent requests, running the whole
+  batch before failing so `DownloadFailures` names every icon that could not be fetched.
+- **`scripts/lib/yatta.ts`** — the monster index behind a `Schema`, so a shape change is a named,
+  loud warning instead of an empty map.
+- **`scripts/gen-data.ts`** — unchanged in shape: still a top-level-`await` script, now calling
+  `Effect.runPromise` at its two I/O boundaries. Deliberately not converted wholesale; the rest of it
+  is synchronous data munging that Effect would only make longer.
 
-Fix the four gaps in `scripts/lib/download.ts` in plain TypeScript, and replace the Yatta cast with
-a hand-written check. The spike's `plain-impl.ts` and `yatta-plain.ts` are working implementations of
-exactly that, and `contract.test.ts` is the suite they have to keep passing. That is roughly 48 lines
-against the 27 Effect would have cost — a fair price for not taking the dependency.
+Verified end to end: regenerating from scratch produces byte-identical `characters.json`,
+`bosses.json`, `data-size.json`, and all 70 icons, including a run that deleted icons to force real
+downloads and a live Yatta fetch through the new decoder.
 
-## The one cost this decision does keep
+## Boundaries
 
-`effect` stays in `devDependencies`. It is there for the spike and nothing else: no `src/` file and
-no shipped script imports it, and the build measurement above confirms it reaches neither the client
-bundle nor the Vercel function. What it does cost is install weight — 34 MB unpacked — on every
-`pnpm install`, in exchange for a decision that can be re-measured instead of re-argued.
+- **Do not import `effect` from `src/`.** That is what the first table costs.
+- `effect` stays in `devDependencies`, alongside `genshin-db`, for the same reason: build-time only,
+  never runtime.
+- `scripts/lib/icon-plan.ts`, `trim.ts`, and `size-report.ts` stay plain. They are pure functions
+  over in-memory data with no failure modes worth typing; the one `throw` in `planIconDownloads` is
+  a data error that should fail the build loudly and already does.
 
-That is a deliberate trade and an easy one to reverse: deleting `scripts/spike/download-pipeline/`
-and dropping the dependency leaves this ADR standing on its recorded numbers alone.
+## When to reopen the `src/` half
 
-## When to reopen this
-
-The measurements above are about a repo with no runtime I/O. Effect's case rests on orchestration —
-typed error channels, resource safety, retries, interruption, structured concurrency — and there is
-nothing here to orchestrate. Reopen if that changes:
+Effect's case rests on orchestration, and there is nothing in `src/` to orchestrate. Reopen if that
+changes:
 
 - a database, a request-time external API, auth, or a job queue enters the runtime;
 - server-side work grows past a few dozen lines with more than one real failure mode;
 - Vercel's tracing learns to prune an externalized package to its used exports, which would take the
   8.5× function penalty off the table.
-
-Adopting Effect for one build script now, in the hope of the first of those arriving, is the
-speculative-generality trade this codebase's "composition over abstraction" line already refuses.
