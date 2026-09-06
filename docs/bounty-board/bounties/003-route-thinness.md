@@ -12,7 +12,7 @@ runs: 2
 ## Why this matters
 
 `AGENTS.md` asks for thin route files with logic in `$lib`, and for flat component hierarchies. The
-line has bent: `src/routes/char/+page.svelte` is 145 lines, and `CardChrome.svelte` is 450 — big
+line has bent: `src/routes/char/+page.svelte` is 108 lines, and `CardChrome.svelte` is 450 — big
 enough that the rules it encodes are only discoverable by reading it. Logic living in a `.svelte`
 file is logic the node test project cannot reach, so it drags bounty 001 down with it: the only way
 to test it is a browser test that renders the whole component.

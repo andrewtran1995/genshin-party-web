@@ -23,7 +23,7 @@
 | `genshin-party char`  | `/char`        | Working — entry form filters via `$lib/genshin` and navigates to a pre-rendered `/char/[name]` result.                                                                                                 |
 | `genshin-party boss`  | `/boss`        | Working — entry form picks one or three bosses via `$lib/genshin`, honoring gauntlet/weekly. Single bosses render at `/boss/[name]` (pre-rendered); gauntlets render at `/boss/[a]/[b]/[c]` (dynamic). |
 | `genshin-party order` | `/order`       | Working — entry form shuffles `[1,2,3,4]` and navigates to a pre-rendered `/order/[permutation]` result.                                                                                               |
-| `genshin-party i`     | `/interactive` | Working — client-side 4-player flow using `$lib/genshin` and `$lib/player-selection-stack.ts`.                                                                                                         |
+| `genshin-party i`     | `/interactive` | Working — client-side 4-player flow using `$lib/genshin` and `$lib/party-flow.svelte.ts`.                                                                                                              |
 
 ## Data layer
 

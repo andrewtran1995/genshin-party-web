@@ -15,7 +15,7 @@ Prefer existing `package.json` scripts over crafting custom commands. Check `pnp
 - SvelteKit 2 with Svelte 5 syntax (runes)
 - `@sveltejs/adapter-vercel` — do not change the adapter
 
-The data layer is client-safe: `/char`, `/boss`, and `/order` roll from the browser using a build-time-extracted dataset loaded by `$lib/genshin`, while `/interactive` uses the same dataset via a Svelte 5 rune reducer in `$lib/player-selection-stack.ts`. `genshin-db` is a `devDependency` used only by the extraction script.
+The data layer is client-safe: `/char`, `/boss`, and `/order` roll from the browser using a build-time-extracted dataset loaded by `$lib/genshin`, while `/interactive` uses the same dataset via a Svelte 5 rune reducer in `$lib/party-flow.svelte.ts`. `genshin-db` is a `devDependency` used only by the extraction script.
 
 ## Effect: build scripts only
 

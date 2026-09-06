@@ -11,11 +11,12 @@ runs: 0
 
 ## Why this matters
 
-Six of the fourteen components under `src/lib/components/` have a `.svelte.test.ts` beside them;
+Nine of the seventeen components under `src/lib/components/` have a `.svelte.test.ts` beside them;
 the rest have none. The untested ones include the two largest surfaces in the app —
-`CardChrome.svelte` (450 lines) and `PlayerNameInputs.svelte` (137) — so a regression in card
-chrome or player-name entry reaches production with only the five e2e specs standing between it and
-a user. Unit tests are also the cheap layer: `pnpm test:unit --run` gates every commit, e2e does not.
+`CardChrome.svelte` (450 lines) and `PlayerNameRow.svelte` (184) — so a regression in card
+chrome or per-player name entry reaches production with only the six e2e specs standing between it
+and a user. Unit tests are also the cheap layer: `pnpm test:unit --run` gates every commit, e2e does
+not.
 
 ## Scope
 

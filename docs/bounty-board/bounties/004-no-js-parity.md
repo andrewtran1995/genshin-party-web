@@ -31,10 +31,12 @@ multi-step stateful flow, and it needs a human's call before any code is written
 - [x] Each of `/char`, `/boss`, and `/order` produces the same result set from the server action as
       from the client roll, given the same inputs — asserted by a test over the shared helper, not by
       comparing two hand-written lists. Already true architecturally (both the client `handleSubmit`
-      and the server actions call the same `parseCharFilters`/`rollCharUrl`,
-      `parseBossFilters`/`rollBossUrl`, and `rollOrderUrl` from `src/lib/genshin/rolls.ts`), and
-      `rolls.test.ts` already exercises those functions directly with property-based tests — nothing
-      new needed this run, just confirmed.
+      and the server actions call the same `parseCharFilters`/`rollCharUrl` (`characters.ts`),
+      `parseBossFilters`/`rollBossUrl` (`bosses.ts`), and `rollOrderUrl` (`order.ts`) — all under
+      `src/lib/genshin/`), and each module's own `.test.ts` already exercises those functions directly
+      with property-based tests — nothing new needed this run, just confirmed. (These lived in one
+      `rolls.ts` when this criterion was checked; bounty 005 later split it per-dataset — see bounty
+      006's findings.)
 - [ ] Validation failures in every server action return `fail()` with a message the no-JS page
       actually renders, covered by `e2e/no-js.spec.ts`. **Narrowed** after this run: only `/char`'s
       two actions (`roll`, `debug`) have a `fail()` path reachable through the real form with the
