@@ -32,7 +32,8 @@ scripted below.
 
 ## Scope
 
-**In:** `src/lib/genshin/rolls.ts` (URL building) and its two `encodeURIComponent(name)` call sites in
+**In:** `src/lib/genshin/path-segment.ts` (the shared `encodePathSegment` helper), the roll-URL
+builders that use it (`characters.ts`, `bosses.ts`, `order.ts`), and the two `encodeURIComponent(name)` call sites in
 `char/+page.svelte`/`char/+page.server.ts` (the "show all variants" debug form), for any dataset name
 containing a character in `decodeURI`'s reserved-and-undecoded set (`, ; : @ & = + $` — `/ ? #` are
 excluded since those must stay escaped to not restructure the path). A scan of `getAllBossNames()` /
@@ -48,7 +49,9 @@ config.
       (200, not 404) against a built preview server, for every name in the dataset — asserted by a
       test that iterates `getAllBossNames()`/`getAllCharNames()`, not by hand-picking the two known
       offenders. See `e2e/prerendered-routes.spec.ts` (added this run) plus the unit-level
-      `encodePathSegment` coverage in `src/lib/genshin/rolls.test.ts`.
+      `encodePathSegment` coverage in `src/lib/genshin/path-segment.test.ts` (the helper and its test
+      lived in one `rolls.ts`/`rolls.test.ts` when this criterion was checked; bounty 005 later split
+      it per-dataset — see bounty 006's findings).
 - [x] `e2e/no-js.spec.ts`'s boss-roll test no longer depends on which boss got randomly picked — the
       fix removes the possibility structurally, and the test now also asserts the "Random boss" heading
       renders (it previously only checked the URL shape, which would have passed even on a 404 page).

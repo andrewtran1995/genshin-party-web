@@ -3,7 +3,8 @@
 ## `Genshin Heavy` — heading face
 
 `static/fonts/genshin-heavy-latin.woff2` (~14 KB) is the face used for `h1`–`h3`
-via `--font-heading` in `src/app.css`.
+via `--heading-font-family` in `src/lib/themes/genshin.css` (the `@font-face` itself
+is declared in `src/app.css`).
 
 ### Provenance
 
@@ -27,7 +28,7 @@ HoYoverse for use in the game client and its account web views. We are not a
 party to that licence. Self-hosting it here redistributes it to every visitor,
 which the licence does not cover — this is a knowing trade-off for a fan
 project, not a cleared one. If the site ever grows a commercial dimension, or if
-HanYi or HoYoverse object, the fix is to swap `--font-heading` for an
+HanYi or HoYoverse object, the fix is to swap `--heading-font-family` for an
 open-licensed (OFL/Apache) face; nothing else in the codebase depends on it.
 
 Do not add more faces from this source, and do not ship the full `zh-cn.ttf` —
