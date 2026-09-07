@@ -3,8 +3,8 @@ id: 002
 title: Accessibility gaps in interactive components
 status: open
 size: S
-last-run: 2026-08-26
-runs: 3
+last-run: 2026-09-07
+runs: 4
 ---
 
 # Accessibility gaps in interactive components
@@ -109,3 +109,12 @@ queryable through the existing `vitest-browser-svelte` and Playwright locators.
     behaviour.
   - Did not touch the keyboard-operability criterion this run — see the widened note in "Why this
     matters" above on why it's a multi-slice criterion rather than a one-file fix.
+- 2026-09-07: Worked issue #78 (part of a broader Svelte-idiom sweep, `#88`), not this bounty
+  directly — no-change note. That issue's slice 1 converted `src/lib/tilt.ts`'s `tilt()` from a
+  `use:` action to a `{@attach}` attachment (mechanical: return the cleanup closure directly instead
+  of `{ destroy() { ... } }`), with no behavioural change. `CardChrome.svelte.test.ts`, the
+  reduced-motion guardrail this bounty's exit criterion above depends on, is unchanged and expected
+  to keep passing — see PR #97 for local-verification limits (this sandbox's pre-installed Chromium
+  didn't match the pinned Playwright version, so `pnpm test:unit:browser` had to be deferred to CI).
+  Issue #78 also has an unstarted slice (`$props.id()`) tagged as feeding this bounty's scope
+  directly; still open for a future run.

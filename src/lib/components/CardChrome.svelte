@@ -93,7 +93,7 @@
 	style:--frame-2={palette['--frame-2']}
 	style:--foil-max={palette['--foil-max']}
 	style:aspect-ratio={layout.variant === 'fill' ? layout.cardAspectRatio : undefined}
-	use:tilt
+	{@attach tilt}
 >
 	<div class="card-inner" class:card-inner-fill={layout.variant === 'fill'}>
 		<div class="card-glow" aria-hidden="true"></div>
