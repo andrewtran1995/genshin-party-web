@@ -161,7 +161,7 @@ function subscribeMotion(listener: MotionListener): () => void {
 	};
 }
 
-/** Svelte action: tilts and shines the card it is applied to. */
+/** Svelte attachment: tilts and shines the card it is applied to. */
 export function tilt(node: HTMLElement) {
 	const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
 	const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -210,12 +210,10 @@ export function tilt(node: HTMLElement) {
 	const usesMotion = !canHover.matches && 'DeviceOrientationEvent' in window;
 	const unsubscribe = usesMotion ? subscribeMotion(onMotion) : undefined;
 
-	return {
-		destroy() {
-			cancelAnimationFrame(frame);
-			node.removeEventListener('pointermove', onMove);
-			node.removeEventListener('pointerleave', reset);
-			unsubscribe?.();
-		}
+	return () => {
+		cancelAnimationFrame(frame);
+		node.removeEventListener('pointermove', onMove);
+		node.removeEventListener('pointerleave', reset);
+		unsubscribe?.();
 	};
 }
