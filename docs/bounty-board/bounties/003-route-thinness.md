@@ -93,3 +93,13 @@ adding an abstraction nobody asked for, log that in the findings and leave the f
   props" the guardrail warns against, since there's exactly one caller. Leaving it as the one
   remaining violation of that criterion for now; if it keeps coming up across runs, consider changing
   the criterion to exclude `<style>` line count, since it's measuring CSS weight, not logic placement.
+
+- 2026-09-09 (no-change, issue #80 run): unrelated to this bounty's scope, but a workaround for the
+  headless-shell mismatch noted above. `pnpm test:e2e` (real Playwright `test`, not vitest's browser
+  mode) runs fine against the _full_ Chromium build the environment does have
+  (`/opt/pw-browsers/chromium`, revision 1194) — only `pnpm test:unit:browser` is blocked, because
+  `@vitest/browser-playwright` insists on `chromium_headless_shell` specifically, and this box only
+  has headless-shell 1194 against a pinned `@playwright/test` 1.61.0 that wants 1228. Point
+  `playwright.config.ts`'s `use.launchOptions.executablePath` at `/opt/pw-browsers/chromium` locally
+  (don't commit it — CI installs its own matching browsers) to get a real `pnpm test:e2e` run when
+  this gap blocks the browser-mode unit tests.
