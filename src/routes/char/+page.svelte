@@ -1,19 +1,28 @@
 <script lang="ts">
-	import { goto, preloadCode } from '$app/navigation';
+	import { goto, preloadCode, pushState } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import type { Pathname } from '$app/types';
 	import type { ActionData, PageData } from './$types';
-	import { CHAR_ERROR, parseCharFilters, rollCharUrl } from '$lib/genshin/characters';
+	import {
+		CHAR_ERROR,
+		getCharByName,
+		parseCharFilters,
+		rollCharUrl
+	} from '$lib/genshin/characters';
 	import { encodePathSegment } from '$lib/genshin/path-segment';
 	import { isElement } from '$lib/types';
 	import { CARD_VARIANT_FILTER_LABELS, parseVariantOverride } from '$lib/card-variant';
 	import ElementIcon from '$lib/components/ElementIcon.svelte';
 	import AnyElementIcon from '$lib/components/AnyElementIcon.svelte';
 	import CharacterDebugPanel from '$lib/components/CharacterDebugPanel.svelte';
+	import CharAllVariantsDialog from '$lib/components/CharAllVariantsDialog.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let clientError = $state('');
 	let selectedElement = $state('');
+
+	const allVariantsChar = $derived(page.state.charAllVariants);
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
@@ -37,6 +46,22 @@
 		const name = data.characters[0]?.name;
 		if (!name) return;
 		void preloadCode(`/char/${encodePathSegment(name)}`).catch(() => undefined);
+	}
+
+	// Shallow-routes into the debug panel's "all variants" view: the URL becomes
+	// URL-addressable as /char/[name]?allVariants=1 (see +page.svelte for the
+	// full-page fallback on direct load or reload), but here it opens as an
+	// overlay above the char list, dismissed with the browser's Back button.
+	function showAllVariants(name: string) {
+		const char = getCharByName(name);
+		if (!char) return;
+		pushState(resolve(`/char/${encodePathSegment(name)}?allVariants=1` as Pathname), {
+			charAllVariants: char
+		});
+	}
+
+	function closeAllVariants() {
+		history.back();
 	}
 </script>
 
@@ -105,4 +130,10 @@
 	<p class="error" role="alert">{clientError || form?.error}</p>
 {/if}
 
-<CharacterDebugPanel characters={data.characters} error={form?.debugError} />
+<CharacterDebugPanel
+	characters={data.characters}
+	error={form?.debugError}
+	onshowvariants={showAllVariants}
+/>
+
+<CharAllVariantsDialog char={allVariantsChar} onclose={closeAllVariants} />

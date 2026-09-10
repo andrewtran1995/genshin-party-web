@@ -3,8 +3,8 @@ id: 003
 title: Logic drifting out of $lib and into components
 status: open
 size: M
-last-run: 2026-09-03
-runs: 2
+last-run: 2026-09-10
+runs: 3
 ---
 
 # Logic drifting out of `$lib` and into components
@@ -29,6 +29,8 @@ its tests passing unchanged before and after.
 
 - [ ] No file under `src/routes/` exceeds 100 lines. Still violated by `src/routes/+page.svelte`
       (121, almost entirely CSS — see findings log); `src/routes/char/[name]/+page.svelte` is now 95.
+      `src/routes/char/+page.svelte` has drifted back over the line too (139 — see the 2026-09-10
+      entry) after issue #79's shallow-routing work; not touched this run.
 - [ ] No component under `src/lib/components/` exceeds 250 lines. Still violated by `BossCard.svelte`
       (251), `CharCard.svelte` (284), `PresetManager.svelte` (286), `InteractiveFlow.svelte` (329),
       and `CardChrome.svelte` (450) — none touched this run.
@@ -103,3 +105,37 @@ adding an abstraction nobody asked for, log that in the findings and leave the f
   `playwright.config.ts`'s `use.launchOptions.executablePath` at `/opt/pw-browsers/chromium` locally
   (don't commit it — CI installs its own matching browsers) to get a real `pnpm test:e2e` run when
   this gap blocks the browser-mode unit tests.
+
+- 2026-09-10 (issue #79 run, not a bounty slice — recorded here because #79 named this bounty as the
+  reason `char/[name]/+page.svelte` was in scope for shallow routing): #79 asked for the debug panel's
+  `?allVariants=1` view to become a shallow-routed overlay instead of a real navigation, while keeping
+  the URL addressable. Implemented it on `src/routes/char/+page.svelte` (the char-list route, since
+  the classic shallow-routing shape is "list page + overlay that looks like a navigation to a detail
+  page"): `CharacterDebugPanel.svelte` now hands the chosen name to the route via an `onshowvariants`
+  callback instead of calling `goto` itself, and the route calls `pushState` to set `page.state`
+  and a new `CharAllVariantsDialog.svelte` component (Skeleton's `Dialog`, same pattern `NavDrawer.svelte`
+  already uses) renders `CharVariantGallery` as a backdrop-and-focus-trapped modal, dismissed by
+  Back/Escape/backdrop-click via `history.back()`. `src/routes/char/[name]/+page.svelte` itself is
+  untouched — its own `{#if allVariants}` branch is still the correct fallback for a direct load or a
+  reload of the URL, exactly per the issue's "preserve a URL-addressable path" catch, so this run did
+  not touch this bounty's exit criteria there. Filled in `App.PageState` in `src/app.d.ts` per the
+  issue's "Verify" section. Did not touch candidate (2) from the issue (reroll/candidate history in
+  `party-flow.svelte.ts`) — the issue itself flags it as the riskier candidate against a 291-line test
+  suite, and one slice is enough for a run.
+  - This did add to `src/routes/`'s line-count violation rather than remove one: `char/+page.svelte`
+    went from 108 to 139 lines. Extracted the dialog markup into `CharAllVariantsDialog.svelte` (a
+    real component wrapping `Dialog`/`Portal`/`CharVariantGallery`, not a prop-forwarding shim) to
+    claw back what could be clawed back without violating the hollow-abstraction guardrail; the
+    remainder is the pre-existing roll form (unrelated to this issue, left alone) plus the new
+    `showAllVariants`/`closeAllVariants` functions, which are DOM/navigation glue in the same sense
+    the 2026-08-31 entry above carved out for `goto`/`FormData` handlers, not branch rules deciding
+    what to show — so the third exit criterion doesn't apply to them either. Recorded as a fresh
+    violation of the first exit criterion above rather than silently left out of it.
+  - Verified with the full Playwright suite (`pnpm test:e2e`, 22 specs including
+    `e2e/rolls.spec.ts:31` and `e2e/no-js.spec.ts:17`, both named in issue #79's own "Verify" section)
+    against `/opt/pw-browsers/chromium` per the workaround two entries up — all 22 passed unchanged.
+    Also drove it manually with a scripted Playwright session against `pnpm dev`: confirmed the
+    JS-enabled path never POSTs to `?/debug` and instead pushes `/char/<name>?allVariants=1` onto
+    history while the dialog's `data-state` goes to `open`, and that the no-JS/direct-load path still
+    POSTs and does a real redirect. Screenshotted the overlay to confirm it renders as a dimmed modal
+    above the char-list form, not a second full-page mode.
