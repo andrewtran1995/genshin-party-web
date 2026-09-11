@@ -1,7 +1,7 @@
 ---
 id: 003
 title: Logic drifting out of $lib and into components
-status: open
+status: in-progress
 size: M
 last-run: 2026-09-03
 runs: 2
