@@ -1,10 +1,10 @@
 ---
 id: 003
 title: Logic drifting out of $lib and into components
-status: in-progress
+status: open
 size: M
-last-run: 2026-09-03
-runs: 2
+last-run: 2026-09-11
+runs: 3
 ---
 
 # Logic drifting out of `$lib` and into components
@@ -12,7 +12,7 @@ runs: 2
 ## Why this matters
 
 `AGENTS.md` asks for thin route files with logic in `$lib`, and for flat component hierarchies. The
-line has bent: `src/routes/char/+page.svelte` is 108 lines, and `CardChrome.svelte` is 450 — big
+line has bent: `src/routes/char/+page.svelte` is 108 lines, and `CardChrome.svelte` is 439 — big
 enough that the rules it encodes are only discoverable by reading it. Logic living in a `.svelte`
 file is logic the node test project cannot reach, so it drags bounty 001 down with it: the only way
 to test it is a browser test that renders the whole component.
@@ -27,11 +27,14 @@ its tests passing unchanged before and after.
 
 ## Exit criteria
 
-- [ ] No file under `src/routes/` exceeds 100 lines. Still violated by `src/routes/+page.svelte`
-      (121, almost entirely CSS — see findings log); `src/routes/char/[name]/+page.svelte` is now 95.
-- [ ] No component under `src/lib/components/` exceeds 250 lines. Still violated by `BossCard.svelte`
-      (251), `CharCard.svelte` (284), `PresetManager.svelte` (286), `InteractiveFlow.svelte` (329),
-      and `CardChrome.svelte` (450) — none touched this run.
+- [ ] No file under `src/routes/` exceeds 100 lines. Violated by `src/routes/+page.svelte` (121,
+      almost entirely CSS — see findings log), `src/routes/char/+page.svelte` (108), and
+      `src/routes/boss/+page.svelte` (120, ~35 of which are CSS). The latter two regressed above 100
+      lines since the 2026-09-03 run through unrelated feature work elsewhere in the repo — this
+      criterion needs re-checking every run, not just trusted from the last pass's count.
+- [ ] No component under `src/lib/components/` exceeds 250 lines. Violated by `BossCard.svelte`
+      (252), `PresetManager.svelte` (286), `InteractiveFlow.svelte` (329), and `CardChrome.svelte`
+      (439). `CharCard.svelte` (was 284) cleared this run — see findings log.
 - [ ] Every branch rule that decides _what_ is shown (as opposed to _how_) lives in a `$lib` module
       with a node-project test.
 
@@ -103,3 +106,38 @@ adding an abstraction nobody asked for, log that in the findings and leave the f
   `playwright.config.ts`'s `use.launchOptions.executablePath` at `/opt/pw-browsers/chromium` locally
   (don't commit it — CI installs its own matching browsers) to get a real `pnpm test:e2e` run when
   this gap blocks the browser-mode unit tests.
+
+- 2026-09-11: `CharCard.svelte` (284 lines) carried ~90 lines computing its colour scheme
+  (`ELEMENT_PALETTES`, `DEFAULT_PALETTE`, `RARITY_5_PALETTE`, combined via `$derived`) — a pure
+  function of `char.element`/`char.rarity`, and a branch rule deciding _what_ colours are shown, not
+  DOM glue. Moved it to `$lib/card-palette.ts` as `charCardPalette()`, with unit tests in
+  `card-palette.test.ts` covering per-element distinctness, the rarity-5 frame override, and the
+  fallback for an unrecognised element (`none`, before a real element is assigned). This isn't a
+  single-caller extraction the guardrail would flag as hollow: it's a pure function moved out of a
+  component, not a new component layer, and the same palette shape is likely reusable if boss cards
+  ever grow per-category colour (they don't yet — `BossCard.svelte`'s palette is a static constant,
+  left alone). `CardPalette` itself was only an `export interface` inside `CardChrome.svelte`, which
+  meant any plain `.ts` module (including this one and its test) importing it hit
+  `@typescript-eslint/no-unsafe-*` errors — this project's eslint config only wires up the Svelte-aware
+  TS program for `**/*.svelte`/`**/*.svelte.ts` files (see `eslint.config.js`), so a type sourced from a
+  `.svelte` file is unresolvable type information to a plain-`.ts` linting pass. Moved the interface
+  into `card-palette.ts` itself and had `CardChrome.svelte`/`BossCard.svelte` import it from there
+  instead — this is itself a small instance of this bounty's own class (a type that belongs in `$lib`
+  was living in a component) and worth remembering for the next slice: a type any `$lib` module needs
+  to reference must not be declared inside a `.svelte` file. `CharCard.svelte` is now 201 lines (clears
+  the 250-line criterion); `card-palette.ts` is 101. `pnpm lint`, `pnpm check`, and `pnpm test:unit
+--run` all pass (225 unit tests, up from 222). No visual or behavioural change: the palette values
+  were copied verbatim and the combination logic (`{...DEFAULT, ...ELEMENT_PALETTES[element],
+...(rarity === 5 ? RARITY_5 : {})}`) is unchanged, just relocated — `CardChrome.svelte` still
+  receives the identical resulting object shape.
+  - While surveying, found the first exit criterion's violation list was stale: `char/+page.svelte`
+    (108) and `boss/+page.svelte` (120) have both drifted over the 100-line limit since the last run
+    recorded 95/(not listed) for routes other than `+page.svelte`, through unrelated feature commits
+    (e.g. the `warmResultRoute`/`preloadCode` additions). Corrected the exit criterion text above.
+    Neither is this slice: `boss/+page.svelte`'s excess is ~35 lines of `<style>` for the toggle rows,
+    same "CSS weight, not logic placement" shape as `+page.svelte` already logged as a guardrail case;
+    `char/+page.svelte`'s `warmResultRoute`/`handleSubmit` are DOM/navigation glue, not branch rules,
+    so extracting them would be exactly the hollow, single-caller move the guardrail warns against.
+  - Did not attempt `BossCard.svelte`, `PresetManager.svelte`, `InteractiveFlow.svelte`, or
+    `CardChrome.svelte` this run — each needs its own reading for a genuine split, per the previous
+    run's note, and one slice per run.
