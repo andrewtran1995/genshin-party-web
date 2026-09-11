@@ -2,18 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import { tilt } from '$lib/tilt';
 	import { CARD_VARIANT_LABELS, type CardVariant } from '$lib/card-variant';
-
-	export interface CardPalette {
-		'--stock': string;
-		'--stock-2': string;
-		'--el': string;
-		'--el-splash': string;
-		'--ink': string;
-		'--muted': string;
-		'--frame': string;
-		'--frame-2': string;
-		'--foil-max': string;
-	}
+	import type { CardPalette } from '$lib/card-palette';
 
 	/**
 	 * A portrait card sizes the card itself and lets the window fill whatever

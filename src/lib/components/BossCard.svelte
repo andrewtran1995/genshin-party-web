@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { Enemy } from '$lib/types';
 	import type { CardVariant } from '$lib/card-variant';
-	import CardChrome, { type CardPalette } from './CardChrome.svelte';
+	import type { CardPalette } from '$lib/card-palette';
+	import CardChrome from './CardChrome.svelte';
 
 	interface Props {
 		boss: Enemy;
