@@ -505,4 +505,103 @@ describe('InteractiveFlow', () => {
 			expect(onstart).not.toHaveBeenCalled();
 		});
 	});
+
+	// Bounty 002's remaining exit criterion ("every interactive element is
+	// reachable and operable by keyboard alone") spans every component and
+	// route, so this is one slice of it: the choosing view's six buttons, plus
+	// Start and Start over, driven entirely with the keyboard rather than
+	// `.click()`. The name-input rows (Tab/Enter/Arrow reordering) already have
+	// keyboard coverage above and in `PlayerNameInputs.svelte.test.ts`.
+	describe('keyboard operability', () => {
+		const fullyEnabledState: PartyFlowState = {
+			...activeState,
+			playerChoices: [pick(1, 'Furina')],
+			candidateHistory: [
+				{ char: makeChar('Furina'), variant: 'normal' },
+				{ char: makeChar('Amber'), variant: 'normal' },
+				{ char: makeChar('Diluc'), variant: 'normal' }
+			],
+			candidateHistoryIndex: 1
+		};
+
+		it('reaches every primary, history, and secondary control by Tab alone, in visual order', async () => {
+			const { container } = await render(InteractiveFlow, {
+				props: choosing({ flowState: fullyEnabledState })
+			});
+			const expectedOrder = [
+				button(container, 'Accept'),
+				button(container, 'Accept as main'),
+				buttonByLabel(container, 'Previous roll'),
+				button(container, 'Reroll'),
+				buttonByLabel(container, 'Next roll'),
+				button(container, 'Go back to Player 1')
+			];
+
+			expectedOrder[0]?.focus();
+			expect(document.activeElement).toBe(expectedOrder[0]);
+			for (const next of expectedOrder.slice(1)) {
+				await userEvent.keyboard('{Tab}');
+				expect(document.activeElement).toBe(next);
+			}
+		});
+
+		it('activates every choosing-view control with Enter, no click involved', async () => {
+			const onaccept = vi.fn();
+			const onreroll = vi.fn();
+			const onpreviousroll = vi.fn();
+			const onnextroll = vi.fn();
+			const ongoback = vi.fn();
+			const { container } = await render(InteractiveFlow, {
+				props: choosing({
+					flowState: fullyEnabledState,
+					onaccept,
+					onreroll,
+					onpreviousroll,
+					onnextroll,
+					ongoback
+				})
+			});
+
+			const pressEnterOn = async (el: HTMLElement) => {
+				el.focus();
+				await userEvent.keyboard('{Enter}');
+			};
+
+			await pressEnterOn(button(container, 'Accept'));
+			await expect.poll(() => onaccept).toHaveBeenCalledWith(false);
+
+			await pressEnterOn(button(container, 'Accept as main'));
+			await expect.poll(() => onaccept).toHaveBeenCalledWith(true);
+
+			await pressEnterOn(buttonByLabel(container, 'Previous roll'));
+			expect(onpreviousroll).toHaveBeenCalledOnce();
+
+			await pressEnterOn(button(container, 'Reroll'));
+			expect(onreroll).toHaveBeenCalledOnce();
+
+			await pressEnterOn(buttonByLabel(container, 'Next roll'));
+			expect(onnextroll).toHaveBeenCalledOnce();
+
+			await pressEnterOn(button(container, 'Go back to Player 1'));
+			expect(ongoback).toHaveBeenCalledOnce();
+		});
+
+		it('activates Start (idle) and Start over (done) with Enter alone', async () => {
+			const onstart = vi.fn();
+			const { container: idleContainer } = await render(InteractiveFlow, {
+				props: baseProps({ onstart })
+			});
+			button(idleContainer, 'Start').focus();
+			await userEvent.keyboard('{Enter}');
+			await expect.poll(() => onstart).toHaveBeenCalledOnce();
+
+			const onreset = vi.fn();
+			const { container: doneContainer } = await render(InteractiveFlow, {
+				props: baseProps({ flowState: doneState, onreset })
+			});
+			button(doneContainer, 'Start over').focus();
+			await userEvent.keyboard('{Enter}');
+			await expect.poll(() => onreset).toHaveBeenCalledOnce();
+		});
+	});
 });

@@ -1,10 +1,10 @@
 ---
 id: 002
 title: Accessibility gaps in interactive components
-status: in-progress
+status: open
 size: S
-last-run: 2026-09-07
-runs: 4
+last-run: 2026-09-12
+runs: 5
 ---
 
 # Accessibility gaps in interactive components
@@ -20,7 +20,11 @@ step runs every `*.svelte.test.ts` browser-mode component test, which is still a
 components in `src/lib/components/`, so this is a gap that stays open until more of the exit
 criteria below have tests. Keyboard operability — the one remaining exit criterion — is the widest:
 it covers every interactive element across `src/lib/components/` and `src/routes/`, not a single
-component, so closing it will take more than one slice.
+component, so closing it will take more than one slice. `InteractiveFlow.svelte`'s choosing/idle/done
+button controls are now covered (see findings log), as is `PlayerNameInputs`'s drag-handle reorder
+(pre-existing `ArrowUp`/`ArrowDown` tests in `PlayerNameInputs.svelte.test.ts`). Everything else —
+`NavDrawer`'s nav links, `PresetManager`, `BossCard`'s expand toggle, and every route under
+`src/routes/` — has no keyboard-driven test yet, and each is its own slice.
 
 ## Scope
 
@@ -118,3 +122,27 @@ queryable through the existing `vitest-browser-svelte` and Playwright locators.
   didn't match the pinned Playwright version, so `pnpm test:unit:browser` had to be deferred to CI).
   Issue #78 also has an unstarted slice (`$props.id()`) tagged as feeding this bounty's scope
   directly; still open for a future run.
+- 2026-09-12: First slice of the keyboard-operability criterion — no-change to the checkbox (it
+  spans every route and component, so one slice can't close it) but new coverage for
+  `InteractiveFlow.svelte`, the component named in "Why this matters." Every button it renders
+  (`Start`, `Start over`, `Accept`, `Accept as main`, `Previous roll`, `Reroll`, `Next roll`,
+  `Go back`) was already a real `<button>`, so nothing needed fixing — Tab and Enter already
+  worked; the gap was purely that no test drove them that way. Added two browser-mode tests to
+  `InteractiveFlow.svelte.test.ts`: one asserts the choosing view's six controls sit in one
+  Tab-reachable sequence in visual order, the other presses `Enter` (never `.click()`) on each of
+  those six plus `Start` and `Start over` and asserts the right callback prop fires. Verified with
+  `pnpm test:unit:browser` locally after working around this sandbox's Playwright/Chromium revision
+  mismatch (see below) — 111/111 passed, no regressions.
+  - Local-tooling note for future runs: `pnpm test:unit:browser` fails out of the box in this sandbox
+    because the pre-installed Chromium is a different revision than the one
+    `@vitest/browser-playwright`'s pinned `playwright` version expects (`chromium_headless_shell-1194`
+    on disk vs `-1228` expected here) — the same class of gap PR #97's findings-log entry hit.
+    Symlinking the expected `chromium_headless_shell-1228/chrome-headless-shell-linux64/` path (and a
+    `chrome-headless-shell` alias) onto the installed `-1194` build under `/opt/pw-browsers/` lets the
+    suite run for real; that fix lives only in the sandbox filesystem, not this repo, so it doesn't
+    carry to CI (where the pinned revision is presumably already correct) or to the next sandboxed run
+    (which will need to redo it or just defer to CI, per the existing precedent).
+  - Left for a future slice: every other interactive surface named in "Why this matters" above —
+    `NavDrawer`'s nav links, `PresetManager`'s edit/delete/default-radio controls, `BossCard`'s
+    expand toggle, `InteractiveFlow`'s own name-input Add/Remove buttons (reachability, not just the
+    Enter-to-advance behaviour already tested), and every route under `src/routes/`.
