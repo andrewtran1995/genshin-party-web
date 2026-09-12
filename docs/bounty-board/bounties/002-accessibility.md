@@ -1,7 +1,7 @@
 ---
 id: 002
 title: Accessibility gaps in interactive components
-status: open
+status: in-progress
 size: S
 last-run: 2026-09-07
 runs: 4
