@@ -1,12 +1,15 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
-	import type { Pathname } from '$app/types';
 	import { getCharByName } from '$lib/genshin/characters';
-	import { encodePathSegment } from '$lib/genshin/path-segment';
 
-	let { characters, error }: { characters: { name: string }[]; error?: string | undefined } =
-		$props();
+	let {
+		characters,
+		error,
+		onshowvariants
+	}: {
+		characters: { name: string }[];
+		error?: string | undefined;
+		onshowvariants: (name: string) => void;
+	} = $props();
 
 	let selectedCharacter = $state('');
 	let clientError = $state('');
@@ -22,7 +25,7 @@
 			return;
 		}
 
-		void goto(resolve(`/char/${encodePathSegment(name)}?allVariants=1` as Pathname));
+		onshowvariants(name);
 	}
 </script>
 
