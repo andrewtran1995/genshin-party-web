@@ -123,6 +123,14 @@ pnpm test:unit --run
 
 The pre-commit hook runs these too, so a commit that fails them will not land in the first place.
 
+**Gotcha:** the `prepare` script runs `skills:install`/`skills:sync` on most `pnpm install` and
+`pnpm exec <bin>` invocations, which can re-vendor `.agents/skills/` against whatever the skills
+registry currently serves and touch `skills-lock.json` — unrelated to whatever you're working on.
+Run `git status` before staging and `git checkout -- .agents skills-lock.json` to drop that drift if
+your change didn't intend to touch skills. Prefer `node_modules/.bin/<tool>` over `pnpm exec <tool>`
+for one-off local checks (`prettier`, `eslint`, `tsc`, `svelte-check`, `vitest`, `stylelint`,
+`playwright`) to avoid triggering it repeatedly.
+
 ### 6. Open the pull request
 
 - A bounty → title it `[bounty] <bounty title>`. In the body, name the bounty file, state the slice
